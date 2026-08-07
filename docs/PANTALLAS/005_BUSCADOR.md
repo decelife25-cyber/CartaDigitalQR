@@ -1,40 +1,142 @@
-# BUSCADOR
+# PANTALLA 005 · BUSCADOR
 
-## Purpose
-(Purpose of the screen)
+# Objetivo
 
-## Official reference image
-(Reference image)
+Permitir localizar cualquier plato de la carta en pocos segundos mediante un buscador rápido y sencillo.
 
-## Functional description
-(Functional description)
+La búsqueda debe ser inmediata y pensada para móviles.
 
-## UI layout
-(UI layout)
+---
 
-## Visual hierarchy
-(Visual hierarchy)
+# Imagen oficial de referencia
 
-## Buttons
-(Buttons)
+docs/REFERENCIAS/PUBLICO/5_Buscar_plato.png
 
-## Navigation
-(Navigation)
+Esta imagen es la referencia visual OFICIAL.
 
-## Data displayed
-(Data displayed)
+Debe reproducirse prácticamente igual.
 
-## User interactions
-(User interactions)
+No reinterpretar.
 
-## Responsive behaviour
-(Responsive behaviour)
+No modernizar.
 
-## Acceptance criteria
-(Acceptance criteria)
+No cambiar el diseño.
 
-## Future improvements
-(Future improvements)
+---
 
-## Notes
-(Notes)
+# Fuente de datos
+
+Todos los datos proceden exclusivamente de Supabase.
+
+Nunca utilizar datos de ejemplo.
+
+Nunca utilizar datos mock.
+
+Nunca hardcodear información.
+
+---
+
+# Campo de búsqueda
+
+Debe aparecer en la parte superior.
+
+Al recibir el foco debe abrir automáticamente el teclado.
+
+Placeholder:
+
+"Buscar plato..."
+
+---
+
+# Funcionamiento
+
+La búsqueda es instantánea.
+
+No necesita botón Buscar.
+
+Mientras el usuario escribe:
+
+actualizar automáticamente los resultados.
+
+---
+
+# Qué debe buscar
+
+Nombre del plato.
+
+Descripción.
+
+Ingredientes.
+
+Palabras clave.
+
+Sugerencias.
+
+---
+
+# Resultados
+
+Mostrar los platos utilizando exactamente el mismo diseño que el listado de platos.
+
+Cada resultado contiene:
+
+- Fotografía.
+- Nombre.
+- Descripción corta.
+- Precio.
+
+---
+
+# Sin resultados
+
+Mostrar un mensaje claro.
+
+Ejemplo:
+
+"No se han encontrado platos."
+
+No mostrar errores.
+
+---
+
+# Navegación
+
+Al pulsar un plato:
+
+abrir directamente su ficha.
+
+---
+
+# Rendimiento
+
+No recargar toda la página.
+
+Realizar únicamente las consultas necesarias.
+
+La respuesta debe ser prácticamente instantánea.
+
+---
+
+# Responsive
+
+Diseñado exclusivamente para móviles.
+
+Botones grandes.
+
+Texto legible.
+
+Espacios cómodos para pulsar.
+
+---
+
+# Prohibiciones
+
+No añadir filtros avanzados.
+
+No añadir categorías.
+
+No añadir opciones de ordenación.
+
+No añadir elementos que no aparecen en la imagen de referencia.
+
+La imagen oficial define completamente el diseño que debe implementarse.
