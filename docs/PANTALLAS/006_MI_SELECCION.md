@@ -1,40 +1,179 @@
-# MI SELECCION
+# PANTALLA 006 · MI SELECCIÓN
 
-## Purpose
-(Purpose of the screen)
+# Objetivo
 
-## Official reference image
-(Reference image)
+Esta pantalla permite al cliente crear una lista de los platos que desea pedir.
 
-## Functional description
-(Functional description)
+NO es un carrito de compra.
 
-## UI layout
-(UI layout)
+NO realiza pedidos.
 
-## Visual hierarchy
-(Visual hierarchy)
+NO envía información al restaurante.
 
-## Buttons
-(Buttons)
+Su única finalidad es que el cliente pueda enseñar la selección al camarero cuando esté preparado para pedir.
 
-## Navigation
-(Navigation)
+---
 
-## Data displayed
-(Data displayed)
+# Imagen oficial de referencia
 
-## User interactions
-(User interactions)
+docs/REFERENCIAS/PUBLICO/6_Mi_seleccion.png
 
-## Responsive behaviour
-(Responsive behaviour)
+Esta imagen constituye la referencia oficial.
 
-## Acceptance criteria
-(Acceptance criteria)
+Debe reproducirse visualmente con la máxima fidelidad posible.
 
-## Future improvements
-(Future improvements)
+No reinterpretar.
 
-## Notes
-(Notes)
+No modernizar.
+
+No cambiar la distribución.
+
+---
+
+# Fuente de datos
+
+Toda la información procede exclusivamente de Supabase y del estado local de la selección del usuario.
+
+Nunca utilizar datos de ejemplo.
+
+Nunca utilizar datos mock.
+
+---
+
+# Contenido
+
+Cada plato seleccionado mostrará:
+
+- Fotografía.
+- Nombre.
+- Precio unitario.
+- Cantidad.
+- Precio total del artículo.
+
+---
+
+# Cantidad
+
+Cada artículo dispondrá de:
+
+Botón (-)
+
+Cantidad actual.
+
+Botón (+)
+
+Al pulsar:
+
+(-)
+
+Reduce una unidad.
+
+Si llega a cero:
+
+el plato desaparece automáticamente de la selección.
+
+(+)
+
+Añade una unidad más.
+
+La actualización debe ser inmediata.
+
+---
+
+# Precio
+
+Cada línea mostrará:
+
+Precio unitario.
+
+Cantidad.
+
+Importe total del artículo.
+
+En la parte inferior aparecerá:
+
+Total de la selección.
+
+---
+
+# Vaciar selección
+
+Debe existir un botón:
+
+"Vaciar selección"
+
+Solicitar confirmación antes de eliminar todos los platos.
+
+---
+
+# Mostrar al camarero
+
+Debe existir un botón destacado:
+
+"Mostrar al camarero"
+
+Este botón únicamente prepara la lista para ser mostrada.
+
+No envía pedidos.
+
+No realiza pagos.
+
+No conecta con cocina.
+
+---
+
+# Navegación
+
+Debe existir un botón para volver a la carta.
+
+No perder la selección mientras dure la sesión.
+
+---
+
+# Responsive
+
+Optimizado exclusivamente para teléfonos móviles.
+
+Botones grandes.
+
+Separación suficiente para evitar pulsaciones accidentales.
+
+---
+
+# Rendimiento
+
+Las modificaciones deben ser instantáneas.
+
+No recargar la pantalla completa.
+
+Actualizar únicamente el elemento modificado.
+
+---
+
+# Filosofía
+
+La aplicación NO sustituye al camarero.
+
+Simplemente ayuda al cliente a recordar los platos que desea pedir.
+
+Toda la interacción final sigue realizándose con el personal del restaurante.
+
+---
+
+# Prohibiciones
+
+No implementar pedidos online.
+
+No implementar pagos.
+
+No implementar pasarela de pago.
+
+No enviar pedidos automáticamente.
+
+No solicitar registro.
+
+No solicitar inicio de sesión.
+
+No modificar el diseño oficial.
+
+La imagen de referencia define completamente la interfaz que debe implementarse.
