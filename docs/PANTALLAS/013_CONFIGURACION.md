@@ -14,7 +14,7 @@ No será utilizada durante el servicio normal.
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PRIVADO/13_Configuracion.png
+docs/REFERENCIAS/PUBLICO/10_Configuracion.png
 
 Esta imagen constituye la especificación oficial.
 

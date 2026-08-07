@@ -16,7 +16,7 @@ La rapidez tiene prioridad absoluta.
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PRIVADO/9_Productos.png
+docs/REFERENCIAS/PUBLICO/7_Privado_List_platos.png
 
 Esta imagen constituye la especificación oficial.
 

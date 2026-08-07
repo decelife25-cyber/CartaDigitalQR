@@ -16,7 +16,7 @@ Su única finalidad es que el cliente pueda enseñar la selección al camarero c
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PUBLICO/6_Mi_seleccion.png
+docs/REFERENCIAS/PUBLICO/6_mi_seleccion.png
 
 Esta imagen constituye la referencia oficial.
 

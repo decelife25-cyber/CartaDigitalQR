@@ -12,7 +12,7 @@ La velocidad es más importante que la estética.
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PRIVADO/8_FamiliasPrivado.png
+docs/REFERENCIAS/PUBLICO/9_Gestion_familias.png
 
 La imagen es la especificación oficial.
 
