@@ -1,159 +1,24 @@
-Complete the document:
+# 018 - ARQUITECTURA GENERAL
 
-docs/018_ARQUITECTURA_GENERAL.md
+## Objetivo
+Describir la arquitectura oficial de CartaDigitalQR.
 
-Write the entire document in Spanish.
+## Aplicación 1: Carta Digital Pública
+**Tecnología**: React, Vite, Tailwind, PWA.
+- Acceso escaneando un código QR, sin instalación obligatoria.
+- Solo lectura (No modifica base de datos).
 
-Do not write code.
+## Aplicación 2: Administración Privada
+**Tecnología**: Android Nativo, Jetpack Compose.
+- Instalable como APK en móviles del personal.
+- Requiere autenticación.
+- Todas las operaciones CRUD.
 
-Do not modify the application.
+## Base de Datos, Sincronización y Multirestaurante
+- **Supabase**: Base de datos compartida única.
+- **Sincronización**: Automática, los cambios del Android se ven en la PWA.
+- **Multirestaurante**: Cambiar de restaurante implica solo actualizar la URL y Key en la configuración de la App Privada, conectándose a una nueva instancia de Supabase.
+- **Offline**: Caché de datos para lectura rápida, pero Supabase es la fuente oficial.
 
-Only create technical documentation.
-
-====================================================
-TITLE
-====================================================
-
-018 - ARQUITECTURA GENERAL
-
-====================================================
-OBJECTIVE
-====================================================
-
-Describe the official architecture of CartaDigitalQR.
-
-This document becomes the official architectural specification of the project.
-
-====================================================
-PROJECT ARCHITECTURE
-====================================================
-
-CartaDigitalQR is NOT a single application.
-
-It consists of TWO completely different applications sharing the same Supabase database.
-
-====================================================
-APPLICATION 1
-====================================================
-
-PUBLIC DIGITAL MENU
-
-Technology:
-
-React
-Vite
-Tailwind
-PWA
-
-Characteristics:
-
-- Accessed by scanning a QR code.
-- No installation required.
-- Works on Android.
-- Works on iPhone.
-- Works on tablets.
-- Works on desktop browsers.
-- Read-only.
-- Never modifies the database.
-- Shows only public information.
-
-====================================================
-APPLICATION 2
-====================================================
-
-PRIVATE ADMINISTRATION
-
-Technology:
-
-Android Native
-
-Jetpack Compose
-
-Characteristics:
-
-- Installed as an Android application.
-- Only restaurant staff can use it.
-- Authentication required.
-- Can be installed on multiple Android phones simultaneously.
-- All devices share the same Supabase database.
-- Any modification made from one device is immediately visible on every other device and on the public PWA.
-
-====================================================
-DATABASE
-====================================================
-
-Both applications use exactly the same Supabase database.
-
-Supabase is the single source of truth.
-
-Never duplicate information.
-
-Never use local databases as the main storage.
-
-====================================================
-SYNCHRONIZATION
-====================================================
-
-Changes made in the Android application must appear automatically in the public PWA.
-
-No manual synchronization.
-
-No exports.
-
-No imports.
-
-====================================================
-SECURITY
-====================================================
-
-The public PWA can only read public information.
-
-The Android application performs all Create, Update and Delete operations.
-
-Authentication is mandatory for the Android application.
-
-====================================================
-MULTI DEVICE
-====================================================
-
-The same administrator account may work on several Android devices.
-
-All devices remain synchronized through Supabase.
-
-====================================================
-OFFLINE
-====================================================
-
-The Android application may temporarily cache data to improve performance.
-
-However, Supabase always remains the official source of data.
-
-====================================================
-FUTURE
-====================================================
-
-The architecture must allow future expansion without changing the overall design.
-
-Possible future modules include:
-
-- Reservations
-- Orders
-- Kitchen Display
-- Waiter mode
-- Statistics
-- Multiple restaurants
-- Artificial Intelligence
-
-====================================================
-ACCEPTANCE CRITERIA
-====================================================
-
-The document must clearly explain the complete architecture.
-
-Any developer reading this document must understand the project without needing further explanations.
-
-Do not generate code.
-
-Only generate documentation.
-
-Create the Pull Request when finished.
+## Futuro
+La arquitectura soporta escalabilidad (Pedidos, Modo Camarero, etc.) mediante Supabase.

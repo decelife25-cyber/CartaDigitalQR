@@ -1,3 +1,0 @@
-# REGLAS OBLIGATORIAS
-
-Documentación para REGLAS OBLIGATORIAS.
