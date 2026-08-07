@@ -16,7 +16,7 @@ Son recomendaciones relacionadas con el producto.
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PRIVADO/12_Sugerencias.png
+docs/REFERENCIAS/PUBLICO/12_Privado_vista preliminar.png
 
 Esta imagen constituye la especificación oficial.
 

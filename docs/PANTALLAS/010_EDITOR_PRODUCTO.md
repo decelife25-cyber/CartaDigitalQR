@@ -16,7 +16,7 @@ Toda la pantalla está diseñada para utilizarse desde un teléfono móvil duran
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PRIVADO/10_EditorProducto.png
+docs/REFERENCIAS/PUBLICO/8_Privado_Editar_platos.png
 
 Esta imagen constituye la especificación oficial.
 

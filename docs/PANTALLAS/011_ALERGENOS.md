@@ -12,7 +12,10 @@ La rapidez es mucho más importante que la estética.
 
 # Imagen oficial de referencia
 
-docs/REFERENCIAS/PRIVADO/11_Alergenos.png
+docs/REFERENCIAS/PUBLICO/11_gestion_alergenos.png
+
+Referencia adicional:
+docs/REFERENCIAS/PUBLICO/13_crear_alergenos.png
 
 Esta imagen constituye la especificación oficial.
 
