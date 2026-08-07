@@ -1,40 +1,163 @@
-# FAMILIAS PRIVADO
+# PANTALLA 008 · GESTIÓN DE FAMILIAS
 
-## Purpose
-(Purpose of the screen)
+# Objetivo
 
-## Official reference image
-(Reference image)
+Permitir administrar todas las familias de la carta de forma rápida y sencilla.
 
-## Functional description
-(Functional description)
+Esta pantalla está pensada para usarse durante el trabajo diario del restaurante.
 
-## UI layout
-(UI layout)
+La velocidad es más importante que la estética.
 
-## Visual hierarchy
-(Visual hierarchy)
+---
 
-## Buttons
-(Buttons)
+# Imagen oficial de referencia
 
-## Navigation
-(Navigation)
+docs/REFERENCIAS/PRIVADO/8_FamiliasPrivado.png
 
-## Data displayed
-(Data displayed)
+La imagen es la especificación oficial.
 
-## User interactions
-(User interactions)
+No reinterpretar.
 
-## Responsive behaviour
-(Responsive behaviour)
+No modificar el diseño.
 
-## Acceptance criteria
-(Acceptance criteria)
+No modernizar.
 
-## Future improvements
-(Future improvements)
+Debe reproducirse prácticamente igual.
 
-## Notes
-(Notes)
+---
+
+# Fuente de datos
+
+Toda la información procede exclusivamente de Supabase.
+
+Nunca utilizar datos de ejemplo.
+
+Nunca utilizar datos mock.
+
+---
+
+# Información mostrada
+
+Cada familia mostrará:
+
+- Imagen.
+- Nombre.
+- Orden.
+- Estado (Visible / Oculta).
+- Número de productos pertenecientes a esa familia.
+
+---
+
+# Orden
+
+Las familias deben mostrarse exactamente en el orden definido por el usuario.
+
+Debe existir la posibilidad de cambiar el orden.
+
+Ese orden será el utilizado posteriormente en la carta pública.
+
+---
+
+# Acciones disponibles
+
+Cada familia permitirá:
+
+Editar.
+
+Eliminar.
+
+Ocultar.
+
+Mostrar.
+
+Cambiar orden.
+
+---
+
+# Crear familia
+
+Debe existir un botón:
+
+"Nueva familia"
+
+Al pulsarlo abrirá el editor de familias.
+
+---
+
+# Fotografía
+
+Cada familia puede tener una imagen.
+
+Si no existe:
+
+mostrar imagen genérica.
+
+Nunca dejar un espacio vacío.
+
+---
+
+# Eliminación
+
+Antes de eliminar una familia:
+
+solicitar confirmación.
+
+Si la familia contiene productos:
+
+advertir claramente al usuario.
+
+---
+
+# Navegación
+
+Al pulsar una familia:
+
+abrir el editor correspondiente.
+
+---
+
+# Diseño
+
+Pantalla muy compacta.
+
+Debe mostrarse el mayor número posible de familias.
+
+Reducir el scroll al mínimo.
+
+La información es más importante que las imágenes.
+
+---
+
+# Responsive
+
+Diseñada exclusivamente para teléfonos móviles.
+
+Botones grandes.
+
+Texto muy legible.
+
+---
+
+# Rendimiento
+
+Carga inmediata.
+
+Las modificaciones deben actualizar únicamente la familia modificada.
+
+No recargar toda la pantalla.
+
+---
+
+# Prohibiciones
+
+No utilizar tablas de escritorio.
+
+No utilizar ventanas complejas.
+
+No utilizar paneles laterales.
+
+No reinterpretar el diseño.
+
+No crear funciones no solicitadas.
+
+La imagen oficial define completamente la interfaz.
