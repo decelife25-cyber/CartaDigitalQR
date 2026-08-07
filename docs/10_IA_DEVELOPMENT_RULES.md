@@ -1,3 +1,0 @@
-# IA DEVELOPMENT RULES
-
-Documentación para IA DEVELOPMENT RULES.

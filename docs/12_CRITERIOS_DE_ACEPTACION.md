@@ -1,100 +1,25 @@
-# 12 - CRITERIOS DE ACEPTACIÓN
+# 12 - CRITERIOS DE ACEPTACIÓN GLOBALES
 
-## Regla principal
+## Regla Principal
+Una tarea NO se considera terminada porque compile. Solo se considera terminada cuando cumple TODOS los requisitos de este documento.
 
-Una tarea NO se considera terminada porque compile.
+## Diseño
+- Debe ser prácticamente idéntico a las fotografías de referencia en `docs/REFERENCIAS/PUBLICO/`.
+- No se permite reinterpretar ni modernizar el diseño.
 
-Una tarea SOLO se considera terminada cuando cumple TODOS los requisitos de este documento.
+## Datos
+- Todos los datos proceden de Supabase.
+- Está estrictamente prohibido utilizar mockData, datos de ejemplo, JSON locales, arrays temporales o datos simulados.
 
----
+## Código y Arquitectura
+- Respetar la documentación oficial de la arquitectura.
+- Código limpio, modular, reutilizable y documentado.
+- Prioridad absoluta en rendimiento (Mobile-First, carga rápida, sin consultas duplicadas).
 
-# Diseño
-
-Debe ser prácticamente idéntico a la fotografía de referencia.
-
-No se permite reinterpretar el diseño.
-
-No se permiten cambios estéticos sin autorización.
-
----
-
-# Datos
-
-Todos los datos proceden de Supabase.
-
-Está prohibido utilizar:
-
-- mockData
-- datos de ejemplo
-- JSON locales
-- arrays temporales
-- datos simulados
-
----
-
-# Arquitectura
-
-Debe respetarse toda la documentación oficial.
-
-No se permite modificar la arquitectura sin autorización.
-
----
-
-# Código
-
-El código deberá ser:
-
-- limpio
-- modular
-- reutilizable
-- documentado
-
-No se permiten archivos gigantes.
-
----
-
-# Rendimiento
-
-La aplicación debe abrir rápidamente.
-
-No cargar información innecesaria.
-
-No realizar consultas duplicadas.
-
----
-
-# Responsive
-
-Todo el proyecto está diseñado exclusivamente para móviles.
-
-Nunca se diseñará pensando primero en escritorio.
-
----
-
-# Calidad
-
-Antes de dar una tarea por finalizada deberá comprobarse:
-
-✓ Compila.
-
-✓ No produce errores.
-
-✓ Funciona.
-
-✓ Usa Supabase.
-
-✓ Sigue exactamente el diseño aprobado.
-
-✓ No rompe funcionalidades existentes.
-
-✓ Cumple toda la documentación del repositorio.
-
----
-
-# Regla de oro
-
-Si existe una fotografía de referencia...
-
-La fotografía tiene prioridad sobre cualquier interpretación de la IA.
-
-La imagen es la especificación oficial.
+## Verificación de Tarea
+Antes de dar por finalizada una tarea:
+- [ ] Compila y funciona sin errores.
+- [ ] Usa Supabase (sin datos harcodeados).
+- [ ] Sigue exactamente el diseño aprobado.
+- [ ] No rompe funcionalidades existentes.
+- [ ] Cumple con la documentación del repositorio.
