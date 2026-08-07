@@ -1,0 +1,3 @@
+# FOTOGRAFIAS
+
+Documentación para FOTOGRAFIAS.
