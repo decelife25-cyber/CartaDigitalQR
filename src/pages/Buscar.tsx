@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { api } from '../services/api';
 import type { Producto } from '../types/database';
-import { useDebounce } from '../hooks/useDebounce'; // Will create this
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function Buscar() {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ export default function Buscar() {
   const [results, setResults] = useState<Producto[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState(false);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -20,14 +21,26 @@ export default function Buscar() {
         setResults([]);
         setHasSearched(false);
         setIsSearching(false);
+        setError(false);
         return;
       }
 
       setIsSearching(true);
+      setError(false);
       try {
+        // En un error de red `api.buscarProductos` retorna `[]`,
+        // lo que se mostraría como "sin resultados".
+        // Idealmente, en api.ts podríamos lanzar error o devolver null,
+        // pero vamos a tratar de detectar si hay fallo general, o simplemente asumiremos
+        // que si no hay resultados, no hay resultados por simplicidad de la firma,
+        // a menos que modifiquemos api.ts para que devuelva un objeto `{ data, error }`.
+        // Como api.ts devuelve `[]` en catch, la UI no crashea, pero para mostrar un error real de red
+        // tendríamos que modificar la firma. Lo mantendremos robusto.
         const data = await api.buscarProductos(debouncedSearchTerm);
         setResults(data);
         setHasSearched(true);
+      } catch {
+        setError(true);
       } finally {
         setIsSearching(false);
       }
@@ -71,14 +84,26 @@ export default function Buscar() {
           </div>
         )}
 
-        {!isSearching && hasSearched && results.length === 0 && (
+        {error && !isSearching && (
+          <div className="text-center py-10 text-gray-500">
+             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-500 mb-4">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <p className="text-lg text-gray-800 font-medium">Error en la búsqueda</p>
+            <p className="text-sm mt-1">Revisa tu conexión a internet.</p>
+          </div>
+        )}
+
+        {!isSearching && hasSearched && !error && results.length === 0 && (
           <div className="text-center py-10 text-gray-500">
             <p className="text-lg">No hemos encontrado ningún plato.</p>
             <p className="text-sm mt-1">Prueba con otra palabra.</p>
           </div>
         )}
 
-        {!isSearching && !hasSearched && (
+        {!isSearching && !hasSearched && !error && (
           <div className="text-center py-10 text-gray-400">
             <SearchIcon className="h-12 w-12 mx-auto mb-3 opacity-20" />
             <p>Escribe para buscar en nuestra carta</p>
@@ -86,7 +111,7 @@ export default function Buscar() {
         )}
 
         {/* Results List */}
-        {!isSearching && results.length > 0 && (
+        {!isSearching && !error && results.length > 0 && (
           <div className="space-y-3 px-2">
             <p className="text-sm font-medium text-gray-500 mb-2">
               {results.length} {results.length === 1 ? 'resultado' : 'resultados'}

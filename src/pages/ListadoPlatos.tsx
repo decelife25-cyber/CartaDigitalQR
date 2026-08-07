@@ -9,6 +9,7 @@ export default function ListadoPlatos() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [familia, setFamilia] = useState<Familia | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -19,10 +20,15 @@ export default function ListadoPlatos() {
           api.getFamilias()
         ]);
 
-        setProductos(productosData);
-        const currentFamilia = familiasData.find(f => f.id === id);
-        if (currentFamilia) setFamilia(currentFamilia);
-
+        if (productosData && familiasData) {
+          setProductos(productosData);
+          const currentFamilia = familiasData.find(f => f.id === id);
+          if (currentFamilia) setFamilia(currentFamilia);
+        } else {
+          setError(true);
+        }
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -34,6 +40,20 @@ export default function ListadoPlatos() {
     return (
       <div className="flex justify-center items-center h-full pt-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+       <div className="p-4 pt-10 text-center">
+        <p className="text-red-500 font-medium mb-4">No hemos podido cargar los platos.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -99,9 +119,9 @@ export default function ListadoPlatos() {
       </div>
 
       {productos.length === 0 && (
-        <p className="text-center text-gray-500 mt-10">
-          No hay productos disponibles en esta categoría.
-        </p>
+        <div className="text-center py-10 px-4 bg-white rounded-xl border border-gray-100 mt-4">
+          <p className="text-gray-500 font-medium">No hay productos disponibles en esta categoría.</p>
+        </div>
       )}
     </div>
   );

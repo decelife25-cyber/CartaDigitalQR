@@ -11,6 +11,7 @@ export default function FichaPlato() {
   const navigate = useNavigate();
   const [producto, setProducto] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   // Zustand Store
   const { isSelected, addSelection, removeSelection } = useSelectionStore();
@@ -20,7 +21,13 @@ export default function FichaPlato() {
       if (!id) return;
       try {
         const data = await api.getProductoById(id);
-        setProducto(data);
+        if (data) {
+           setProducto(data);
+        } else {
+           setError(true);
+        }
+      } catch {
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -36,11 +43,19 @@ export default function FichaPlato() {
     );
   }
 
-  if (!producto) {
+  if (error || !producto) {
     return (
-      <div className="p-8 text-center text-gray-500">
-        Producto no encontrado.
-        <button onClick={() => navigate(-1)} className="mt-4 text-primary block w-full">Volver</button>
+      <div className="p-8 text-center text-gray-500 mt-10">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 text-red-500 mb-4">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <p className="font-medium text-gray-800">Producto no encontrado</p>
+        <p className="text-sm mt-1 mb-6">El producto que buscas no existe o ha sido eliminado.</p>
+        <button onClick={() => navigate(-1)} className="text-white bg-primary px-6 py-2 rounded-lg font-medium w-full shadow-sm" style={{ backgroundColor: 'var(--color-primary)' }}>
+          Volver a la carta
+        </button>
       </div>
     );
   }
