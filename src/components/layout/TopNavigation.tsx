@@ -34,9 +34,9 @@ export default function TopNavigation() {
       </div>
 
       <div className="flex-1 flex justify-center items-center">
-        {config?.logo_url ? (
+        {config?.logotipo_url ? (
           <img
-            src={config.logo_url}
+            src={config.logotipo_url}
             alt={config.nombre_restaurante}
             className="h-8 object-contain"
           />
