@@ -1,0 +1,38 @@
+name: Diagnóstico Supabase
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Diagnostics
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: node scripts/diagnostico.js
+
+      - name: Build and Lint
+        run: |
+          npm run build
+          npm run lint
+
+      - name: Upload Diagnostics Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-supabase
+          path: docs/DIAGNOSTICO_SUPABASE.md
