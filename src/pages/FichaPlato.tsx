@@ -12,7 +12,6 @@ export default function FichaPlato() {
   const [producto, setProducto] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Zustand Store
   const { isSelected, addSelection, removeSelection } = useSelectionStore();
 
   useEffect(() => {
@@ -57,11 +56,10 @@ export default function FichaPlato() {
 
   return (
     <div className="bg-white min-h-full pb-8">
-      {/* Product Image Header */}
       <div className="w-full aspect-video bg-gray-100 relative">
-        {producto.imagen_url ? (
+        {producto.foto_url ? (
           <img
-            src={producto.imagen_url}
+            src={producto.foto_url}
             alt={producto.nombre}
             className="w-full h-full object-cover"
           />
@@ -73,7 +71,6 @@ export default function FichaPlato() {
       </div>
 
       <div className="p-5 space-y-6">
-        {/* Title and Price */}
         <div className="flex justify-between items-start gap-4">
           <h1 className="text-2xl font-bold text-gray-900 leading-tight">
             {producto.nombre}
@@ -83,14 +80,12 @@ export default function FichaPlato() {
           </span>
         </div>
 
-        {/* Description */}
         {producto.descripcion && (
           <p className="text-gray-600 leading-relaxed text-[15px]">
             {producto.descripcion}
           </p>
         )}
 
-        {/* Allergens Section */}
         {producto.alergenos && producto.alergenos.length > 0 && (
           <div className="pt-4 border-t border-gray-100">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -99,9 +94,9 @@ export default function FichaPlato() {
             <div className="flex flex-wrap gap-3">
               {producto.alergenos.map((alergeno) => (
                 <div key={alergeno.id} className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-                  {alergeno.icono_url && (
+                  {alergeno.icono && (
                     <img
-                      src={alergeno.icono_url}
+                      src={alergeno.icono}
                       alt={alergeno.nombre}
                       className="w-5 h-5 object-contain"
                     />
@@ -113,7 +108,6 @@ export default function FichaPlato() {
           </div>
         )}
 
-        {/* Action Button */}
         <div className="pt-6">
           <button
             onClick={toggleSelection}
