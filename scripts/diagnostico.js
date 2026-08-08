@@ -2,12 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 async function runDiagnostic() {
-  console.log("Iniciando diagnóstico de Supabase...");
+  console.log('Iniciando diagnóstico de Supabase...');
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error("Error: Las variables de entorno VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas.");
+    console.error('Error: Las variables de entorno VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas.');
     process.exit(1);
   }
 
@@ -31,10 +31,10 @@ async function runDiagnostic() {
       const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
+          Prefer: 'return=representation'
         }
       });
 
@@ -61,13 +61,13 @@ async function runDiagnostic() {
           markdown += `- **Registros con visible=true:** ${visibleTrue}\n`;
           markdown += `- **Registros con visible=false:** ${visibleFalse}\n\n`;
 
-          let classification = "";
+          let classification;
           if (data.length === 0) {
-            classification = "A) tabla vacía";
+            classification = 'A) tabla vacía (no se puede distinguir por esta consulta entre tabla realmente vacía y filas no visibles por RLS)';
           } else if (visibleTrue === 0) {
-            classification = "B) existen familias pero ninguna tiene visible=true";
+            classification = 'B) existen familias pero ninguna tiene visible=true';
           } else {
-            classification = "D) Supabase devuelve familias correctamente";
+            classification = 'D) Supabase devuelve familias correctamente';
           }
           markdown += `### Clasificación: ${classification}\n\n`;
 
@@ -83,16 +83,15 @@ async function runDiagnostic() {
           markdown += `- **Registros con disponible=true:** ${disponibleTrue}\n`;
           markdown += `- **Registros con disponible=false:** ${disponibleFalse}\n\n`;
 
-          let classification = "";
+          let classification;
           if (data.length === 0) {
-            classification = "A) tabla vacía";
+            classification = 'A) tabla vacía (no se puede distinguir por esta consulta entre tabla realmente vacía y filas no visibles por RLS)';
           } else if (disponibleTrue === 0) {
-            classification = "B) existen productos pero ninguno tiene disponible=true";
+            classification = 'B) existen productos pero ninguno tiene disponible=true';
           } else {
-            classification = "D) Supabase devuelve productos correctamente";
+            classification = 'D) Supabase devuelve productos correctamente';
           }
           markdown += `### Clasificación: ${classification}\n\n`;
-
 
           markdown += `### Datos reales accesibles (${table})\n\n`;
           markdown += '```json\n';
@@ -103,38 +102,55 @@ async function runDiagnostic() {
         const errorText = await response.text();
         markdown += `- **Error exacto si falla:** \`${errorText}\`\n\n`;
 
-        let errorCode = "";
-        let errorMsg = "";
+        let errorCode = '';
+        let errorMsg = '';
         try {
           const parsedError = JSON.parse(errorText);
-          errorCode = parsedError.code || "";
-          errorMsg = parsedError.message || "";
-        } catch (ignore) { /* eslint-disable-line no-unused-vars */ }
+          errorCode = parsedError.code || '';
+          errorMsg = parsedError.message || '';
+        } catch (ignore) {
+          // El cuerpo no era JSON; se conserva el error textual para el diagnóstico.
+        }
 
-        let existe = "No se puede determinar";
-        if (errorCode === '42P01' || errorMsg.includes("relation") && errorMsg.includes("does not exist")) {
-           existe = "No";
-        } else if (response.status === 401 || response.status === 403 || response.status === 200) {
-           existe = "Sí"; // Probablemente sí existe pero falla por otra cosa
+        const normalizedMessage = `${errorCode} ${errorMsg} ${errorText}`.toLowerCase();
+
+        let existe = 'No se puede determinar';
+        if (
+          errorCode === '42P01' ||
+          errorCode === 'PGRST205' ||
+          /relation .* does not exist/i.test(errorMsg) ||
+          /could not find the table/i.test(errorMsg)
+        ) {
+          existe = 'No';
+        } else if (response.status === 401 || response.status === 403) {
+          existe = 'No se puede determinar por esta respuesta de permisos/autenticación';
         }
 
         markdown += `- **¿Existe la tabla?:** ${existe}\n`;
 
-        let classification = "";
+        let classification;
         if (response.status === 401) {
-            classification = "E) error de autenticación";
+          classification = 'E) error de autenticación';
+        } else if (
+          response.status === 403 &&
+          /(row[- ]level security|rls|permission denied|policy)/i.test(normalizedMessage)
+        ) {
+          classification = 'C) RLS bloquea la consulta';
         } else if (response.status === 403) {
-            if (errorMsg.includes("RLS") || errorMsg.includes("row-level security")) {
-                classification = "C) RLS bloquea la consulta";
-            } else {
-                classification = `E) otro error: ${errorMsg || '403 Forbidden sin más detalles'}`;
-            }
+          classification = `E) error 403 no identificado como RLS: ${errorMsg || 'Forbidden sin más detalles'}`;
+        } else if (
+          errorCode === '42P01' ||
+          errorCode === 'PGRST205' ||
+          /relation .* does not exist/i.test(errorMsg) ||
+          /could not find the table/i.test(errorMsg)
+        ) {
+          classification = 'E) tabla inexistente / error de esquema';
         } else {
-            classification = "E) otro error de esquema/relación";
+          classification = `E) otro error de esquema/relación: ${errorMsg || `HTTP ${response.status}`}`;
         }
 
         if (table === 'familias' || table === 'productos') {
-            markdown += `### Clasificación: ${classification}\n\n`;
+          markdown += `### Clasificación: ${classification}\n\n`;
         }
       }
     } catch (error) {
@@ -142,11 +158,11 @@ async function runDiagnostic() {
       markdown += `- **¿Existe la tabla?:** No se puede determinar\n`;
       markdown += `- **Error exacto si falla:** \`${error.message}\`\n`;
       if (table === 'familias' || table === 'productos') {
-        markdown += `### Clasificación: E) otro error de esquema/relación\n\n`;
+        markdown += `### Clasificación: E) error de ejecución: ${error.message}\n\n`;
       }
     }
 
-    markdown += `\n---\n\n`;
+    markdown += '\n---\n\n';
   }
 
   const docsDir = path.join(__dirname, '..', 'docs');
@@ -156,7 +172,7 @@ async function runDiagnostic() {
 
   const outPath = path.join(docsDir, 'DIAGNOSTICO_SUPABASE.md');
   fs.writeFileSync(outPath, markdown, 'utf8');
-  console.log(`Diagnóstico completado. Resultados guardados en docs/DIAGNOSTICO_SUPABASE.md`);
+  console.log('Diagnóstico completado. Resultados guardados en docs/DIAGNOSTICO_SUPABASE.md');
 }
 
 runDiagnostic();
