@@ -23,8 +23,6 @@ export default function MiSeleccion() {
       setLoading(true);
       try {
         const data = await api.getProductosByIds(selectedIds);
-
-        // Mantener el orden original de la selección si es posible, o simplemente mostrar la data devuelta
         setProductos(data);
       } finally {
         setLoading(false);
@@ -110,9 +108,9 @@ export default function MiSeleccion() {
       <div className="flex-1 overflow-y-auto space-y-4 mb-6 px-2">
         {productos.map((producto) => (
           <div key={producto.id} className="flex gap-4 items-center bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-            {producto.imagen_url ? (
+            {producto.foto_url ? (
               <img
-                src={producto.imagen_url}
+                src={producto.foto_url}
                 alt={producto.nombre}
                 className="w-20 h-20 rounded-lg object-cover"
               />
