@@ -11,8 +11,7 @@ export default function AdminProductos() {
   const fetchProductos = async () => {
     setLoading(true);
     try {
-      const data = await adminApi.getProductosAdmin();
-      setProductos(data);
+      setProductos(await adminApi.getProductosAdmin());
     } catch (error) {
       console.error('Error loading productos:', error);
     } finally {
@@ -20,41 +19,27 @@ export default function AdminProductos() {
     }
   };
 
-  useEffect(() => {
-    fetchProductos();
-  }, []);
+  useEffect(() => { fetchProductos(); }, []);
 
   const handleDelete = async (id: string, nombre: string) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar "${nombre}"?`)) {
-      try {
-        await adminApi.deleteProducto(id);
-        setProductos(productos.filter(p => p.id !== id));
-      } catch (error) {
-        console.error('Delete error', error);
-        alert('Error al eliminar el producto');
-      }
+    if (!window.confirm(`¿Estás seguro de que deseas eliminar "${nombre}"?`)) return;
+    try {
+      await adminApi.deleteProducto(id);
+      setProductos((current) => current.filter((p) => p.id !== id));
+    } catch (error) {
+      console.error('Delete error', error);
+      alert('Error al eliminar el producto');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
-        <Link
-          to="/admin/productos/nuevo"
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: 'var(--color-primary)' }}
-        >
-          <Plus size={20} />
-          Nuevo Producto
+        <Link to="/admin/productos/nuevo" className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-medium" style={{ backgroundColor: 'var(--color-primary)' }}>
+          <Plus size={20} /> Nuevo Producto
         </Link>
       </div>
 
@@ -62,73 +47,34 @@ export default function AdminProductos() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600">
-              <tr>
-                <th className="p-4">Producto</th>
-                <th className="p-4">Precio</th>
-                <th className="p-4">Estado</th>
-                <th className="p-4 text-right">Acciones</th>
-              </tr>
+              <tr><th className="p-4">Producto</th><th className="p-4">Precio</th><th className="p-4">Estado</th><th className="p-4 text-right">Acciones</th></tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {productos.map((producto) => (
-                <tr key={producto.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={producto.id} className="hover:bg-gray-50">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      {producto.foto_url ? (
-                        <img
-                          src={producto.foto_url}
-                          alt={producto.nombre}
-                          className="w-10 h-10 rounded object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
-                          Sin foto
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-medium text-gray-900">{producto.nombre}</p>
-                        <p className="text-sm text-gray-500 line-clamp-1">{producto.descripcion || 'Sin descripción'}</p>
-                      </div>
+                      {producto.imagen_url ? <img src={producto.imagen_url} alt={producto.nombre} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>}
+                      <div><p className="font-medium text-gray-900">{producto.nombre}</p><p className="text-sm text-gray-500 line-clamp-1">{producto.descripcion || 'Sin descripción'}</p></div>
                     </div>
                   </td>
                   <td className="p-4 font-medium">{producto.precio.toFixed(2)}€</td>
                   <td className="p-4">
                     <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full w-fit ${producto.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {producto.activo ? <Eye size={12} /> : <EyeOff size={12} />}
-                        {producto.activo ? 'Visible' : 'Oculto'}
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full w-fit ${producto.disponible ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {producto.disponible ? <Eye size={12} /> : <EyeOff size={12} />}
+                        {producto.disponible ? 'Disponible' : 'No disponible'}
                       </span>
-                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full w-fit ${!producto.agotado ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-                        {!producto.agotado ? 'Disponible' : 'Agotado'}
-                      </span>
+                      {producto.destacado && <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 w-fit">Destacado</span>}
                     </div>
                   </td>
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        to={`/admin/productos/${producto.id}/editar`}
-                        className="p-2 text-gray-600 hover:text-primary hover:bg-primary/10 rounded transition-colors"
-                      >
-                        <Edit size={18} />
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(producto.id, producto.nombre)}
-                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
+                  <td className="p-4 text-right"><div className="flex items-center justify-end gap-2">
+                    <Link to={`/admin/productos/${producto.id}/editar`} className="p-2 text-gray-600 hover:text-primary rounded"><Edit size={18} /></Link>
+                    <button onClick={() => handleDelete(producto.id, producto.nombre)} className="p-2 text-gray-600 hover:text-red-600 rounded"><Trash2 size={18} /></button>
+                  </div></td>
                 </tr>
               ))}
-
-              {productos.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-gray-500">
-                    No hay productos todavía.
-                  </td>
-                </tr>
-              )}
+              {!productos.length && <tr><td colSpan={4} className="p-8 text-center text-gray-500">No hay productos todavía.</td></tr>}
             </tbody>
           </table>
         </div>
