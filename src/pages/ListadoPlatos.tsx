@@ -22,7 +22,6 @@ export default function ListadoPlatos() {
         setProductos(productosData);
         const currentFamilia = familiasData.find(f => f.id === id);
         if (currentFamilia) setFamilia(currentFamilia);
-
       } finally {
         setLoading(false);
       }
@@ -51,9 +50,9 @@ export default function ListadoPlatos() {
             onClick={() => navigate(`/plato/${producto.id}`)}
             className="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
           >
-            {producto.imagen_url ? (
+            {producto.foto_url ? (
               <img
-                src={producto.imagen_url}
+                src={producto.foto_url}
                 alt={producto.nombre}
                 className="w-28 h-28 object-cover"
               />
@@ -76,14 +75,13 @@ export default function ListadoPlatos() {
                   {producto.precio.toFixed(2)}€
                 </span>
 
-                {/* Allergen Icons */}
                 {producto.alergenos && producto.alergenos.length > 0 && (
                   <div className="flex gap-1">
                     {producto.alergenos.map((alergeno) => (
-                      alergeno.icono_url ? (
+                      alergeno.icono ? (
                         <img
                           key={alergeno.id}
-                          src={alergeno.icono_url}
+                          src={alergeno.icono}
                           alt={alergeno.nombre}
                           title={alergeno.nombre}
                           className="w-5 h-5 object-contain"
