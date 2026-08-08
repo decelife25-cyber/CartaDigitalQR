@@ -40,9 +40,10 @@ export const adminApi = {
         descripcion: producto.descripcion,
         precio: producto.precio,
         familia_id: producto.familia_id,
-        imagen_url: producto.imagen_url,
-        disponible: producto.disponible,
-        destacado: producto.destacado,
+        foto_url: producto.foto_url,
+        activo: producto.activo ?? true,
+        agotado: producto.agotado ?? false,
+        destacado: producto.destacado ?? false,
         orden: producto.orden ?? 0,
       }])
       .select()
@@ -52,7 +53,7 @@ export const adminApi = {
     if (!data) return null;
 
     await this.replaceAlergenos(data.id, alergenosIds);
-    return data as Producto;
+    return mapProducto(data);
   },
 
   async updateProducto(id: string, producto: Partial<Producto>, alergenosIds: string[]): Promise<void> {
@@ -63,8 +64,9 @@ export const adminApi = {
         descripcion: producto.descripcion,
         precio: producto.precio,
         familia_id: producto.familia_id,
-        imagen_url: producto.imagen_url,
-        disponible: producto.disponible,
+        foto_url: producto.foto_url,
+        activo: producto.activo,
+        agotado: producto.agotado,
         destacado: producto.destacado,
         orden: producto.orden ?? 0,
       })
@@ -98,7 +100,7 @@ export const adminApi = {
     const { data, error } = await supabase
       .from('alergenos')
       .select('*')
-      .order('nombre', { ascending: true });
+      .order('orden', { ascending: true });
     if (error) throw error;
     return data ?? [];
   },
