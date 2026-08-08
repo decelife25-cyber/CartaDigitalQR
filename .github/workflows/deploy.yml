@@ -29,6 +29,54 @@ jobs:
             echo "Error: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing."
             exit 1
           fi
+      - name: Supabase Diagnostic Tests
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          echo "=== DIAGNÓSTICO DE SUPABASE ==="
+
+          # Función para testear un endpoint
+          test_endpoint() {
+            local ENDPOINT=$1
+            local TABLE_NAME=$2
+            local STATUS_CODE_FILE="status.txt"
+
+            # Fetch data with status code
+            HTTP_STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              "$SUPABASE_URL/rest/v1/$ENDPOINT")
+
+            echo "=> Tabla: $TABLE_NAME"
+            echo "HTTP Status: $HTTP_STATUS"
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              RECORD_COUNT=$(jq '. | length' /tmp/response.json)
+              echo "Estado: OK. Registros devueltos: $RECORD_COUNT"
+              if [ "$RECORD_COUNT" = "0" ]; then
+                 echo "Aviso: La tabla está vacía o RLS está ocultando todos los registros."
+              else
+                 if [ "$TABLE_NAME" = "familias" ]; then
+                    VISIBLE_COUNT=$(jq '[.[] | select(.visible == true)] | length' /tmp/response.json)
+                    echo "Familias con visible=true: $VISIBLE_COUNT"
+                 elif [ "$TABLE_NAME" = "productos" ]; then
+                    DISPONIBLE_COUNT=$(jq '[.[] | select(.disponible == true)] | length' /tmp/response.json)
+                    echo "Productos con disponible=true: $DISPONIBLE_COUNT"
+                 fi
+              fi
+            else
+              echo "Error: HTTP $HTTP_STATUS"
+              jq '.message, .hint, .details' /tmp/response.json || cat /tmp/response.json
+            fi
+            echo "----------------------------------------"
+          }
+
+          test_endpoint "familias?select=*" "familias"
+          test_endpoint "productos?select=*" "productos"
+
+          echo "=== FIN DEL DIAGNÓSTICO ==="
+
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
