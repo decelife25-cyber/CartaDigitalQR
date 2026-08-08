@@ -1,6 +1,15 @@
 import { supabase } from '../lib/supabase';
 import type { Configuracion, Familia, Producto } from '../types/database';
 
+function mapProducto(producto: any): Producto {
+  return {
+    ...producto,
+    alergenos: (producto.producto_alergeno ?? [])
+      .map((pa: any) => pa.alergenos)
+      .filter((a: any) => a !== null),
+  };
+}
+
 export const api = {
   async getConfiguracion(): Promise<Configuracion | null> {
     const { data, error } = await supabase
@@ -20,7 +29,7 @@ export const api = {
     const { data, error } = await supabase
       .from('familias')
       .select('*')
-      .eq('visible', true)
+      .eq('activo', true)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -40,7 +49,8 @@ export const api = {
         )
       `)
       .eq('familia_id', familiaId)
-      .eq('disponible', true)
+      .eq('activo', true)
+      .eq('agotado', false)
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -48,12 +58,7 @@ export const api = {
       return [];
     }
 
-    return data.map((p: any) => ({
-      ...p,
-      alergenos: p.producto_alergeno
-        .map((pa: any) => pa.alergenos)
-        .filter((a: any) => a !== null),
-    }));
+    return data.map(mapProducto);
   },
 
   async getProductoById(id: string): Promise<Producto | null> {
@@ -66,7 +71,8 @@ export const api = {
         )
       `)
       .eq('id', id)
-      .eq('disponible', true)
+      .eq('activo', true)
+      .eq('agotado', false)
       .single();
 
     if (error) {
@@ -74,12 +80,7 @@ export const api = {
       return null;
     }
 
-    return {
-      ...data,
-      alergenos: data.producto_alergeno
-        .map((pa: any) => pa.alergenos)
-        .filter((a: any) => a !== null),
-    };
+    return mapProducto(data);
   },
 
   async buscarProductos(query: string): Promise<Producto[]> {
@@ -93,7 +94,8 @@ export const api = {
           alergenos (*)
         )
       `)
-      .eq('disponible', true)
+      .eq('activo', true)
+      .eq('agotado', false)
       .ilike('nombre', `%${query}%`)
       .order('nombre', { ascending: true });
 
@@ -102,12 +104,7 @@ export const api = {
       return [];
     }
 
-    return data.map((p: any) => ({
-      ...p,
-      alergenos: p.producto_alergeno
-        .map((pa: any) => pa.alergenos)
-        .filter((a: any) => a !== null),
-    }));
+    return data.map(mapProducto);
   },
 
   async getProductosByIds(ids: string[]): Promise<Producto[]> {
@@ -122,18 +119,14 @@ export const api = {
         )
       `)
       .in('id', ids)
-      .eq('disponible', true);
+      .eq('activo', true)
+      .eq('agotado', false);
 
     if (error) {
       console.error('Error fetching productos by ids:', error);
       return [];
     }
 
-    return data.map((p: any) => ({
-      ...p,
-      alergenos: p.producto_alergeno
-        .map((pa: any) => pa.alergenos)
-        .filter((a: any) => a !== null),
-    }));
+    return data.map(mapProducto);
   }
 };
