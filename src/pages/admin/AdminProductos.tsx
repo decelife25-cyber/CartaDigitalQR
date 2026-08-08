@@ -54,16 +54,19 @@ export default function AdminProductos() {
                 <tr key={producto.id} className="hover:bg-gray-50">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      {producto.imagen_url ? <img src={producto.imagen_url} alt={producto.nombre} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>}
+                      {producto.foto_url ? <img src={producto.foto_url} alt={producto.nombre} className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">Sin foto</div>}
                       <div><p className="font-medium text-gray-900">{producto.nombre}</p><p className="text-sm text-gray-500 line-clamp-1">{producto.descripcion || 'Sin descripción'}</p></div>
                     </div>
                   </td>
                   <td className="p-4 font-medium">{producto.precio.toFixed(2)}€</td>
                   <td className="p-4">
                     <div className="flex flex-col gap-1">
-                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full w-fit ${producto.disponible ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {producto.disponible ? <Eye size={12} /> : <EyeOff size={12} />}
-                        {producto.disponible ? 'Disponible' : 'No disponible'}
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full w-fit ${producto.activo ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {producto.activo ? <Eye size={12} /> : <EyeOff size={12} />}
+                        {producto.activo ? 'Visible' : 'Oculto'}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full w-fit ${!producto.agotado ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {!producto.agotado ? 'Disponible' : 'Agotado'}
                       </span>
                       {producto.destacado && <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 w-fit">Destacado</span>}
                     </div>
