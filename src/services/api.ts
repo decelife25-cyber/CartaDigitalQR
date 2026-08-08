@@ -29,14 +29,14 @@ export const api = {
     const { data, error } = await supabase
       .from('familias')
       .select('*')
-      .eq('activo', true)
+      .eq('visible', true)
       .order('orden', { ascending: true });
 
     if (error) {
       console.error('Error fetching familias:', error);
       return [];
     }
-    return data;
+    return data ?? [];
   },
 
   async getProductosByFamilia(familiaId: string): Promise<Producto[]> {
@@ -49,16 +49,15 @@ export const api = {
         )
       `)
       .eq('familia_id', familiaId)
-      .eq('activo', true)
-      .eq('agotado', false)
-      .order('nombre', { ascending: true });
+      .eq('disponible', true)
+      .order('orden', { ascending: true });
 
     if (error) {
       console.error('Error fetching productos by familia:', error);
       return [];
     }
 
-    return data.map(mapProducto);
+    return (data ?? []).map(mapProducto);
   },
 
   async getProductoById(id: string): Promise<Producto | null> {
@@ -71,8 +70,7 @@ export const api = {
         )
       `)
       .eq('id', id)
-      .eq('activo', true)
-      .eq('agotado', false)
+      .eq('disponible', true)
       .single();
 
     if (error) {
@@ -80,7 +78,7 @@ export const api = {
       return null;
     }
 
-    return mapProducto(data);
+    return data ? mapProducto(data) : null;
   },
 
   async buscarProductos(query: string): Promise<Producto[]> {
@@ -94,17 +92,16 @@ export const api = {
           alergenos (*)
         )
       `)
-      .eq('activo', true)
-      .eq('agotado', false)
+      .eq('disponible', true)
       .ilike('nombre', `%${query}%`)
-      .order('nombre', { ascending: true });
+      .order('orden', { ascending: true });
 
     if (error) {
       console.error('Error searching productos:', error);
       return [];
     }
 
-    return data.map(mapProducto);
+    return (data ?? []).map(mapProducto);
   },
 
   async getProductosByIds(ids: string[]): Promise<Producto[]> {
@@ -119,14 +116,13 @@ export const api = {
         )
       `)
       .in('id', ids)
-      .eq('activo', true)
-      .eq('agotado', false);
+      .eq('disponible', true);
 
     if (error) {
       console.error('Error fetching productos by ids:', error);
       return [];
     }
 
-    return data.map(mapProducto);
+    return (data ?? []).map(mapProducto);
   }
 };
