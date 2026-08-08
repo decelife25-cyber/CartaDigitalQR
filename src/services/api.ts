@@ -6,7 +6,7 @@ function mapProducto(producto: any): Producto {
     ...producto,
     alergenos: (producto.producto_alergeno ?? [])
       .map((pa: any) => pa.alergenos)
-      .filter((a: any) => a !== null),
+      .filter(Boolean),
   };
 }
 
@@ -29,7 +29,7 @@ export const api = {
     const { data, error } = await supabase
       .from('familias')
       .select('*')
-      .eq('visible', true)
+      .eq('activo', true)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -49,7 +49,8 @@ export const api = {
         )
       `)
       .eq('familia_id', familiaId)
-      .eq('disponible', true)
+      .eq('activo', true)
+      .eq('agotado', false)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -70,7 +71,8 @@ export const api = {
         )
       `)
       .eq('id', id)
-      .eq('disponible', true)
+      .eq('activo', true)
+      .eq('agotado', false)
       .single();
 
     if (error) {
@@ -92,7 +94,8 @@ export const api = {
           alergenos (*)
         )
       `)
-      .eq('disponible', true)
+      .eq('activo', true)
+      .eq('agotado', false)
       .ilike('nombre', `%${query}%`)
       .order('orden', { ascending: true });
 
@@ -116,7 +119,8 @@ export const api = {
         )
       `)
       .in('id', ids)
-      .eq('disponible', true);
+      .eq('activo', true)
+      .eq('agotado', false);
 
     if (error) {
       console.error('Error fetching productos by ids:', error);
