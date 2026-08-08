@@ -16,8 +16,10 @@ export interface Familia {
   configuracion_restaurante_id: string;
   nombre: string;
   descripcion: string | null;
-  orden: number;
   activo: boolean;
+  orden: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Alergeno {
@@ -41,16 +43,12 @@ export interface Producto {
   agotado: boolean;
   destacado: boolean;
   orden: number;
+  created_at: string;
+  updated_at: string;
   alergenos?: Alergeno[];
-  sugerencias?: Producto[];
 }
 
 export interface ProductoAlergeno {
   producto_id: string;
   alergeno_id: string;
-}
-
-export interface ProductoSugerencia {
-  producto_id: string;
-  sugerencia_id: string;
 }
