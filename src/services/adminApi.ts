@@ -8,7 +8,7 @@ export const adminApi = {
       .from('productos')
       .select(`
         *,
-        producto_alergenos (
+        producto_alergeno (
           alergenos (*)
         )
       `)
@@ -19,22 +19,22 @@ export const adminApi = {
       throw error;
     }
 
-    return (data || []).map(p => {
-       const mapped = { ...p };
-
-       mapped.alergenos = (p.producto_alergenos || [])
-         .map((pa: any) => pa.alergenos)
-         .filter(Boolean);
-
-       return mapped;
-    });
+    return (data || []).map((p: any) => ({
+      ...p,
+      alergenos: (p.producto_alergeno || [])
+        .map((pa: any) => pa.alergenos)
+        .filter(Boolean),
+    }));
   },
 
   async getProductoByIdAdmin(id: string): Promise<Producto | null> {
     const { data, error } = await supabase
       .from('productos')
       .select(`
-        *
+        *,
+        producto_alergeno (
+          alergenos (*)
+        )
       `)
       .eq('id', id)
       .single();
@@ -46,30 +46,36 @@ export const adminApi = {
 
     if (!data) return null;
 
-    // Fetch Alergenos
-    const { data: paData } = await supabase
-      .from('producto_alergenos')
-      .select(`
-        alergenos (*)
-      `)
-      .eq('producto_id', id);
-
-    // Fetch Sugerencias
-    const { data: psData } = await supabase
+    const { data: psData, error: psError } = await supabase
       .from('producto_sugerencias')
       .select(`
         productos!sugerencia_id (*)
       `)
       .eq('producto_id', id);
 
+    if (psError) {
+      console.error('Error fetching sugerencias (admin):', psError);
+      throw psError;
+    }
+
     return {
       ...data,
-      alergenos: (paData || []).map((pa: any) => pa.alergenos).filter(Boolean),
-      sugerencias: (psData || []).map((ps: any) => ps.productos).filter(Boolean)
+      alergenos: ((data as any).producto_alergeno || [])
+        .map((pa: any) => pa.alergenos)
+        .filter(Boolean),
+      sugerencias: (psData || [])
+        .map((ps: any) => ps.productos)
+        .filter(Boolean),
     };
   },
 
-  async createProducto(producto: Partial<Producto>, alergenosIds: string[], sugerenciasIds: string[]): Promise<Producto | null> {
+  async createProducto(
+    producto: Partial<Producto>,
+    alergenosIds: string[],
+    sugerenciasIds: string[],
+  ): Promise<Producto | null> {
+    // The current public application and database types use these fields directly.
+    // Do not translate to the old imagen/estado/disponibilidad schema here.
     const { data, error } = await supabase
       .from('productos')
       .insert([
@@ -78,10 +84,10 @@ export const adminApi = {
           descripcion: producto.descripcion,
           precio: producto.precio,
           familia_id: producto.familia_id,
-          imagen: producto.foto_url,
-          estado: producto.activo ? 'Visible' : 'Oculto',
-          disponibilidad: !producto.agotado,
-        }
+          foto_url: producto.foto_url,
+          activo: producto.activo,
+          agotado: producto.agotado,
+        },
       ])
       .select()
       .single();
@@ -91,20 +97,20 @@ export const adminApi = {
       throw error;
     }
 
-    if (data && alergenosIds.length > 0) {
-      const paInserts = alergenosIds.map(aId => ({ producto_id: data.id, alergeno_id: aId }));
-      await supabase.from('producto_alergenos').insert(paInserts);
-    }
+    if (!data) return null;
 
-    if (data && sugerenciasIds.length > 0) {
-      const psInserts = sugerenciasIds.map(sId => ({ producto_id: data.id, sugerencia_id: sId }));
-      await supabase.from('producto_sugerencias').insert(psInserts);
-    }
+    await this.replaceAlergenos(data.id, alergenosIds);
+    await this.replaceSugerencias(data.id, sugerenciasIds);
 
-    return data;
+    return data as Producto;
   },
 
-  async updateProducto(id: string, producto: Partial<Producto>, alergenosIds: string[], sugerenciasIds: string[]): Promise<void> {
+  async updateProducto(
+    id: string,
+    producto: Partial<Producto>,
+    alergenosIds: string[],
+    sugerenciasIds: string[],
+  ): Promise<void> {
     const { error } = await supabase
       .from('productos')
       .update({
@@ -112,9 +118,9 @@ export const adminApi = {
         descripcion: producto.descripcion,
         precio: producto.precio,
         familia_id: producto.familia_id,
-        imagen: producto.foto_url,
-        estado: producto.activo ? 'Visible' : 'Oculto',
-        disponibilidad: !producto.agotado,
+        foto_url: producto.foto_url,
+        activo: producto.activo,
+        agotado: producto.agotado,
       })
       .eq('id', id);
 
@@ -123,18 +129,59 @@ export const adminApi = {
       throw error;
     }
 
-    // Update Alergenos: Delete existing, then insert new
-    await supabase.from('producto_alergenos').delete().eq('producto_id', id);
-    if (alergenosIds.length > 0) {
-      const paInserts = alergenosIds.map(aId => ({ producto_id: id, alergeno_id: aId }));
-      await supabase.from('producto_alergenos').insert(paInserts);
+    await this.replaceAlergenos(id, alergenosIds);
+    await this.replaceSugerencias(id, sugerenciasIds);
+  },
+
+  async replaceAlergenos(id: string, alergenosIds: string[]): Promise<void> {
+    const { error: deleteError } = await supabase
+      .from('producto_alergeno')
+      .delete()
+      .eq('producto_id', id);
+
+    if (deleteError) {
+      console.error('Error deleting existing alergenos:', deleteError);
+      throw deleteError;
     }
 
-    // Update Sugerencias: Delete existing, then insert new
-    await supabase.from('producto_sugerencias').delete().eq('producto_id', id);
-    if (sugerenciasIds.length > 0) {
-      const psInserts = sugerenciasIds.map(sId => ({ producto_id: id, sugerencia_id: sId }));
-      await supabase.from('producto_sugerencias').insert(psInserts);
+    if (alergenosIds.length === 0) return;
+
+    const { error: insertError } = await supabase
+      .from('producto_alergeno')
+      .insert(alergenosIds.map((alergeno_id) => ({
+        producto_id: id,
+        alergeno_id,
+      })));
+
+    if (insertError) {
+      console.error('Error inserting alergenos:', insertError);
+      throw insertError;
+    }
+  },
+
+  async replaceSugerencias(id: string, sugerenciasIds: string[]): Promise<void> {
+    const { error: deleteError } = await supabase
+      .from('producto_sugerencias')
+      .delete()
+      .eq('producto_id', id);
+
+    if (deleteError) {
+      console.error('Error deleting existing sugerencias:', deleteError);
+      throw deleteError;
+    }
+
+    if (sugerenciasIds.length === 0) return;
+
+    const { error: insertError } = await supabase
+      .from('producto_sugerencias')
+      .insert(sugerenciasIds.map((sugerencia_id) => ({
+        producto_id: id,
+        sugerencia_id,
+      })));
+
+    if (insertError) {
+      console.error('Error inserting sugerencias:', insertError);
+      throw insertError;
     }
   },
 
@@ -161,6 +208,7 @@ export const adminApi = {
       console.error('Error fetching alergenos (admin):', error);
       throw error;
     }
+
     return data || [];
   },
 
@@ -175,6 +223,7 @@ export const adminApi = {
       console.error('Error fetching familias (admin):', error);
       throw error;
     }
+
     return data || [];
   },
 };
