@@ -17,15 +17,7 @@ async function run() {
   // Only show the base URL to avoid leaking possible tokens in query string (though not expected)
   const safeUrl = new URL(url).origin;
 
-  let markdown = `# Diagnóstico real de Supabase
-
-## Conexión
-- URL del proyecto: ${safeUrl}
-- Cliente Supabase inicializado: SÍ
-- Consulta real ejecutada: SÍ
-
-## Tablas
-`;
+  let markdown = `# Diagnóstico real de Supabase\n\n## Conexión\n- URL del proyecto: ${safeUrl}\n- Cliente Supabase inicializado: SÍ\n- Consulta real ejecutada: SÍ\n\n## Tablas\n`;
 
   for (const table of tables) {
     markdown += `\n### ${table}\n\n`;
