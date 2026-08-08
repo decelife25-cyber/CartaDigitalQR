@@ -13,28 +13,34 @@ export interface Configuracion {
 
 export interface Familia {
   id: string;
+  configuracion_restaurante_id: string;
   nombre: string;
   descripcion: string | null;
-  imagen_url: string | null;
   orden: number;
-  visible: boolean;
+  activo: boolean;
 }
 
 export interface Alergeno {
   id: string;
   nombre: string;
-  icono_url: string | null;
+  sigla: string | null;
+  icono: string | null;
+  descripcion: string | null;
+  orden: number;
 }
 
 export interface Producto {
   id: string;
+  configuracion_restaurante_id: string;
   familia_id: string;
   nombre: string;
   descripcion: string | null;
   precio: number;
-  imagen_url: string | null;
+  foto_url: string | null;
+  activo: boolean;
+  agotado: boolean;
   destacado: boolean;
-  disponible: boolean;
+  orden: number;
   alergenos?: Alergeno[];
 }
 
