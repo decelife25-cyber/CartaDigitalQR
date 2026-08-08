@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { api } from '../services/api';
 import type { Producto } from '../types/database';
-import { useDebounce } from '../hooks/useDebounce'; // Will create this
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function Buscar() {
   const navigate = useNavigate();
@@ -40,7 +40,6 @@ export default function Buscar() {
     <div className="p-4 pt-6 space-y-6 flex flex-col h-full">
       <h1 className="text-2xl font-bold text-gray-900 px-2">Buscar plato</h1>
 
-      {/* Search Bar */}
       <div className="relative px-2">
         <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
           <SearchIcon className="h-5 w-5 text-gray-400" />
@@ -63,7 +62,6 @@ export default function Buscar() {
         )}
       </div>
 
-      {/* Results State */}
       <div className="flex-1 overflow-y-auto">
         {isSearching && (
           <div className="flex justify-center py-10">
@@ -85,7 +83,6 @@ export default function Buscar() {
           </div>
         )}
 
-        {/* Results List */}
         {!isSearching && results.length > 0 && (
           <div className="space-y-3 px-2">
             <p className="text-sm font-medium text-gray-500 mb-2">
@@ -97,9 +94,9 @@ export default function Buscar() {
                 onClick={() => navigate(`/plato/${producto.id}`)}
                 className="flex items-center gap-4 bg-white p-3 rounded-xl shadow-sm border border-gray-100 cursor-pointer active:bg-gray-50 transition-colors"
               >
-                {producto.imagen_url ? (
+                {producto.foto_url ? (
                   <img
-                    src={producto.imagen_url}
+                    src={producto.foto_url}
                     alt={producto.nombre}
                     className="w-16 h-16 rounded-lg object-cover"
                   />
