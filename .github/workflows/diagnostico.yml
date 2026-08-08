@@ -14,14 +14,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
 
-      - name: Ejecutar script de diagnóstico
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar diagnóstico real contra Supabase
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: node scripts/diagnostico.js
 
-      - name: Upload results
+      - name: Verificar build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Verificar lint
+        run: npm run lint
+
+      - name: Mostrar resumen del diagnóstico
+        run: cat docs/DIAGNOSTICO_SUPABASE.md
+
+      - name: Subir diagnóstico como artifact
         uses: actions/upload-artifact@v4
         with:
           name: diagnostic-results
