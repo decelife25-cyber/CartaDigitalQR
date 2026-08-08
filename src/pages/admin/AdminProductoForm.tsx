@@ -17,8 +17,9 @@ export default function AdminProductoForm() {
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
   const [familiaId, setFamiliaId] = useState('');
-  const [imagenUrl, setImagenUrl] = useState('');
-  const [disponible, setDisponible] = useState(true);
+  const [fotoUrl, setFotoUrl] = useState('');
+  const [activo, setActivo] = useState(true);
+  const [agotado, setAgotado] = useState(false);
   const [destacado, setDestacado] = useState(false);
   const [selectedAlergenos, setSelectedAlergenos] = useState<Set<string>>(new Set());
 
@@ -43,8 +44,9 @@ export default function AdminProductoForm() {
           setDescripcion(producto.descripcion ?? '');
           setPrecio(String(producto.precio));
           setFamiliaId(producto.familia_id);
-          setImagenUrl(producto.imagen_url ?? '');
-          setDisponible(producto.disponible);
+          setFotoUrl(producto.foto_url ?? '');
+          setActivo(producto.activo);
+          setAgotado(producto.agotado);
           setDestacado(producto.destacado);
           setSelectedAlergenos(new Set((producto.alergenos ?? []).map((a) => a.id)));
         } else if (familiasData.length) {
@@ -74,15 +76,22 @@ export default function AdminProductoForm() {
       return;
     }
 
+    const parsedPrecio = Number(precio);
+    if (!Number.isFinite(parsedPrecio) || parsedPrecio < 0) {
+      alert('Introduce un precio válido.');
+      return;
+    }
+
     setSaving(true);
     try {
       const productoData: Partial<Producto> = {
-        nombre,
-        descripcion: descripcion || null,
-        precio: Number(precio),
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim() || null,
+        precio: parsedPrecio,
         familia_id: familiaId,
-        imagen_url: imagenUrl || null,
-        disponible,
+        foto_url: fotoUrl.trim() || null,
+        activo,
+        agotado,
         destacado,
       };
 
@@ -138,7 +147,7 @@ export default function AdminProductoForm() {
           </div>
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">URL de la imagen</label>
-            <input type="url" value={imagenUrl} onChange={(e) => setImagenUrl(e.target.value)} placeholder="https://..." className="w-full px-4 py-2 rounded-lg border border-gray-300 outline-none" />
+            <input type="url" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="https://..." className="w-full px-4 py-2 rounded-lg border border-gray-300 outline-none" />
           </div>
         </section>
 
@@ -146,10 +155,14 @@ export default function AdminProductoForm() {
           <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Estado</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer">
-              <input type="checkbox" checked={disponible} onChange={(e) => setDisponible(e.target.checked)} className="w-5 h-5" />
-              <div><p className="font-medium text-gray-900">Disponible</p><p className="text-sm text-gray-500">Se muestra en la carta pública.</p></div>
+              <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="w-5 h-5" />
+              <div><p className="font-medium text-gray-900">Visible</p><p className="text-sm text-gray-500">El producto se muestra en la carta pública.</p></div>
             </label>
             <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer">
+              <input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="w-5 h-5" />
+              <div><p className="font-medium text-gray-900">Disponible</p><p className="text-sm text-gray-500">Desmarca si está agotado temporalmente.</p></div>
+            </label>
+            <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer md:col-span-2">
               <input type="checkbox" checked={destacado} onChange={(e) => setDestacado(e.target.checked)} className="w-5 h-5" />
               <div><p className="font-medium text-gray-900">Destacado</p><p className="text-sm text-gray-500">Marca el producto como destacado.</p></div>
             </label>
@@ -164,7 +177,7 @@ export default function AdminProductoForm() {
               return (
                 <label key={alergeno.id} className={`flex flex-col items-center justify-center p-3 border rounded-lg cursor-pointer text-center gap-2 ${selected ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'}`}>
                   <input type="checkbox" className="sr-only" checked={selected} onChange={() => toggleAlergeno(alergeno.id)} />
-                  {alergeno.icono_url && <img src={alergeno.icono_url} alt={alergeno.nombre} className="w-8 h-8 object-contain" />}
+                  {alergeno.icono && <img src={alergeno.icono} alt={alergeno.nombre} className="w-8 h-8 object-contain" />}
                   <span className="text-sm font-medium">{alergeno.nombre}</span>
                 </label>
               );
