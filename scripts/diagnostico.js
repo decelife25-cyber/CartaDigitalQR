@@ -58,45 +58,28 @@ async function runDiagnostic() {
         }
 
         if (table === 'familias') {
-          const visibleTrue = data.filter(item => item.visible === true).length;
-          const visibleFalse = data.filter(item => item.visible === false).length;
+          const activoTrue = data.filter(item => item.activo === true).length;
+          const activoFalse = data.filter(item => item.activo === false).length;
 
-          markdown += `- **Total de registros accesibles:** ${data.length}\n`;
-          markdown += `- **Registros con visible=true:** ${visibleTrue}\n`;
-          markdown += `- **Registros con visible=false:** ${visibleFalse}\n\n`;
-
-          let classification;
-          if (data.length === 0) {
-            classification = 'A) tabla vacía (no se puede distinguir por esta consulta entre tabla realmente vacía y filas no visibles por RLS)';
-          } else if (visibleTrue === 0) {
-            classification = 'B) existen familias pero ninguna tiene visible=true';
-          } else {
-            classification = 'D) Supabase devuelve familias correctamente';
-          }
-          markdown += `### Clasificación: ${classification}\n\n`;
-
-          markdown += `### Datos reales accesibles (${table})\n\n`;
-          markdown += '```json\n';
-          markdown += JSON.stringify(data, null, 2);
-          markdown += '\n```\n';
+          markdown += `- **Registros con activo=true:** ${activoTrue}\n`;
+          markdown += `- **Registros con activo=false:** ${activoFalse}\n\n`;
+          markdown += `### Clasificación: ${data.length === 0 ? 'A) tabla vacía' : activoTrue === 0 ? 'B) existen familias pero ninguna está activa' : 'D) Supabase devuelve familias activas correctamente'}\n\n`;
         } else if (table === 'productos') {
-          const disponibleTrue = data.filter(item => item.disponible === true).length;
-          const disponibleFalse = data.filter(item => item.disponible === false).length;
+          const activoTrue = data.filter(item => item.activo === true).length;
+          const agotadoTrue = data.filter(item => item.agotado === true).length;
+          const disponibles = data.filter(item => item.activo === true && item.agotado === false).length;
 
-          markdown += `- **Total de registros accesibles:** ${data.length}\n`;
-          markdown += `- **Registros con disponible=true:** ${disponibleTrue}\n`;
-          markdown += `- **Registros con disponible=false:** ${disponibleFalse}\n\n`;
+          markdown += `- **Registros con activo=true:** ${activoTrue}\n`;
+          markdown += `- **Registros con agotado=true:** ${agotadoTrue}\n`;
+          markdown += `- **Registros publicables (activo=true y agotado=false):** ${disponibles}\n\n`;
+          markdown += `### Clasificación: ${data.length === 0 ? 'A) tabla vacía' : disponibles === 0 ? 'B) existen productos pero ninguno está publicable' : 'D) Supabase devuelve productos publicables correctamente'}\n\n`;
+        }
 
-          let classification;
-          if (data.length === 0) {
-            classification = 'A) tabla vacía (no se puede distinguir por esta consulta entre tabla realmente vacía y filas no visibles por RLS)';
-          } else if (disponibleTrue === 0) {
-            classification = 'B) existen productos pero ninguno tiene disponible=true';
-          } else {
-            classification = 'D) Supabase devuelve productos correctamente';
-          }
-          markdown += `### Clasificación: ${classification}\n\n`;
+        if (table === 'alergenos' && data.length > 0) {
+          markdown += `- **Campos de alérgenos detectados:** \`${Object.keys(data[0]).join(', ')}\`\n\n`;
+        }
 
+        if (table === 'familias' || table === 'productos') {
           markdown += `### Datos reales accesibles (${table})\n\n`;
           markdown += '```json\n';
           markdown += JSON.stringify(data, null, 2);
@@ -112,7 +95,7 @@ async function runDiagnostic() {
           const parsedError = JSON.parse(errorText);
           errorCode = parsedError.code || '';
           errorMsg = parsedError.message || '';
-        } catch (ignore) {
+        } catch {
           // El cuerpo no era JSON; se conserva el error textual para el diagnóstico.
         }
 
