@@ -42,9 +42,15 @@ export interface Producto {
   destacado: boolean;
   orden: number;
   alergenos?: Alergeno[];
+  sugerencias?: Producto[];
 }
 
 export interface ProductoAlergeno {
   producto_id: string;
   alergeno_id: string;
+}
+
+export interface ProductoSugerencia {
+  producto_id: string;
+  sugerencia_id: string;
 }

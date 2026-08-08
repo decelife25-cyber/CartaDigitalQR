@@ -6,6 +6,10 @@ import ListadoPlatos from './pages/ListadoPlatos';
 import FichaPlato from './pages/FichaPlato';
 import Buscar from './pages/Buscar';
 import MiSeleccion from './pages/MiSeleccion';
+import AdminLayout from './components/layout/AdminLayout';
+import Login from './pages/admin/Login';
+import AdminProductos from './pages/admin/AdminProductos';
+import AdminProductoForm from './pages/admin/AdminProductoForm';
 
 function App() {
   return (
@@ -18,6 +22,15 @@ function App() {
           <Route path="plato/:id" element={<FichaPlato />} />
           <Route path="buscar" element={<Buscar />} />
           <Route path="seleccion" element={<MiSeleccion />} />
+        </Route>
+
+        <Route path="/admin/login" element={<Login />} />
+
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminProductos />} />
+          <Route path="productos" element={<AdminProductos />} />
+          <Route path="productos/nuevo" element={<AdminProductoForm />} />
+          <Route path="productos/:id/editar" element={<AdminProductoForm />} />
         </Route>
       </Routes>
     </BrowserRouter>
