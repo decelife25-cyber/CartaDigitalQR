@@ -20,7 +20,7 @@ export const api = {
     const { data, error } = await supabase
       .from('familias')
       .select('*')
-      .eq('activa', true)
+      .eq('visible', true)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -40,7 +40,7 @@ export const api = {
         )
       `)
       .eq('familia_id', familiaId)
-      .eq('activo', true)
+      .eq('disponible', true)
       .order('nombre', { ascending: true });
 
     if (error) {
@@ -66,7 +66,7 @@ export const api = {
         )
       `)
       .eq('id', id)
-      .eq('activo', true)
+      .eq('disponible', true)
       .single();
 
     if (error) {
@@ -93,7 +93,7 @@ export const api = {
           alergenos (*)
         )
       `)
-      .eq('activo', true)
+      .eq('disponible', true)
       .ilike('nombre', `%${query}%`)
       .order('nombre', { ascending: true });
 
@@ -122,7 +122,7 @@ export const api = {
         )
       `)
       .in('id', ids)
-      .eq('activo', true);
+      .eq('disponible', true);
 
     if (error) {
       console.error('Error fetching productos by ids:', error);

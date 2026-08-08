@@ -1,10 +1,14 @@
 export interface Configuracion {
   id: string;
   nombre_restaurante: string;
-  logo_url: string | null;
-  imagen_portada_url: string | null;
-  color_primario: string;
-  color_secundario: string;
+  logotipo_url: string | null;
+  color_principal: string | null;
+  color_secundario: string | null;
+  telefono: string | null;
+  direccion: string | null;
+  moneda: string | null;
+  idioma: string | null;
+  horario: string | null;
 }
 
 export interface Familia {
@@ -13,7 +17,7 @@ export interface Familia {
   descripcion: string | null;
   imagen_url: string | null;
   orden: number;
-  activa: boolean;
+  visible: boolean;
 }
 
 export interface Alergeno {
@@ -30,7 +34,7 @@ export interface Producto {
   precio: number;
   imagen_url: string | null;
   destacado: boolean;
-  activo: boolean;
+  disponible: boolean;
   alergenos?: Alergeno[];
 }
 
