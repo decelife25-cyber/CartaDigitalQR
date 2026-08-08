@@ -39,16 +39,7 @@ export default function Familias() {
             onClick={() => navigate(`/familias/${familia.id}`)}
             className="group relative flex flex-col items-center p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95 overflow-hidden aspect-square justify-center text-center"
           >
-            {familia.imagen_url ? (
-              <img
-                src={familia.imagen_url}
-                alt={familia.nombre}
-                className="absolute inset-0 w-full h-full object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-              />
-            ) : (
-              <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-50 to-gray-100" />
-            )}
-
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-50 to-gray-100" />
             <div className="relative z-10 font-semibold text-gray-800 text-lg shadow-white drop-shadow-md">
               {familia.nombre}
             </div>
