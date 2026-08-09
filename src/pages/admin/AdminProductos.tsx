@@ -4,16 +4,26 @@ import { Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
 import type { Producto } from '../../types/database';
 
+function errorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return String(error);
+}
+
 export default function AdminProductos() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchProductos = async () => {
     setLoading(true);
+    setError(null);
     try {
       setProductos(await adminApi.getProductosAdmin());
     } catch (error) {
       console.error('Error loading productos:', error);
+      setError(errorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -28,11 +38,28 @@ export default function AdminProductos() {
       setProductos((current) => current.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Delete error', error);
-      alert('Error al eliminar el producto');
+      alert(errorMessage(error));
     }
   };
 
   if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto mt-8 rounded-xl border border-red-200 bg-red-50 p-6">
+        <h1 className="text-xl font-bold text-red-800">No se pueden cargar los productos</h1>
+        <p className="mt-2 text-sm text-red-700 break-words">{error}</p>
+        <button
+          type="button"
+          onClick={fetchProductos}
+          className="mt-4 rounded-lg px-4 py-2 font-medium text-white"
+          style={{ backgroundColor: 'var(--color-primary)' }}
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
