@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BookOpen, Phone, CalendarDays } from 'lucide-react';
 import { api } from '../services/api';
 import type { Configuracion } from '../types/database';
+
+const PORTADA_IMAGE = `${import.meta.env.BASE_URL}portada-carta-digital.jpg`;
 
 export default function Portada() {
   const navigate = useNavigate();
@@ -9,58 +12,34 @@ export default function Portada() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadConfig() {
-      try {
-        const data = await api.getConfiguracion();
-        if (data) {
-          setConfig(data);
-          // Set dynamic primary color for Tailwind
-          if (data.color_principal) {
-            document.documentElement.style.setProperty('--color-primary', data.color_principal);
-          }
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadConfig();
+    api.getConfiguracion().then((data) => {
+      if (data?.color_principal) document.documentElement.style.setProperty('--color-primary', data.color_principal);
+      setConfig(data);
+      setLoading(false);
+    });
   }, []);
 
-  if (loading) {
-    return <div className="flex h-screen items-center justify-center">Cargando...</div>;
-  }
+  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+
+  const phone = config?.telefono?.trim();
 
   return (
-    <div className="relative h-screen w-full bg-black flex flex-col justify-end overflow-hidden">
-      {/* Background Image Fallback (since no imagen_portada_url in official schema) */}
-      <div className="absolute inset-0 w-full h-full bg-gray-800" />
-
-      {/* Gradient Overlay for Text Readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-      {/* Content */}
-      <div className="relative z-10 p-8 flex flex-col items-center text-center pb-24">
-        {config?.logotipo_url && (
-          <img
-            src={config.logotipo_url}
-            alt={config.nombre_restaurante}
-            className="w-40 h-40 object-contain mb-8 rounded-2xl shadow-2xl bg-white/10 backdrop-blur-sm p-4"
-          />
-        )}
-
-        <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-md">
-          {config?.nombre_restaurante || 'Carta Digital'}
-        </h1>
-        <p className="text-gray-300 mb-10">Descubre nuestra selección</p>
-
-        <button
-          onClick={() => navigate('/familias')}
-          className="w-full max-w-xs bg-primary text-white py-4 rounded-full font-semibold text-lg shadow-lg transform transition active:scale-95 hover:opacity-90"
-          style={{ backgroundColor: config?.color_principal || '#000000' }}
-        >
-          Ver Carta
-        </button>
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-slate-900">
+      <img src={PORTADA_IMAGE} alt="Taberna Camborio" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/10 to-black/70" />
+      <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-20">
+        <div className="mx-auto flex w-full max-w-md flex-col gap-2.5">
+          <button type="button" onClick={() => navigate('/familias')} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-white/95 px-5 text-base font-extrabold text-slate-900 shadow-xl backdrop-blur active:scale-[.99]">
+            <BookOpen size={20} /> Ver carta
+          </button>
+          <button type="button" onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] px-5 text-base font-extrabold text-white shadow-xl backdrop-blur active:scale-[.99]">
+            <CalendarDays size={20} /> Reservar mesa
+          </button>
+          <button type="button" onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-white/70 bg-black/35 px-5 text-base font-extrabold text-white shadow-xl backdrop-blur active:scale-[.99]">
+            <Phone size={20} /> Llamar al restaurante
+          </button>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
