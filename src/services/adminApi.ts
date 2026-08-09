@@ -58,9 +58,6 @@ export const adminApi = {
       throw new Error('El producto necesita una familia.');
     }
 
-    // La tabla productos exige configuracion_restaurante_id. La familia ya
-    // contiene el restaurante al que pertenece, así que lo resolvemos aquí
-    // en lugar de depender de un valor que el formulario no conoce.
     const { data: familia, error: familiaError } = await supabase
       .from('familias')
       .select('configuracion_restaurante_id')
@@ -98,7 +95,6 @@ export const adminApi = {
     try {
       await this.replaceAlergenos(data.id, alergenosIds);
     } catch (error) {
-      // Evita dejar productos huérfanos si falla el guardado de sus alérgenos.
       await supabase.from('productos').delete().eq('id', data.id);
       throw error;
     }
@@ -126,6 +122,12 @@ export const adminApi = {
 
     if (error) throw new Error(`No se puede actualizar el producto: ${getErrorMessage(error)}`);
     await this.replaceAlergenos(id, alergenosIds);
+  },
+
+  async updateProductoFields(id: string, fields: Partial<Pick<Producto, 'activo' | 'agotado' | 'destacado' | 'orden'>>): Promise<void> {
+    await requireSession();
+    const { error } = await supabase.from('productos').update(fields).eq('id', id);
+    if (error) throw new Error(`No se puede actualizar el producto: ${getErrorMessage(error)}`);
   },
 
   async replaceAlergenos(id: string, alergenosIds: string[]): Promise<void> {
