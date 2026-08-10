@@ -3,7 +3,7 @@ import Portada from './pages/Portada';
 import Familias from './pages/Familias';
 import ListadoPlatos from './pages/ListadoPlatos';
 import FichaPlato from './pages/FichaPlato';
-import Buscador from './pages/Buscador';
+import Buscar from './pages/Buscar';
 import MiSeleccion from './pages/MiSeleccion';
 import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/admin/Login';
@@ -21,7 +21,7 @@ function App() {
         <Route path="/familias" element={<Familias />} />
         <Route path="/familia/:id" element={<ListadoPlatos />} />
         <Route path="/producto/:id" element={<FichaPlato />} />
-        <Route path="/buscar" element={<Buscador />} />
+        <Route path="/buscar" element={<Buscar />} />
         <Route path="/seleccion" element={<MiSeleccion />} />
 
         <Route path="/admin/login" element={<Login />} />
