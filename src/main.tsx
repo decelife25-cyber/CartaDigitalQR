@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
+const savedTheme = window.localStorage.getItem('carta-theme');
+if (savedTheme === 'night') {
+  document.documentElement.classList.add('theme-night');
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).then(
