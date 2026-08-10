@@ -261,6 +261,7 @@ export default function AdminFamilias() {
         message="Escribe el nombre de la nueva familia."
         confirmLabel="Añadir"
         cancelLabel="Cancelar"
+        mobilePosition="top"
         onCancel={() => { setCreateOpen(false); setNewName(''); }}
         onConfirm={() => void create()}
         content={(
