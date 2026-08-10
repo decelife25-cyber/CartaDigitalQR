@@ -1,0 +1,75 @@
+name: Import Erudus allergen SVGs
+
+on:
+  push:
+    paths:
+      - '.github/workflows/import-erudus-allergens.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download original Erudus SVGs
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST='public/assets/allergens/erudus'
+          mkdir -p "$DEST"
+
+          base='https://raw.githubusercontent.com/Erudus/erudus-icons/master/src/svg'
+          files=(
+            cereal.svg
+            crustaceans.svg
+            eggs.svg
+            fish.svg
+            peanuts.svg
+            soya.svg
+            milk.svg
+            nuts.svg
+            celery.svg
+            mustard.svg
+            sesame.svg
+            so2.svg
+            lupin.svg
+            molluscs.svg
+          )
+
+          for file in "${files[@]}"; do
+            curl --fail --silent --show-error --location "$base/$file" -o "$DEST/$file"
+          done
+
+          curl --fail --silent --show-error --location \
+            'https://raw.githubusercontent.com/Erudus/erudus-icons/master/LICENSE' \
+            -o "$DEST/LICENSE-ERUDUS.txt"
+
+          cat > "$DEST/SOURCE.md" <<'EOF'
+# Erudus Food Allergen Icons
+
+Original source: https://github.com/Erudus/erudus-icons
+License: MIT
+Copyright: (c) 2016 Erudus Ltd (http://erudus.com/)
+
+The SVG files in this directory are copied from the original `src/svg` directory of the Erudus repository without redrawing or modification.
+EOF
+
+      - name: Commit imported assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/assets/allergens/erudus
+          if git diff --cached --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git commit -m 'assets: import original Erudus allergen SVGs'
+          git push origin HEAD:${GITHUB_REF_NAME}
