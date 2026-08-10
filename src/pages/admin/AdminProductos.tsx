@@ -161,8 +161,8 @@ export default function AdminProductos() {
   }
 
   return (
-    <div className="w-full min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)' }}>
-      <header className="flex items-center gap-1 border-b pb-2" style={{ borderColor: 'var(--app-border)' }}>
+    <div className="-mx-8 w-[calc(100%+4rem)] min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)' }}>
+      <header className="flex items-center gap-1 border-b px-2 pb-2" style={{ borderColor: 'var(--app-border)' }}>
         <Link
           to="/admin"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
@@ -184,7 +184,7 @@ export default function AdminProductos() {
 
       {error && (
         <div
-          className="mt-2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm"
+          className="mx-2 mt-2 flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm"
           style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}
         >
           <span className="min-w-0 break-words">{error}</span>
@@ -194,7 +194,7 @@ export default function AdminProductos() {
         </div>
       )}
 
-      <div className="py-2">
+      <div className="px-2 py-2">
         <div className="relative">
           <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--app-muted)' }} />
           <input
@@ -285,23 +285,23 @@ export default function AdminProductos() {
             <article
               key={producto.id}
               data-product-id={producto.id}
-              className={`grid grid-cols-[minmax(0,1fr)_32px] items-stretch overflow-hidden rounded-2xl border transition-opacity ${dragging ? 'opacity-45' : 'opacity-100'}`}
+              className={`grid grid-cols-[minmax(0,1fr)_34px] items-stretch overflow-hidden border-y transition-opacity ${dragging ? 'opacity-45' : 'opacity-100'}`}
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
               <Link
                 to={`/admin/productos/${producto.id}/editar`}
-                className="grid min-w-0 grid-cols-[42px_minmax(0,1fr)_72px] items-center gap-2 py-1.5 pl-2.5 sm:grid-cols-[48px_minmax(0,1fr)_92px_72px]"
+                className="grid min-w-0 grid-cols-[42px_minmax(0,1fr)_76px] items-center gap-2 py-1.5 pl-2 pr-1"
                 aria-label={`Editar ${producto.nombre}`}
               >
                 {producto.foto_url ? (
                   <img
                     src={producto.foto_url}
                     alt=""
-                    className="h-10 w-10 rounded-lg object-cover sm:h-11 sm:w-11"
+                    className="h-10 w-10 rounded-lg object-cover"
                   />
                 ) : (
                   <div
-                    className="flex h-10 w-10 items-center justify-center rounded-lg sm:h-11 sm:w-11"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg"
                     style={{ background: 'rgba(148,163,184,.12)', color: 'var(--app-muted)' }}
                     aria-hidden="true"
                   >
@@ -309,15 +309,15 @@ export default function AdminProductos() {
                   </div>
                 )}
 
-                <div className="min-w-0">
-                  <div className="truncate text-[15px] font-extrabold leading-tight">{producto.nombre}</div>
+                <div className="min-w-0 self-center">
+                  <div className="break-words text-[15px] font-extrabold leading-[1.15]">{producto.nombre}</div>
                   <div className="mt-0.5 truncate text-[12px] font-medium" style={{ color: 'var(--app-muted)' }}>
                     {familiaMap.get(producto.familia_id) ?? 'Sin familia'}
                   </div>
                 </div>
 
-                <div className="min-w-0 text-right">
-                  <div className="truncate text-[14px] font-extrabold">{producto.precio.toFixed(2)} €</div>
+                <div className="min-w-0 self-center text-right">
+                  <div className="whitespace-nowrap text-[14px] font-extrabold">{producto.precio.toFixed(2)} €</div>
                   <span
                     className="mt-0.5 inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold"
                     style={producto.activo
@@ -325,17 +325,6 @@ export default function AdminProductos() {
                       : { background: 'rgba(148,163,184,.14)', color: 'var(--app-muted)' }}
                   >
                     {producto.activo ? 'Activo' : 'Oculto'}
-                  </span>
-                </div>
-
-                <div className="hidden text-right sm:block">
-                  <span
-                    className="inline-flex rounded-full px-2 py-1 text-[10px] font-bold"
-                    style={producto.agotado
-                      ? { background: 'rgba(249,115,22,.12)', color: '#f97316' }
-                      : { background: 'rgba(59,130,246,.12)', color: '#3b82f6' }}
-                  >
-                    {producto.agotado ? 'Agotado' : 'Disponible'}
                   </span>
                 </div>
               </Link>
@@ -347,7 +336,7 @@ export default function AdminProductos() {
                 onPointerMove={moveDrag}
                 onPointerUp={(event) => void finishDrag(event)}
                 onPointerCancel={(event) => void finishDrag(event)}
-                className="flex min-h-[58px] w-8 touch-none items-center justify-center disabled:cursor-default disabled:opacity-70"
+                className="flex min-h-[58px] w-[34px] touch-none items-center justify-center disabled:cursor-default disabled:opacity-70"
                 style={{ color: 'var(--app-muted)' }}
                 aria-label={`Arrastrar ${producto.nombre} para cambiar su orden`}
                 title={canReorder ? 'Arrastra para cambiar el orden' : 'Restablece los filtros para cambiar el orden'}
@@ -360,7 +349,7 @@ export default function AdminProductos() {
 
         {!filteredProductos.length && (
           <div
-            className="rounded-2xl border border-dashed px-5 py-10 text-center"
+            className="mx-2 rounded-2xl border border-dashed px-5 py-10 text-center"
             style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
           >
             <Search className="mx-auto" style={{ color: 'var(--app-muted)' }} size={30} />
