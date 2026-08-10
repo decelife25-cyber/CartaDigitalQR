@@ -8,6 +8,7 @@ import Buscar from './pages/Buscar';
 import MiSeleccion from './pages/MiSeleccion';
 import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/admin/Login';
+import HomePrivado from './pages/admin/HomePrivado';
 import AdminProductos from './pages/admin/AdminProductos';
 import AdminProductoForm from './pages/admin/AdminProductoForm';
 
@@ -27,7 +28,7 @@ function App() {
         <Route path="/admin/login" element={<Login />} />
 
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminProductos />} />
+          <Route index element={<HomePrivado />} />
           <Route path="productos" element={<AdminProductos />} />
           <Route path="productos/nuevo" element={<AdminProductoForm />} />
           <Route path="productos/:id/editar" element={<AdminProductoForm />} />
