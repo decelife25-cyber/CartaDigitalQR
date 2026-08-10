@@ -139,7 +139,16 @@ export default function AdminFamilias() {
   }
 
   return (
-    <div className="-mx-8 w-[calc(100%+4rem)] min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)' }}>
+    <div
+      className="min-h-[calc(100dvh-4rem)]"
+      style={{
+        color: 'var(--app-text)',
+        width: '100vw',
+        maxWidth: '100vw',
+        marginLeft: 'calc(50% - 50vw)',
+        overflowX: 'clip',
+      }}
+    >
       <header className="flex items-center gap-1 border-b px-2 pb-2" style={{ borderColor: 'var(--app-border)' }}>
         <Link
           to="/admin"
