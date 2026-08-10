@@ -8,11 +8,8 @@ export default function MainLayout() {
 
   return (
     <div
-      className={
-        isPortada
-          ? 'min-h-[100dvh] w-full relative overflow-hidden bg-black'
-          : 'min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative shadow-xl overflow-hidden'
-      }
+      className="relative mx-auto flex min-h-screen w-full max-w-md flex-col overflow-hidden shadow-xl"
+      style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}
     >
       {!isPortada && <TopNavigation />}
 
