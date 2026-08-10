@@ -15,20 +15,21 @@ function normalize(value: string): string {
 
 function erudusIconPath(nombre: string): string | null {
   const key = normalize(nombre);
-  if (key.includes('gluten') || key.includes('cereal')) return '/icons/alergenos/erudus/cereal.svg';
-  if (key.includes('crustace')) return '/icons/alergenos/erudus/crustaceans.svg';
-  if (key.includes('huevo')) return '/icons/alergenos/erudus/eggs.svg';
-  if (key.includes('pescado')) return '/icons/alergenos/erudus/fish.svg';
-  if (key.includes('cacahuet')) return '/icons/alergenos/erudus/peanuts.svg';
-  if (key.includes('soja')) return '/icons/alergenos/erudus/soya.svg';
-  if (key.includes('leche') || key.includes('lact')) return '/icons/alergenos/erudus/milk.svg';
-  if (key.includes('fruto') && key.includes('cascara')) return '/icons/alergenos/erudus/nuts.svg';
-  if (key.includes('apio')) return '/icons/alergenos/erudus/celery.svg';
-  if (key.includes('mostaza')) return '/icons/alergenos/erudus/mustard.svg';
-  if (key.includes('sesamo')) return '/icons/alergenos/erudus/sesame.svg';
-  if (key.includes('sulf') || key.includes('dioxido') || key.includes('azufre')) return '/icons/alergenos/erudus/so2.svg';
-  if (key.includes('altramuc')) return '/icons/alergenos/erudus/lupin.svg';
-  if (key.includes('molusc')) return '/icons/alergenos/erudus/molluscs.svg';
+  const base = 'https://raw.githubusercontent.com/Erudus/erudus-icons/master/src/svg';
+  if (key.includes('gluten') || key.includes('cereal')) return `${base}/cereal.svg`;
+  if (key.includes('crustace')) return `${base}/crustaceans.svg`;
+  if (key.includes('huevo')) return `${base}/eggs.svg`;
+  if (key.includes('pescado')) return `${base}/fish.svg`;
+  if (key.includes('cacahuet')) return `${base}/peanuts.svg`;
+  if (key.includes('soja')) return `${base}/soya.svg`;
+  if (key.includes('leche') || key.includes('lact')) return `${base}/milk.svg`;
+  if (key.includes('fruto') && key.includes('cascara')) return `${base}/nuts.svg`;
+  if (key.includes('apio')) return `${base}/celery.svg`;
+  if (key.includes('mostaza')) return `${base}/mustard.svg`;
+  if (key.includes('sesamo')) return `${base}/sesame.svg`;
+  if (key.includes('sulf') || key.includes('dioxido') || key.includes('azufre')) return `${base}/so2.svg`;
+  if (key.includes('altramuc')) return `${base}/lupin.svg`;
+  if (key.includes('molusc')) return `${base}/molluscs.svg`;
   return null;
 }
 
