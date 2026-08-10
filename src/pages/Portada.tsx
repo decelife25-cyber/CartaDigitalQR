@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Phone, CalendarDays } from 'lucide-react';
+import { X, BookOpen, Phone, CalendarDays } from 'lucide-react';
 import { api } from '../services/api';
 import type { Configuracion } from '../types/database';
 
@@ -48,7 +48,7 @@ export default function Portada() {
         aria-label="Salir de la portada"
         className="absolute left-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white/90 shadow-lg backdrop-blur-md active:scale-95"
       >
-        <ArrowLeft size={20} strokeWidth={2.5} />
+        <X size={20} strokeWidth={2.5} />
       </button>
 
       <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-10">
