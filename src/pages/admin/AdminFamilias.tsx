@@ -50,7 +50,9 @@ export default function AdminFamilias() {
     setSaving(true);
     try {
       const familia = await adminApi.createFamilia({ nombre, orden: familias.length, activo: true });
-      setFamilias((items) => [...items, familia].sort((a, b) => a.orden - b.orden));
+      if (familia) {
+        setFamilias((items) => [...items, familia].sort((a, b) => a.orden - b.orden));
+      }
       setNewName('');
     } catch (e) { alert(errorMessage(e)); }
     finally { setSaving(false); }
