@@ -11,6 +11,7 @@ import HomePrivado from './pages/admin/HomePrivado';
 import AdminFamilias from './pages/admin/AdminFamilias';
 import AdminProductos from './pages/admin/AdminProductos';
 import AdminProductoForm from './pages/admin/AdminProductoForm';
+import AdminConfiguracion from './pages/admin/AdminConfiguracion';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="productos" element={<AdminProductos />} />
           <Route path="productos/nuevo" element={<AdminProductoForm />} />
           <Route path="productos/:id/editar" element={<AdminProductoForm />} />
+          <Route path="configuracion" element={<AdminConfiguracion />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
