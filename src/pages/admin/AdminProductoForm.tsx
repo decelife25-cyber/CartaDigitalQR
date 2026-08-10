@@ -15,7 +15,7 @@ function normalize(value: string): string {
 
 function erudusIconPath(nombre: string): string | null {
   const key = normalize(nombre);
-  const base = 'https://raw.githubusercontent.com/Erudus/erudus-icons/master/src/svg';
+  const base = '/icons/alergenos/erudus';
   if (key.includes('gluten') || key.includes('cereal')) return `${base}/cereal.svg`;
   if (key.includes('crustace')) return `${base}/crustaceans.svg`;
   if (key.includes('huevo')) return `${base}/eggs.svg`;
