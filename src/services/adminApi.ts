@@ -175,4 +175,32 @@ export const adminApi = {
     if (error) throw new Error(`No se pueden cargar las familias: ${getErrorMessage(error)}`);
     return data ?? [];
   },
+
+  async updateFamilia(id: string, fields: Partial<Familia>): Promise<void> {
+    await requireSession();
+    const { error } = await supabase.from('familias').update(fields).eq('id', id);
+    if (error) throw new Error(`No se puede actualizar la familia: ${getErrorMessage(error)}`);
+  },
+
+  async createFamilia(fields: Partial<Familia>): Promise<Familia | null> {
+    await requireSession();
+    const { data, error } = await supabase
+      .from('familias')
+      .insert([{
+         nombre: fields.nombre,
+         activo: fields.activo ?? true,
+         orden: fields.orden ?? 0,
+         configuracion_restaurante_id: fields.configuracion_restaurante_id ?? null
+      }])
+      .select()
+      .single();
+    if (error) throw new Error(`No se puede crear la familia: ${getErrorMessage(error)}`);
+    return data;
+  },
+
+  async deleteFamilia(id: string): Promise<void> {
+    await requireSession();
+    const { error } = await supabase.from('familias').delete().eq('id', id);
+    if (error) throw new Error(`No se puede eliminar la familia: ${getErrorMessage(error)}`);
+  },
 };
