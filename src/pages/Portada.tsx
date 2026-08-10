@@ -48,9 +48,9 @@ export default function Portada() {
           <button
             type="button"
             onClick={() => navigate('/familias')}
-            className="col-span-2 flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl bg-white/92 px-3 text-base font-extrabold text-slate-900 shadow-lg backdrop-blur active:scale-[.99]"
+            className="col-span-2 flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl border border-white/30 bg-black/55 px-3 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
           >
-            <BookOpen size={20} className="shrink-0" />
+            <BookOpen size={17} className="shrink-0" />
             <span>Ver carta</span>
           </button>
 
