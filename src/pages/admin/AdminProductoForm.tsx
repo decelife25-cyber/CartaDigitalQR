@@ -13,17 +13,34 @@ function normalize(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
+function erudusIconPath(nombre: string): string | null {
+  const key = normalize(nombre);
+  if (key.includes('gluten') || key.includes('cereal')) return '/icons/alergenos/erudus/cereal.svg';
+  if (key.includes('crustace')) return '/icons/alergenos/erudus/crustaceans.svg';
+  if (key.includes('huevo')) return '/icons/alergenos/erudus/eggs.svg';
+  if (key.includes('pescado')) return '/icons/alergenos/erudus/fish.svg';
+  if (key.includes('cacahuet')) return '/icons/alergenos/erudus/peanuts.svg';
+  if (key.includes('soja')) return '/icons/alergenos/erudus/soya.svg';
+  if (key.includes('leche') || key.includes('lact')) return '/icons/alergenos/erudus/milk.svg';
+  if (key.includes('fruto') && key.includes('cascara')) return '/icons/alergenos/erudus/nuts.svg';
+  if (key.includes('apio')) return '/icons/alergenos/erudus/celery.svg';
+  if (key.includes('mostaza')) return '/icons/alergenos/erudus/mustard.svg';
+  if (key.includes('sesamo')) return '/icons/alergenos/erudus/sesame.svg';
+  if (key.includes('sulf') || key.includes('dioxido') || key.includes('azufre')) return '/icons/alergenos/erudus/so2.svg';
+  if (key.includes('altramuc')) return '/icons/alergenos/erudus/lupin.svg';
+  if (key.includes('molusc')) return '/icons/alergenos/erudus/molluscs.svg';
+  return null;
+}
+
 function AlergenoIcon({ alergeno }: { alergeno: Alergeno }) {
   const [failed, setFailed] = useState(false);
-  if (alergeno.icono && !failed) {
-    return <img src={alergeno.icono} alt="" className="h-7 w-7 shrink-0 object-contain" onError={() => setFailed(true)} />;
+  const iconPath = erudusIconPath(alergeno.nombre);
+
+  if (iconPath && !failed) {
+    return <img src={iconPath} alt="" className="h-7 w-7 shrink-0 object-contain" onError={() => setFailed(true)} />;
   }
-  const symbol: Record<string, string> = {
-    gluten: '🌾', crustaceos: '🦐', huevos: '🥚', pescado: '🐟', cacahuetes: '🥜', soja: '🫘', lacteos: '🥛',
-    'frutos de cascara': '🌰', apio: '🌿', mostaza: '🟡', sesamo: '🌱', sulfitos: '🧪', altramuces: '🌼', moluscos: '🦪',
-  };
-  const key = Object.keys(symbol).find((name) => normalize(alergeno.nombre).includes(name));
-  return <span className="text-[23px] leading-none" aria-hidden="true">{key ? symbol[key] : '◉'}</span>;
+
+  return <span className="h-7 w-7 shrink-0 rounded-full border border-white/20" aria-hidden="true" />;
 }
 
 export default function AdminProductoForm() {
