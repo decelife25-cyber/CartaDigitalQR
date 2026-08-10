@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ChevronUp, Edit, GripVertical, Plus, Save, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Edit, GripVertical, Plus, Save, Trash2, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
 import type { Familia } from '../../types/database';
+import AppModal from '../../components/ui/AppModal';
 
 function errorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) return String((error as { message: unknown }).message);
@@ -18,6 +19,8 @@ export default function AdminFamilias() {
   const [draftName, setDraftName] = useState('');
   const [newName, setNewName] = useState('');
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Familia | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -54,7 +57,7 @@ export default function AdminFamilias() {
       setFamilias((items) => items.map((item) => item.id === familia.id ? { ...item, nombre } : item));
       cancelEdit();
     } catch (e) {
-      alert(errorMessage(e));
+      setModalError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -69,20 +72,20 @@ export default function AdminFamilias() {
       if (familia) setFamilias((items) => [...items, familia].sort((a, b) => a.orden - b.orden));
       setNewName('');
     } catch (e) {
-      alert(errorMessage(e));
+      setModalError(errorMessage(e));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (familia: Familia) => {
-    if (!window.confirm(`¿Eliminar «${familia.nombre}»?`)) return;
+    setDeleteTarget(null);
     setSaving(true);
     try {
       await adminApi.deleteFamilia(familia.id);
       setFamilias((items) => items.filter((item) => item.id !== familia.id));
     } catch (e) {
-      alert(errorMessage(e));
+      setModalError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -95,7 +98,7 @@ export default function AdminFamilias() {
       await adminApi.updateFamilia(familia.id, { activo });
       setFamilias((items) => items.map((item) => item.id === familia.id ? { ...item, activo } : item));
     } catch (e) {
-      alert(errorMessage(e));
+      setModalError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -117,21 +120,12 @@ export default function AdminFamilias() {
     try {
       await Promise.all(normalized.map((item) => adminApi.updateFamilia(item.id, { orden: item.orden })));
     } catch (e) {
-      alert(errorMessage(e));
+      setModalError(errorMessage(e));
       await load();
     } finally {
       setSaving(false);
       setDraggedId(null);
     }
-  };
-
-  const moveBy = async (familiaId: string, delta: -1 | 1) => {
-    if (saving) return;
-    const current = [...ordered];
-    const index = current.findIndex((item) => item.id === familiaId);
-    const targetIndex = index + delta;
-    if (index < 0 || targetIndex < 0 || targetIndex >= current.length) return;
-    await reorder(familiaId, current[targetIndex].id);
   };
 
   if (loading) {
@@ -154,9 +148,6 @@ export default function AdminFamilias() {
         </Link>
         <div className="min-w-0">
           <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Familias</h1>
-          <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--app-muted)' }}>
-            Organiza las categorías de la carta
-          </p>
         </div>
       </header>
 
@@ -190,18 +181,13 @@ export default function AdminFamilias() {
         </div>
       </section>
 
-      <div className="flex items-center justify-between px-1 py-3">
-        <div>
-          <p className="text-base font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
-          <p className="text-xs" style={{ color: 'var(--app-muted)' }}>Usa las flechas para cambiar el orden.</p>
-        </div>
-        {saving && <span className="text-xs font-semibold" style={{ color: 'var(--app-muted)' }}>Guardando…</span>}
+      <div className="px-1 py-3">
+        <p className="text-base font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
       </div>
 
       <section className="space-y-2">
         {ordered.map((familia) => {
           const editing = editingId === familia.id;
-          const index = ordered.findIndex((item) => item.id === familia.id);
           return (
             <article
               key={familia.id}
@@ -210,10 +196,10 @@ export default function AdminFamilias() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => { if (draggedId) void reorder(draggedId, familia.id); }}
               onDragEnd={() => setDraggedId(null)}
-              className={`rounded-2xl border px-2.5 py-2.5 transition-opacity ${draggedId === familia.id ? 'opacity-50' : 'opacity-100'}`}
+              className={`rounded-2xl border px-2 py-2 transition-opacity ${draggedId === familia.id ? 'opacity-50' : 'opacity-100'}`}
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
-              <div className="flex min-w-0 items-center gap-1.5">
+              <div className="flex min-w-0 items-center gap-1">
                 <button
                   type="button"
                   className="flex h-10 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing"
@@ -236,7 +222,7 @@ export default function AdminFamilias() {
                   />
                 ) : (
                   <div className="min-w-0 flex-1 pr-1">
-                    <div className="break-words text-base font-extrabold leading-tight sm:text-lg">{familia.nombre}</div>
+                    <div className="break-words text-[15px] font-extrabold leading-tight sm:text-base">{familia.nombre}</div>
                   </div>
                 )}
 
@@ -255,25 +241,17 @@ export default function AdminFamilias() {
                       type="button"
                       disabled={saving}
                       onClick={() => void toggleActive(familia)}
-                      className={`min-w-[62px] rounded-xl px-2 py-2 text-xs font-extrabold transition-opacity disabled:opacity-40 ${familia.activo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-black/5 text-zinc-500 dark:bg-white/5 dark:text-zinc-400'}`}
+                      className={`min-w-[58px] rounded-xl px-1.5 py-2 text-[11px] font-extrabold transition-opacity disabled:opacity-40 ${familia.activo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-black/5 text-zinc-500 dark:bg-white/5 dark:text-zinc-400'}`}
                       aria-label={familia.activo ? `Ocultar ${familia.nombre}` : `Mostrar ${familia.nombre}`}
                     >
                       {familia.activo ? 'Visible' : 'Oculta'}
                     </button>
                     <button type="button" onClick={() => startEdit(familia)} className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ color: 'var(--app-muted)' }} aria-label={`Editar ${familia.nombre}`}>
-                      <Edit size={19} />
+                      <Edit size={18} />
                     </button>
-                    <button type="button" disabled={saving} onClick={() => void remove(familia)} className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:text-red-500 disabled:opacity-40" aria-label={`Eliminar ${familia.nombre}`}>
-                      <Trash2 size={19} />
+                    <button type="button" disabled={saving} onClick={() => setDeleteTarget(familia)} className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:text-red-500 disabled:opacity-40" aria-label={`Eliminar ${familia.nombre}`}>
+                      <Trash2 size={18} />
                     </button>
-                    <div className="ml-0.5 flex shrink-0 flex-col">
-                      <button type="button" disabled={saving || index === 0} onClick={() => void moveBy(familia.id, -1)} className="flex h-5 w-6 items-center justify-center rounded text-zinc-400 disabled:opacity-20" aria-label={`Subir ${familia.nombre}`}>
-                        <ChevronUp size={16} />
-                      </button>
-                      <button type="button" disabled={saving || index === ordered.length - 1} onClick={() => void moveBy(familia.id, 1)} className="flex h-5 w-6 items-center justify-center rounded text-zinc-400 disabled:opacity-20" aria-label={`Bajar ${familia.nombre}`}>
-                        <ChevronDown size={16} />
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
@@ -288,6 +266,27 @@ export default function AdminFamilias() {
           </div>
         )}
       </section>
+
+      <AppModal
+        open={Boolean(deleteTarget)}
+        title="¿Eliminar familia?"
+        message={deleteTarget ? `Se eliminará «${deleteTarget.nombre}». Esta acción no se puede deshacer.` : ''}
+        confirmLabel="Eliminar"
+        cancelLabel="Cancelar"
+        danger
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => { if (deleteTarget) void remove(deleteTarget); }}
+      />
+
+      <AppModal
+        open={Boolean(modalError)}
+        title="No se ha podido completar"
+        message={modalError ?? ''}
+        confirmLabel="Aceptar"
+        cancelLabel="Cerrar"
+        onCancel={() => setModalError(null)}
+        onConfirm={() => setModalError(null)}
+      />
     </div>
   );
 }
