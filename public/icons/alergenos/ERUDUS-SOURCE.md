@@ -18,9 +18,9 @@ The original repository's LICENSE file is reproduced alongside this document as 
 
 ## Application use
 
-CartaDigitalQR uses the official Erudus SVG artwork for the 14 EU food allergens in the product editor. The application controls presentation through the UI (size and surrounding styling) rather than redrawing the artwork.
+CartaDigitalQR uses the original Erudus SVG artwork for the 14 EU food allergens in the product editor. The original SVG files are stored locally in `public/icons/alergenos/erudus/` so the application does not depend on an external image host at runtime.
 
-The official SVGs are currently referenced directly from the original Erudus GitHub source in the product editor because the connected GitHub write interface available in this session cannot transfer the upstream SVG blobs directly between repositories. No locally redrawn substitutes are being presented as originals.
+The application controls presentation through the UI (size and surrounding styling) rather than redrawing the artwork.
 
 ## 14 icons
 
