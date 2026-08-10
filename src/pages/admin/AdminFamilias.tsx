@@ -139,8 +139,8 @@ export default function AdminFamilias() {
   }
 
   return (
-    <div className="w-full min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)' }}>
-      <header className="flex items-center gap-1 border-b pb-2" style={{ borderColor: 'var(--app-border)' }}>
+    <div className="-mx-8 w-[calc(100%+4rem)] min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)' }}>
+      <header className="flex items-center gap-1 border-b px-2 pb-2" style={{ borderColor: 'var(--app-border)' }}>
         <Link
           to="/admin"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
@@ -154,13 +154,13 @@ export default function AdminFamilias() {
       </header>
 
       {error && (
-        <div className="mt-2 rounded-xl border p-2 text-sm" style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}>
+        <div className="mx-2 mt-2 rounded-xl border p-2 text-sm" style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}>
           {error}
           <button type="button" onClick={() => void load()} className="ml-2 font-bold text-orange-600">Reintentar</button>
         </div>
       )}
 
-      <div className="flex items-center justify-between px-1 py-2">
+      <div className="flex items-center justify-between px-2 py-2">
         <p className="text-[15px] font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
         <button
           type="button"
@@ -184,7 +184,7 @@ export default function AdminFamilias() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => { if (draggedId) void reorder(draggedId, familia.id); }}
               onDragEnd={() => setDraggedId(null)}
-              className={`rounded-2xl border px-1.5 py-1 transition-opacity ${draggedId === familia.id ? 'opacity-50' : 'opacity-100'}`}
+              className={`border-y px-2 py-1.5 transition-opacity ${draggedId === familia.id ? 'opacity-50' : 'opacity-100'}`}
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
               <div className="flex min-w-0 items-center gap-0.5">
@@ -248,7 +248,7 @@ export default function AdminFamilias() {
         })}
 
         {!ordered.length && (
-          <div className="rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>
+          <div className="mx-2 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>
             <p className="text-sm font-bold">No hay familias creadas.</p>
             <p className="mt-1 text-xs">Pulsa Añadir para crear la primera.</p>
           </div>
