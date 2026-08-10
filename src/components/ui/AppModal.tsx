@@ -9,6 +9,7 @@ type AppModalProps = {
   cancelLabel?: string;
   danger?: boolean;
   content?: ReactNode;
+  mobilePosition?: 'bottom' | 'top';
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -21,6 +22,7 @@ export default function AppModal({
   cancelLabel = 'Cancelar',
   danger = false,
   content,
+  mobilePosition = 'bottom',
   onConfirm,
   onCancel,
 }: AppModalProps) {
@@ -39,7 +41,7 @@ export default function AppModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+      className={`fixed inset-0 z-[100] flex justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center ${mobilePosition === 'top' ? 'items-start pt-8' : 'items-end'}`}
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onCancel();
@@ -50,7 +52,7 @@ export default function AppModal({
         aria-modal="true"
         aria-labelledby="app-modal-title"
         aria-describedby="app-modal-message"
-        className="w-full max-w-sm rounded-3xl border p-5 shadow-2xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto rounded-3xl border p-5 shadow-2xl"
         style={{
           background: 'var(--app-surface)',
           borderColor: 'var(--app-border)',
