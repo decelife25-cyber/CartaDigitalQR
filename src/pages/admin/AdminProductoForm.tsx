@@ -16,14 +16,14 @@ function normalize(value: string): string {
 function AlergenoIcon({ alergeno }: { alergeno: Alergeno }) {
   const [failed, setFailed] = useState(false);
   if (alergeno.icono && !failed) {
-    return <img src={alergeno.icono} alt="" className="h-9 w-9 object-contain" onError={() => setFailed(true)} />;
+    return <img src={alergeno.icono} alt="" className="h-7 w-7 shrink-0 object-contain" onError={() => setFailed(true)} />;
   }
   const symbol: Record<string, string> = {
     gluten: '🌾', crustaceos: '🦐', huevos: '🥚', pescado: '🐟', cacahuetes: '🥜', soja: '🫘', lacteos: '🥛',
     'frutos de cascara': '🌰', apio: '🌿', mostaza: '🟡', sesamo: '🌱', sulfitos: '🧪', altramuces: '🌼', moluscos: '🦪',
   };
   const key = Object.keys(symbol).find((name) => normalize(alergeno.nombre).includes(name));
-  return <span className="text-[28px] leading-none" aria-hidden="true">{key ? symbol[key] : '◉'}</span>;
+  return <span className="text-[23px] leading-none" aria-hidden="true">{key ? symbol[key] : '◉'}</span>;
 }
 
 export default function AdminProductoForm() {
@@ -120,63 +120,71 @@ export default function AdminProductoForm() {
     }
   };
 
-  if (loading) return <div className="flex min-h-[50vh] items-center justify-center"><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-[var(--color-primary)]" /></div>;
+  if (loading) {
+    return <div className="flex min-h-[50vh] items-center justify-center bg-[#111111]"><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-400" /></div>;
+  }
 
   return (
-    <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-3xl px-2 pb-2 sm:px-3">
-      <header className="sticky top-0 z-20 flex h-12 items-center gap-2 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
-        <button type="button" onClick={() => navigate('/admin/productos')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-slate-700 shadow-sm" aria-label="Volver"><ArrowLeft size={20} /></button>
-        <h1 className="truncate text-xl font-extrabold text-slate-900">{isEditing ? 'Editar producto' : 'Nuevo producto'}</h1>
-        <span className="ml-auto shrink-0 text-xs font-bold text-slate-400">{selectedAlergenos.size} alérgenos</span>
+    <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-3xl bg-[#111111] px-2 pb-2 text-white sm:px-3">
+      <header className="sticky top-0 z-20 flex h-12 items-center gap-2 border-b border-white/10 bg-[#111111]/95 backdrop-blur">
+        <button type="button" onClick={() => navigate('/admin/productos')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 hover:bg-white/5" aria-label="Volver"><ArrowLeft size={19} /></button>
+        <h1 className="truncate text-lg font-extrabold">{isEditing ? 'Editar artículo' : 'Nuevo artículo'}</h1>
+        <div className="ml-auto flex items-center gap-3">
+          {isEditing && <span className="text-xs font-semibold text-red-400">Eliminar</span>}
+          <button form="producto-form" type="submit" disabled={saving} className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-extrabold text-orange-400 hover:bg-orange-400/10 disabled:opacity-50"><Save size={15} />{saving ? 'Guardando…' : 'Guardar'}</button>
+        </div>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-2 pt-2 pb-16">
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="grid grid-cols-[minmax(0,1fr)_84px] gap-2">
+      <form id="producto-form" onSubmit={handleSubmit} className="space-y-2 pb-14 pt-2">
+        <section className="rounded-xl border border-white/10 bg-[#171717] p-2.5 shadow-sm">
+          <div className="grid grid-cols-[38%_minmax(0,1fr)] gap-2 max-[430px]:grid-cols-[35%_minmax(0,1fr)]">
             <div className="min-w-0">
-              <label className="block"><span className="mb-1 block text-sm font-bold text-slate-600">Nombre *</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-[15px] font-semibold outline-none focus:border-[var(--color-primary)]" /></label>
-              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_90px] gap-2">
-                <label className="block"><span className="mb-1 block text-sm font-bold text-slate-600">Familia *</span><select required value={familiaId} onChange={(e) => setFamiliaId(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 text-sm outline-none"><option value="">Selecciona</option>{familias.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}</select></label>
-                <label className="block"><span className="mb-1 block text-sm font-bold text-slate-600">Precio</span><input inputMode="decimal" required value={precio} onChange={(e) => setPrecio(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 text-sm outline-none" /></label>
+              <div className="relative overflow-hidden rounded-lg border border-white/10 bg-[#202020]">
+                <div className="aspect-square w-full">
+                  {fotoUrl ? <img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="flex h-full items-center justify-center text-white/30"><ImageIcon size={34} /></div>}
+                </div>
               </div>
+              <label className="mt-1.5 block"><span className="sr-only">URL de imagen</span><input type="url" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="URL imagen" className="h-7 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-[10px] text-white outline-none placeholder:text-white/30 focus:border-orange-400/60" /></label>
             </div>
-            <div className="flex h-[84px] items-center justify-center overflow-hidden rounded-xl bg-slate-100 text-slate-400">{fotoUrl ? <img src={fotoUrl} alt="Vista previa" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <ImageIcon size={28} />}</div>
+
+            <div className="min-w-0 space-y-1.5">
+              <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Nombre del artículo *</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={100} className="h-9 w-full rounded-md border border-white/10 bg-[#202020] px-2.5 text-sm font-semibold text-white outline-none focus:border-orange-400/70" /></label>
+              <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Descripción</span><textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} maxLength={250} className="w-full resize-none rounded-md border border-white/10 bg-[#202020] px-2.5 py-1.5 text-xs leading-4 text-white outline-none focus:border-orange-400/70" /></label>
+            </div>
           </div>
 
-          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_72px] gap-2">
-            <label className="block"><span className="mb-1 block text-sm font-bold text-slate-600">Descripción</span><textarea rows={2} value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-4 outline-none" /></label>
-            <label className="block"><span className="mb-1 block text-sm font-bold text-slate-600">Orden</span><input type="number" min="0" step="1" value={orden} onChange={(e) => setOrden(e.target.value)} className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-2 text-sm outline-none" /></label>
+          <div className="mt-2 grid grid-cols-[1.35fr_.75fr_.55fr] gap-2 max-[430px]:grid-cols-[1.2fr_.7fr_.55fr]">
+            <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Categoría (familia) *</span><select required value={familiaId} onChange={(e) => setFamiliaId(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70"><option value="">Selecciona</option>{familias.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}</select></label>
+            <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Precio *</span><div className="relative"><input inputMode="decimal" required value={precio} onChange={(e) => setPrecio(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70" /><span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/40">€</span></div></label>
+            <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Orden</span><input type="number" min="0" step="1" value={orden} onChange={(e) => setOrden(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70" /></label>
           </div>
 
-          <label className="mt-2 block"><span className="mb-1 block text-sm font-bold text-slate-600">URL imagen</span><input type="url" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="https://..." className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs outline-none" /></label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="text-[10px] font-semibold uppercase text-white/55">Visible</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${activo ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" /></label>
+            <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="text-[10px] font-semibold uppercase text-white/55">Disponible</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${!agotado ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="sr-only" /></label>
+            <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-white/55"><Star size={12} className={destacado ? 'text-orange-400' : ''} />Destacado</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${destacado ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={destacado} onChange={(e) => setDestacado(e.target.checked)} className="sr-only" /></label>
+          </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="mb-2 flex items-center justify-between"><h2 className="text-lg font-extrabold text-slate-900">Estado</h2><span className="text-xs text-slate-400">Toca para activar</span></div>
-          <div className="grid grid-cols-3 gap-2">
-            <label className={`flex h-[68px] cursor-pointer flex-col items-center justify-center rounded-xl border ${activo ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-white'}`}><input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" /><Eye size={21} /><span className="mt-1 text-sm font-bold">Visible</span></label>
-            <label className={`flex h-[68px] cursor-pointer flex-col items-center justify-center rounded-xl border ${!agotado ? 'border-blue-300 bg-blue-50' : 'border-slate-200 bg-white'}`}><input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="sr-only" /><Check size={21} /><span className="mt-1 text-sm font-bold">Disponible</span></label>
-            <label className={`flex h-[68px] cursor-pointer flex-col items-center justify-center rounded-xl border ${destacado ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white'}`}><input type="checkbox" checked={destacado} onChange={(e) => setDestacado(e.target.checked)} className="sr-only" /><Star size={22} className={destacado ? 'fill-current' : ''} /><span className="mt-1 text-sm font-bold">Destacado</span></label>
-          </div>
-
-          <div className="mt-3 flex items-center justify-between"><h2 className="text-lg font-extrabold text-slate-900">Alérgenos</h2><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">{selectedAlergenos.size}</span></div>
-          <div className="mt-2 grid grid-cols-7 gap-1.5 max-[430px]:grid-cols-4">
+        <section className="rounded-xl border border-white/10 bg-[#171717] p-2.5 shadow-sm">
+          <div className="mb-1.5 flex items-end justify-between"><div><h2 className="text-sm font-extrabold">Alérgenos</h2><p className="text-[9px] text-white/40">Selecciona los alérgenos que contiene este artículo.</p></div><span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-orange-400">{selectedAlergenos.size}</span></div>
+          <div className="grid grid-cols-2 gap-1">
             {alergenos.map((a) => {
               const selected = selectedAlergenos.has(a.id);
-              return <label key={a.id} title={a.nombre} className={`relative flex min-h-[64px] cursor-pointer flex-col items-center justify-center rounded-xl border px-0.5 text-center ${selected ? 'border-[var(--color-primary)] bg-slate-50' : 'border-slate-200 bg-white'}`}>
+              return <label key={a.id} title={a.nombre} className={`flex h-8 cursor-pointer items-center gap-2 rounded-md border px-1.5 transition ${selected ? 'border-orange-400/60 bg-orange-400/10' : 'border-white/10 bg-[#202020] hover:border-white/20'}`}>
                 <input type="checkbox" checked={selected} onChange={() => toggleAlergeno(a.id)} className="sr-only" />
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${selected ? 'border-orange-400 bg-orange-400 text-[#111]' : 'border-white/30 bg-transparent text-transparent'}`}><Check size={12} strokeWidth={3} /></span>
                 <AlergenoIcon alergeno={a} />
-                <span className="mt-1 w-full break-words text-[10px] font-bold leading-3 text-slate-600">{a.nombre}</span>
-                {selected && <span className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-primary)] text-white"><Check size={10} /></span>}
+                <span className="min-w-0 truncate text-[10px] font-semibold text-white/80">{a.nombre}</span>
               </label>;
             })}
           </div>
         </section>
 
-        <div className="sticky bottom-0 z-20 -mx-2 border-t border-slate-200 bg-slate-50/95 p-2 backdrop-blur sm:-mx-3">
+        <div className="sticky bottom-0 z-20 -mx-2 border-t border-white/10 bg-[#111111]/95 p-2 backdrop-blur sm:-mx-3">
           <div className="mx-auto flex max-w-3xl gap-2">
-            <button type="button" onClick={() => navigate('/admin/productos')} className="h-11 flex-1 rounded-xl bg-slate-200 text-sm font-bold text-slate-700">Cancelar</button>
-            <button type="submit" disabled={saving} className="h-11 flex-[1.6] rounded-xl text-sm font-extrabold text-white shadow-sm disabled:opacity-50" style={{ backgroundColor: 'var(--color-primary)' }}><span className="inline-flex items-center justify-center gap-2"><Save size={18} />{saving ? 'Guardando…' : 'Guardar cambios'}</span></button>
+            <button type="button" onClick={() => navigate('/admin/productos')} className="h-9 flex-1 rounded-md border border-white/10 bg-[#202020] text-xs font-bold text-white/65">Cancelar</button>
+            <button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-md bg-orange-400 text-xs font-extrabold text-[#111] shadow-sm disabled:opacity-50"><span className="inline-flex items-center justify-center gap-1.5"><Save size={15} />{saving ? 'Guardando…' : 'Guardar cambios'}</span></button>
           </div>
         </div>
       </form>
