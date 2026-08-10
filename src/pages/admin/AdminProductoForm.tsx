@@ -15,7 +15,7 @@ function normalize(value: string): string {
 
 function erudusIconPath(nombre: string): string | null {
   const key = normalize(nombre);
-  const base = '/icons/alergenos/erudus';
+  const base = `${import.meta.env.BASE_URL}icons/alergenos/erudus`;
   if (key.includes('gluten') || key.includes('cereal')) return `${base}/cereal.svg`;
   if (key.includes('crustace')) return `${base}/crustaceans.svg`;
   if (key.includes('huevo')) return `${base}/eggs.svg`;
@@ -38,10 +38,14 @@ function AlergenoIcon({ alergeno }: { alergeno: Alergeno }) {
   const iconPath = erudusIconPath(alergeno.nombre);
 
   if (iconPath && !failed) {
-    return <img src={iconPath} alt="" className="h-7 w-7 shrink-0 object-contain" onError={() => setFailed(true)} />;
+    return (
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/95 p-1">
+        <img src={iconPath} alt="" className="h-full w-full object-contain" onError={() => setFailed(true)} />
+      </span>
+    );
   }
 
-  return <span className="h-7 w-7 shrink-0 rounded-full border border-white/20" aria-hidden="true" />;
+  return <span className="h-7 w-7 shrink-0 rounded-full border border-white/20 bg-white/5" aria-hidden="true" />;
 }
 
 export default function AdminProductoForm() {
