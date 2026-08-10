@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 type AppModalProps = {
@@ -8,6 +8,7 @@ type AppModalProps = {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  content?: ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -19,6 +20,7 @@ export default function AppModal({
   confirmLabel = 'Aceptar',
   cancelLabel = 'Cancelar',
   danger = false,
+  content,
   onConfirm,
   onCancel,
 }: AppModalProps) {
@@ -81,6 +83,8 @@ export default function AppModal({
             <X size={19} />
           </button>
         </div>
+
+        {content}
 
         <div className="mt-5 flex gap-2">
           <button

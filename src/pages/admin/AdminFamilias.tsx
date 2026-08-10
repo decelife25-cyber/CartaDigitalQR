@@ -18,6 +18,7 @@ export default function AdminFamilias() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
   const [newName, setNewName] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Familia | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export default function AdminFamilias() {
       const familia = await adminApi.createFamilia({ nombre, orden: familias.length, activo: true });
       if (familia) setFamilias((items) => [...items, familia].sort((a, b) => a.orden - b.orden));
       setNewName('');
+      setCreateOpen(false);
     } catch (e) {
       setModalError(errorMessage(e));
     } finally {
@@ -158,31 +160,17 @@ export default function AdminFamilias() {
         </div>
       )}
 
-      <section className="mt-2 rounded-2xl border p-2" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
-        <div className="flex gap-1.5">
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void create(); }}
-            placeholder="Nueva familia..."
-            aria-label="Nombre de la nueva familia"
-            className="h-10 min-w-0 flex-1 rounded-xl border bg-transparent px-3 text-sm font-medium outline-none transition-colors focus:border-orange-500"
-            style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
-          />
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void create()}
-            className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Plus size={17} />
-            <span>Añadir</span>
-          </button>
-        </div>
-      </section>
-
-      <div className="px-1 py-2">
+      <div className="flex items-center justify-between px-1 py-2">
         <p className="text-[15px] font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
+        <button
+          type="button"
+          disabled={saving}
+          onClick={() => { setNewName(''); setCreateOpen(true); }}
+          className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Plus size={17} />
+          <span>Añadir</span>
+        </button>
       </div>
 
       <section className="space-y-1">
@@ -262,10 +250,32 @@ export default function AdminFamilias() {
         {!ordered.length && (
           <div className="rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>
             <p className="text-sm font-bold">No hay familias creadas.</p>
-            <p className="mt-1 text-xs">Crea la primera familia desde el campo superior.</p>
+            <p className="mt-1 text-xs">Pulsa Añadir para crear la primera.</p>
           </div>
         )}
       </section>
+
+      <AppModal
+        open={createOpen}
+        title="Nueva familia"
+        message="Escribe el nombre de la nueva familia."
+        confirmLabel="Añadir"
+        cancelLabel="Cancelar"
+        onCancel={() => { setCreateOpen(false); setNewName(''); }}
+        onConfirm={() => void create()}
+        content={(
+          <input
+            autoFocus
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void create(); }}
+            placeholder="Nombre de la familia..."
+            aria-label="Nombre de la nueva familia"
+            className="mt-4 h-11 w-full rounded-xl border bg-transparent px-3 text-sm font-medium outline-none focus:border-orange-500"
+            style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
+          />
+        )}
+      />
 
       <AppModal
         open={Boolean(deleteTarget)}
