@@ -1,9 +1,6 @@
 name: Import Erudus allergen icons
 
-on:
-  push:
-    paths:
-      - '.github/workflows/import-erudus-allergens.yml'
+on: push
 
 permissions:
   contents: write
