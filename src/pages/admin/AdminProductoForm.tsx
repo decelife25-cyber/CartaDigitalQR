@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, Eye, Image as ImageIcon, Save, Star } from 'lucide-react';
+import { ArrowLeft, Check, Image as ImageIcon, Save, Star } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
 import type { Alergeno, Familia, Producto } from '../../types/database';
 
@@ -139,26 +139,19 @@ export default function AdminProductoForm() {
         <section className="rounded-xl border border-white/10 bg-[#171717] p-2.5 shadow-sm">
           <div className="grid grid-cols-[38%_minmax(0,1fr)] gap-2 max-[430px]:grid-cols-[35%_minmax(0,1fr)]">
             <div className="min-w-0">
-              <div className="relative overflow-hidden rounded-lg border border-white/10 bg-[#202020]">
-                <div className="aspect-square w-full">
-                  {fotoUrl ? <img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="flex h-full items-center justify-center text-white/30"><ImageIcon size={34} /></div>}
-                </div>
-              </div>
+              <div className="relative overflow-hidden rounded-lg border border-white/10 bg-[#202020]"><div className="aspect-square w-full">{fotoUrl ? <img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="flex h-full items-center justify-center text-white/30"><ImageIcon size={34} /></div>}</div></div>
               <label className="mt-1.5 block"><span className="sr-only">URL de imagen</span><input type="url" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="URL imagen" className="h-7 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-[10px] text-white outline-none placeholder:text-white/30 focus:border-orange-400/60" /></label>
             </div>
-
             <div className="min-w-0 space-y-1.5">
               <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Nombre del artículo *</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={100} className="h-9 w-full rounded-md border border-white/10 bg-[#202020] px-2.5 text-sm font-semibold text-white outline-none focus:border-orange-400/70" /></label>
               <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Descripción</span><textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} maxLength={250} className="w-full resize-none rounded-md border border-white/10 bg-[#202020] px-2.5 py-1.5 text-xs leading-4 text-white outline-none focus:border-orange-400/70" /></label>
             </div>
           </div>
-
           <div className="mt-2 grid grid-cols-[1.35fr_.75fr_.55fr] gap-2 max-[430px]:grid-cols-[1.2fr_.7fr_.55fr]">
             <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Categoría (familia) *</span><select required value={familiaId} onChange={(e) => setFamiliaId(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70"><option value="">Selecciona</option>{familias.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}</select></label>
             <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Precio *</span><div className="relative"><input inputMode="decimal" required value={precio} onChange={(e) => setPrecio(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70" /><span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/40">€</span></div></label>
             <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Orden</span><input type="number" min="0" step="1" value={orden} onChange={(e) => setOrden(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70" /></label>
           </div>
-
           <div className="mt-2 grid grid-cols-3 gap-2">
             <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="text-[10px] font-semibold uppercase text-white/55">Visible</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${activo ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" /></label>
             <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="text-[10px] font-semibold uppercase text-white/55">Disponible</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${!agotado ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="sr-only" /></label>
@@ -168,25 +161,10 @@ export default function AdminProductoForm() {
 
         <section className="rounded-xl border border-white/10 bg-[#171717] p-2.5 shadow-sm">
           <div className="mb-1.5 flex items-end justify-between"><div><h2 className="text-sm font-extrabold">Alérgenos</h2><p className="text-[9px] text-white/40">Selecciona los alérgenos que contiene este artículo.</p></div><span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-orange-400">{selectedAlergenos.size}</span></div>
-          <div className="grid grid-cols-2 gap-1">
-            {alergenos.map((a) => {
-              const selected = selectedAlergenos.has(a.id);
-              return <label key={a.id} title={a.nombre} className={`flex h-8 cursor-pointer items-center gap-2 rounded-md border px-1.5 transition ${selected ? 'border-orange-400/60 bg-orange-400/10' : 'border-white/10 bg-[#202020] hover:border-white/20'}`}>
-                <input type="checkbox" checked={selected} onChange={() => toggleAlergeno(a.id)} className="sr-only" />
-                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${selected ? 'border-orange-400 bg-orange-400 text-[#111]' : 'border-white/30 bg-transparent text-transparent'}`}><Check size={12} strokeWidth={3} /></span>
-                <AlergenoIcon alergeno={a} />
-                <span className="min-w-0 truncate text-[10px] font-semibold text-white/80">{a.nombre}</span>
-              </label>;
-            })}
-          </div>
+          <div className="grid grid-cols-2 gap-1">{alergenos.map((a) => { const selected = selectedAlergenos.has(a.id); return <label key={a.id} title={a.nombre} className={`flex h-8 cursor-pointer items-center gap-2 rounded-md border px-1.5 transition ${selected ? 'border-orange-400/60 bg-orange-400/10' : 'border-white/10 bg-[#202020] hover:border-white/20'}`}><input type="checkbox" checked={selected} onChange={() => toggleAlergeno(a.id)} className="sr-only" /><span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${selected ? 'border-orange-400 bg-orange-400 text-[#111]' : 'border-white/30 bg-transparent text-transparent'}`}><Check size={12} strokeWidth={3} /></span><AlergenoIcon alergeno={a} /><span className="min-w-0 truncate text-[10px] font-semibold text-white/80">{a.nombre}</span></label>; })}</div>
         </section>
 
-        <div className="sticky bottom-0 z-20 -mx-2 border-t border-white/10 bg-[#111111]/95 p-2 backdrop-blur sm:-mx-3">
-          <div className="mx-auto flex max-w-3xl gap-2">
-            <button type="button" onClick={() => navigate('/admin/productos')} className="h-9 flex-1 rounded-md border border-white/10 bg-[#202020] text-xs font-bold text-white/65">Cancelar</button>
-            <button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-md bg-orange-400 text-xs font-extrabold text-[#111] shadow-sm disabled:opacity-50"><span className="inline-flex items-center justify-center gap-1.5"><Save size={15} />{saving ? 'Guardando…' : 'Guardar cambios'}</span></button>
-          </div>
-        </div>
+        <div className="sticky bottom-0 z-20 -mx-2 border-t border-white/10 bg-[#111111]/95 p-2 backdrop-blur sm:-mx-3"><div className="mx-auto flex max-w-3xl gap-2"><button type="button" onClick={() => navigate('/admin/productos')} className="h-9 flex-1 rounded-md border border-white/10 bg-[#202020] text-xs font-bold text-white/65">Cancelar</button><button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-md bg-orange-400 text-xs font-extrabold text-[#111] shadow-sm disabled:opacity-50"><span className="inline-flex items-center justify-center gap-1.5"><Save size={15} />{saving ? 'Guardando…' : 'Guardar cambios'}</span></button></div></div>
       </form>
     </div>
   );
