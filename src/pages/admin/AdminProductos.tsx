@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { ArrowLeft, ChevronDown, GripVertical, ImageOff, Plus, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '../../services/adminApi';
@@ -102,7 +102,7 @@ export default function AdminProductos() {
     });
   };
 
-  const startDrag = (event: React.PointerEvent<HTMLButtonElement>, id: string) => {
+  const startDrag = (event: PointerEvent<HTMLButtonElement>, id: string) => {
     if (!canReorder) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -111,7 +111,7 @@ export default function AdminProductos() {
     setDraggedId(id);
   };
 
-  const moveDrag = (event: React.PointerEvent<HTMLButtonElement>) => {
+  const moveDrag = (event: PointerEvent<HTMLButtonElement>) => {
     const sourceId = dragIdRef.current;
     if (!sourceId || !canReorder) return;
 
@@ -125,7 +125,7 @@ export default function AdminProductos() {
     reorderLocal(sourceId, targetId);
   };
 
-  const finishDrag = async (event: React.PointerEvent<HTMLButtonElement>) => {
+  const finishDrag = async (event: PointerEvent<HTMLButtonElement>) => {
     const sourceId = dragIdRef.current;
     if (!sourceId) return;
 
@@ -285,27 +285,12 @@ export default function AdminProductos() {
             <article
               key={producto.id}
               data-product-id={producto.id}
-              className={`grid grid-cols-[32px_minmax(0,1fr)] items-stretch overflow-hidden rounded-2xl border transition-opacity ${dragging ? 'opacity-45' : 'opacity-100'}`}
+              className={`grid grid-cols-[minmax(0,1fr)_32px] items-stretch overflow-hidden rounded-2xl border transition-opacity ${dragging ? 'opacity-45' : 'opacity-100'}`}
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
-              <button
-                type="button"
-                disabled={!canReorder}
-                onPointerDown={(event) => startDrag(event, producto.id)}
-                onPointerMove={moveDrag}
-                onPointerUp={(event) => void finishDrag(event)}
-                onPointerCancel={(event) => void finishDrag(event)}
-                className="flex min-h-[58px] w-8 touch-none items-center justify-center disabled:cursor-default disabled:opacity-70"
-                style={{ color: 'var(--app-muted)' }}
-                aria-label={`Arrastrar ${producto.nombre} para cambiar su orden`}
-                title={canReorder ? 'Arrastra para cambiar el orden' : 'Restablece los filtros para cambiar el orden'}
-              >
-                <GripVertical size={18} />
-              </button>
-
               <Link
                 to={`/admin/productos/${producto.id}/editar`}
-                className="grid min-w-0 grid-cols-[42px_minmax(0,1fr)_72px] items-center gap-2 py-1.5 pr-2.5 sm:grid-cols-[48px_minmax(0,1fr)_92px_72px]"
+                className="grid min-w-0 grid-cols-[42px_minmax(0,1fr)_72px] items-center gap-2 py-1.5 pl-2.5 sm:grid-cols-[48px_minmax(0,1fr)_92px_72px]"
                 aria-label={`Editar ${producto.nombre}`}
               >
                 {producto.foto_url ? (
@@ -354,6 +339,21 @@ export default function AdminProductos() {
                   </span>
                 </div>
               </Link>
+
+              <button
+                type="button"
+                disabled={!canReorder}
+                onPointerDown={(event) => startDrag(event, producto.id)}
+                onPointerMove={moveDrag}
+                onPointerUp={(event) => void finishDrag(event)}
+                onPointerCancel={(event) => void finishDrag(event)}
+                className="flex min-h-[58px] w-8 touch-none items-center justify-center disabled:cursor-default disabled:opacity-70"
+                style={{ color: 'var(--app-muted)' }}
+                aria-label={`Arrastrar ${producto.nombre} para cambiar su orden`}
+                title={canReorder ? 'Arrastra para cambiar el orden' : 'Restablece los filtros para cambiar el orden'}
+              >
+                <GripVertical size={18} />
+              </button>
             </article>
           );
         })}
