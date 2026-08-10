@@ -2,8 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  body {
-    @apply bg-gray-50 text-gray-900;
-  }
+:root {
+  --app-bg: #f5f5f4;
+  --app-surface: #ffffff;
+  --app-surface-soft: #fafaf9;
+  --app-text: #18181b;
+  --app-muted: #71717a;
+  --app-border: rgba(24, 24, 27, 0.10);
+  --app-shadow: 0 8px 24px rgba(24, 24, 27, 0.08);
+  --app-image-overlay: rgba(255, 255, 255, 0.00);
+}
+
+html.theme-night {
+  --app-bg: #0f0f0f;
+  --app-surface: #171717;
+  --app-surface-soft: #202020;
+  --app-text: #fafafa;
+  --app-muted: #a1a1aa;
+  --app-border: rgba(255, 255, 255, 0.10);
+  --app-shadow: 0 8px 24px rgba(0, 0, 0, 0.30);
+  --app-image-overlay: rgba(0, 0, 0, 0.12);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply antialiased;
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition: background-color 180ms ease, color 180ms ease;
 }
