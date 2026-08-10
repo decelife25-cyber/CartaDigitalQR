@@ -38,51 +38,59 @@ body {
 }
 
 /* Admin producto — pictogramas Erudus.
-   El SVG original no se recolorea: los fondos son parte de la interfaz. */
+   Los SVG originales no se recolorean; los fondos son parte de la interfaz. */
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label {
-  min-height: 58px;
+  min-height: 48px;
   height: auto !important;
   align-items: center;
-  padding: 4px 6px;
+  padding: 3px 6px;
 }
 
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="cereal.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="crustaceans.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="eggs.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="fish.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="peanuts.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="soya.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="milk.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="nuts.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="celery.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="mustard.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="sesame.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="so2.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="lupin.svg"]),
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="molluscs.svg"]) {
-  width: 50px !important;
-  height: 50px !important;
-  min-width: 50px;
-  min-height: 50px;
-  padding: 8px !important;
+/* Icono Erudus: 40px para mantener los 14 alérgenos en una sola pantalla móvil. */
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img) {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 6px !important;
   border-radius: 9999px;
   background: #f3f4f6 !important;
 }
 
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="cereal.svg"]) { background: #f4d7d7 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="crustaceans.svg"]) { background: #dcecff !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="eggs.svg"]) { background: #fff0c7 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="fish.svg"]) { background: #cfe9f4 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="peanuts.svg"]) { background: #ead7c2 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="soya.svg"]) { background: #d8e9c8 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="milk.svg"]) { background: #e4e8ee !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="nuts.svg"]) { background: #e8d4c4 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="celery.svg"]) { background: #d6ebc9 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="mustard.svg"]) { background: #f7e39a !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="sesame.svg"]) { background: #eadfc9 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="so2.svg"]) { background: #ead3df !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="lupin.svg"]) { background: #e4d8f2 !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="molluscs.svg"]) { background: #d6e2f2 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:nth-of-type(2) {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 6px !important;
+  border-radius: 9999px;
+  background: #f3f4f6 !important;
+  background-size: 28px 28px !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="cereal.svg"]) { background-color: #f4d7d7 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="crustaceans.svg"]) { background-color: #dcecff !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="eggs.svg"]) { background-color: #fff0c7 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="fish.svg"]) { background-color: #cfe9f4 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="peanuts.svg"]) { background-color: #ead7c2 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="soya.svg"]) { background-color: #d8e9c8 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="milk.svg"]) { background-color: #e4e8ee !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="nuts.svg"]) { background-color: #e8d4c4 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="celery.svg"]) { background-color: #d6ebc9 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="mustard.svg"]) { background-color: #f7e39a !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="sesame.svg"]) { background-color: #eadfc9 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="so2.svg"]) { background-color: #ead3df !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="lupin.svg"]) { background-color: #e4d8f2 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="molluscs.svg"]) { background-color: #d6e2f2 !important; }
+
+/* El SVG lupin original está presente, pero se deja además un alias local explícito
+   para evitar que un fallo aislado de carga deje el círculo vacío. */
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label[title="Altramuces"] > span:nth-of-type(2) {
+  background-image: url('/CartaDigitalQR/icons/alergenos/erudus/altramuz.svg') !important;
+  background-color: #e4d8f2 !important;
+}
 
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:last-child {
   white-space: normal !important;
