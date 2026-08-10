@@ -9,7 +9,7 @@ import MiSeleccion from './pages/MiSeleccion';
 import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/admin/Login';
 import HomePrivado from './pages/admin/HomePrivado';
-import AdminProductos from './pages/admin/AdminProductos';
+import AdminProductos9 from './pages/admin/AdminProductos9';
 import AdminProductoForm from './pages/admin/AdminProductoForm';
 
 function App() {
@@ -29,7 +29,7 @@ function App() {
 
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<HomePrivado />} />
-          <Route path="productos" element={<AdminProductos />} />
+          <Route path="productos" element={<AdminProductos9 />} />
           <Route path="productos/nuevo" element={<AdminProductoForm />} />
           <Route path="productos/:id/editar" element={<AdminProductoForm />} />
         </Route>
