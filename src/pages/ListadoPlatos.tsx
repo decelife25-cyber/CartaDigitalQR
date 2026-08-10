@@ -1,7 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronRight, Utensils } from 'lucide-react';
 import { api } from '../services/api';
 import type { Producto, Familia } from '../types/database';
+
+function Alergenos({ producto }: { producto: Producto }) {
+  if (!producto.alergenos?.length) return null;
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5" aria-label="Alérgenos">
+      {producto.alergenos.slice(0, 5).map((alergeno) => (
+        alergeno.icono ? (
+          <img
+            key={alergeno.id}
+            src={alergeno.icono}
+            alt={alergeno.nombre}
+            title={alergeno.nombre}
+            className="h-5 w-5 shrink-0 object-contain"
+          />
+        ) : (
+          <span
+            key={alergeno.id}
+            title={alergeno.nombre}
+            className="flex h-5 min-w-5 items-center justify-center rounded-full border px-1 text-[9px] font-bold"
+            style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)' }}
+          >
+            {alergeno.sigla || '•'}
+          </span>
+        )
+      ))}
+    </div>
+  );
+}
 
 export default function ListadoPlatos() {
   const { id } = useParams<{ id: string }>();
@@ -16,88 +46,85 @@ export default function ListadoPlatos() {
       try {
         const [productosData, familiasData] = await Promise.all([
           api.getProductosByFamilia(id),
-          api.getFamilias()
+          api.getFamilias(),
         ]);
 
         setProductos(productosData);
-        const currentFamilia = familiasData.find(f => f.id === id);
+        const currentFamilia = familiasData.find((f) => f.id === id);
         if (currentFamilia) setFamilia(currentFamilia);
       } finally {
         setLoading(false);
       }
     }
-    loadData();
+    void loadData();
   }, [id]);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full pt-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex min-h-[60vh] items-center justify-center" style={{ background: 'var(--app-bg)' }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
-    <div className="p-4 pt-6 space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900 px-2 capitalize">
-        {familia?.nombre || 'Platos'}
-      </h1>
+    <div className="min-h-full px-3 pb-5 pt-4" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
+      <div className="mb-4 px-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>Familia</p>
+        <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight">{familia?.nombre || 'Platos'}</h1>
+      </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {productos.map((producto) => (
-          <div
+          <button
             key={producto.id}
+            type="button"
             onClick={() => navigate(`/plato/${producto.id}`)}
-            className="flex bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+            className="flex min-h-[116px] w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]"
+            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
           >
-            {producto.foto_url ? (
-              <img
-                src={producto.foto_url}
-                alt={producto.nombre}
-                className="w-28 h-28 object-cover"
-              />
-            ) : (
-              <div className="w-28 h-28 bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400 text-xs">Sin imagen</span>
-              </div>
-            )}
-
-            <div className="p-3 flex-1 flex flex-col justify-between">
-              <div>
-                <h3 className="font-semibold text-gray-900 line-clamp-1">{producto.nombre}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2 mt-1">
-                  {producto.descripcion}
-                </p>
-              </div>
-
-              <div className="flex justify-between items-center mt-2">
-                <span className="font-bold text-primary">
-                  {producto.precio.toFixed(2)}€
-                </span>
-
-                {producto.alergenos && producto.alergenos.length > 0 && (
-                  <div className="flex gap-1">
-                    {producto.alergenos.map((alergeno) => (
-                      alergeno.icono ? (
-                        <img
-                          key={alergeno.id}
-                          src={alergeno.icono}
-                          alt={alergeno.nombre}
-                          title={alergeno.nombre}
-                          className="w-5 h-5 object-contain"
-                        />
-                      ) : null
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="relative h-[116px] w-[34%] shrink-0 overflow-hidden bg-stone-100">
+              {producto.foto_url ? (
+                <img
+                  src={producto.foto_url}
+                  alt={producto.nombre}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
+                  <Utensils className="h-9 w-9" strokeWidth={1.25} />
+                </div>
+              )}
             </div>
-          </div>
+
+            <div className="flex min-w-0 flex-1 items-center gap-2 px-3.5 py-3">
+              <div className="flex min-w-0 flex-1 flex-col self-stretch">
+                <div className="min-w-0">
+                  <h2 className="line-clamp-1 text-[16px] font-extrabold leading-tight">{producto.nombre}</h2>
+                  <p className="mt-1 line-clamp-2 text-xs leading-4" style={{ color: 'var(--app-muted)' }}>
+                    {producto.descripcion || ' '}
+                  </p>
+                </div>
+
+                <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                  <span className="text-lg font-extrabold leading-none text-primary">
+                    {producto.precio.toFixed(2)}€
+                  </span>
+                  <Alergenos producto={producto} />
+                </div>
+              </div>
+
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)' }}>
+                <ChevronRight className="h-4.5 w-4.5" />
+              </span>
+            </div>
+          </button>
         ))}
       </div>
 
       {productos.length === 0 && (
-        <p className="text-center text-gray-500 mt-10">
+        <p className="mt-12 text-center text-sm" style={{ color: 'var(--app-muted)' }}>
           No hay productos disponibles en esta categoría.
         </p>
       )}
