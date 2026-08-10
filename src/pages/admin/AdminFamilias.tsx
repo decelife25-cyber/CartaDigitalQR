@@ -138,54 +138,54 @@ export default function AdminFamilias() {
 
   return (
     <div className="w-full min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)' }}>
-      <header className="flex items-center gap-2 border-b pb-3" style={{ borderColor: 'var(--app-border)' }}>
+      <header className="flex items-center gap-1 border-b pb-2" style={{ borderColor: 'var(--app-border)' }}>
         <Link
           to="/admin"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
           aria-label="Volver al panel privado"
         >
-          <ArrowLeft size={22} />
+          <ArrowLeft size={21} />
         </Link>
         <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Familias</h1>
+          <h1 className="text-[22px] font-extrabold tracking-tight sm:text-3xl">Familias</h1>
         </div>
       </header>
 
       {error && (
-        <div className="mt-4 rounded-xl border p-3 text-sm" style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}>
+        <div className="mt-2 rounded-xl border p-2 text-sm" style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}>
           {error}
           <button type="button" onClick={() => void load()} className="ml-2 font-bold text-orange-600">Reintentar</button>
         </div>
       )}
 
-      <section className="mt-4 rounded-2xl border p-3" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
-        <div className="flex gap-2">
+      <section className="mt-2 rounded-2xl border p-2" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+        <div className="flex gap-1.5">
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void create(); }}
             placeholder="Nueva familia..."
             aria-label="Nombre de la nueva familia"
-            className="h-11 min-w-0 flex-1 rounded-xl border bg-transparent px-3 text-sm font-medium outline-none transition-colors focus:border-orange-500"
+            className="h-10 min-w-0 flex-1 rounded-xl border bg-transparent px-3 text-sm font-medium outline-none transition-colors focus:border-orange-500"
             style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
           />
           <button
             type="button"
             disabled={saving}
             onClick={() => void create()}
-            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-3 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-10 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <Plus size={18} />
+            <Plus size={17} />
             <span>Añadir</span>
           </button>
         </div>
       </section>
 
-      <div className="px-1 py-3">
-        <p className="text-base font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
+      <div className="px-1 py-2">
+        <p className="text-[15px] font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
       </div>
 
-      <section className="space-y-2">
+      <section className="space-y-1">
         {ordered.map((familia) => {
           const editing = editingId === familia.id;
           return (
@@ -196,18 +196,18 @@ export default function AdminFamilias() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => { if (draggedId) void reorder(draggedId, familia.id); }}
               onDragEnd={() => setDraggedId(null)}
-              className={`rounded-2xl border px-2 py-2 transition-opacity ${draggedId === familia.id ? 'opacity-50' : 'opacity-100'}`}
+              className={`rounded-2xl border px-1.5 py-1 transition-opacity ${draggedId === familia.id ? 'opacity-50' : 'opacity-100'}`}
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
-              <div className="flex min-w-0 items-center gap-1">
+              <div className="flex min-w-0 items-center gap-0.5">
                 <button
                   type="button"
-                  className="flex h-10 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing"
+                  className="flex h-9 w-6 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing"
                   style={{ color: 'var(--app-muted)' }}
                   aria-label={`Arrastrar ${familia.nombre} para cambiar su orden`}
                   title="Arrastra para cambiar el orden"
                 >
-                  <GripVertical size={18} />
+                  <GripVertical size={17} />
                 </button>
 
                 {editing ? (
@@ -216,41 +216,41 @@ export default function AdminFamilias() {
                     value={draftName}
                     onChange={(e) => setDraftName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') void saveEdit(familia); if (e.key === 'Escape') cancelEdit(); }}
-                    className="h-10 min-w-0 flex-1 rounded-xl border bg-transparent px-2.5 text-base font-bold outline-none focus:border-orange-500"
+                    className="h-9 min-w-0 flex-1 rounded-xl border bg-transparent px-2 text-[15px] font-bold outline-none focus:border-orange-500"
                     style={{ borderColor: 'rgba(249,115,22,.55)', color: 'var(--app-text)' }}
                     aria-label="Nombre de la familia"
                   />
                 ) : (
-                  <div className="min-w-0 flex-1 pr-1">
+                  <div className="min-w-0 flex-1 pr-0.5">
                     <div className="break-words text-[15px] font-extrabold leading-tight sm:text-base">{familia.nombre}</div>
                   </div>
                 )}
 
                 {editing ? (
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <button type="button" disabled={saving || !draftName.trim()} onClick={() => void saveEdit(familia)} className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-40" aria-label="Guardar cambios">
-                      <Save size={18} />
+                  <div className="flex shrink-0 items-center gap-0">
+                    <button type="button" disabled={saving || !draftName.trim()} onClick={() => void saveEdit(familia)} className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-40" aria-label="Guardar cambios">
+                      <Save size={17} />
                     </button>
-                    <button type="button" onClick={cancelEdit} className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ color: 'var(--app-muted)' }} aria-label="Cancelar edición">
-                      <X size={19} />
+                    <button type="button" onClick={cancelEdit} className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ color: 'var(--app-muted)' }} aria-label="Cancelar edición">
+                      <X size={18} />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex shrink-0 items-center gap-0.5">
+                  <div className="flex shrink-0 items-center gap-0">
                     <button
                       type="button"
                       disabled={saving}
                       onClick={() => void toggleActive(familia)}
-                      className={`min-w-[58px] rounded-xl px-1.5 py-2 text-[11px] font-extrabold transition-opacity disabled:opacity-40 ${familia.activo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-black/5 text-zinc-500 dark:bg-white/5 dark:text-zinc-400'}`}
+                      className={`min-w-[55px] rounded-lg px-1 py-1.5 text-[10px] font-extrabold transition-opacity disabled:opacity-40 ${familia.activo ? 'bg-emerald-500/10 text-emerald-600' : 'bg-black/5 text-zinc-500 dark:bg-white/5 dark:text-zinc-400'}`}
                       aria-label={familia.activo ? `Ocultar ${familia.nombre}` : `Mostrar ${familia.nombre}`}
                     >
                       {familia.activo ? 'Visible' : 'Oculta'}
                     </button>
-                    <button type="button" onClick={() => startEdit(familia)} className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ color: 'var(--app-muted)' }} aria-label={`Editar ${familia.nombre}`}>
-                      <Edit size={18} />
+                    <button type="button" onClick={() => startEdit(familia)} className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ color: 'var(--app-muted)' }} aria-label={`Editar ${familia.nombre}`}>
+                      <Edit size={17} />
                     </button>
-                    <button type="button" disabled={saving} onClick={() => setDeleteTarget(familia)} className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 hover:text-red-500 disabled:opacity-40" aria-label={`Eliminar ${familia.nombre}`}>
-                      <Trash2 size={18} />
+                    <button type="button" disabled={saving} onClick={() => setDeleteTarget(familia)} className="flex h-8 w-8 items-center justify-center rounded-xl text-zinc-400 hover:text-red-500 disabled:opacity-40" aria-label={`Eliminar ${familia.nombre}`}>
+                      <Trash2 size={17} />
                     </button>
                   </div>
                 )}
@@ -260,7 +260,7 @@ export default function AdminFamilias() {
         })}
 
         {!ordered.length && (
-          <div className="rounded-2xl border border-dashed p-10 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>
+          <div className="rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>
             <p className="text-sm font-bold">No hay familias creadas.</p>
             <p className="mt-1 text-xs">Crea la primera familia desde el campo superior.</p>
           </div>
