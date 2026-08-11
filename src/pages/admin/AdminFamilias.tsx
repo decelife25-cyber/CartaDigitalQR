@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, GripVertical, ImageOff, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { adminApi } from '../../services/adminApi';
 import type { Familia } from '../../types/database';
 import AppModal from '../../components/ui/AppModal';
 
