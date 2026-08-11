@@ -14,9 +14,12 @@ function Alergenos({ producto }: { producto: Producto }) {
           <img
             key={alergeno.id}
             src={alergeno.icono}
-            alt={alergeno.nombre}
+            alt=""
             title={alergeno.nombre}
             className="h-5 w-5 shrink-0 object-contain"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
           />
         ) : (
           <span
@@ -30,6 +33,31 @@ function Alergenos({ producto }: { producto: Producto }) {
         )
       ))}
     </div>
+  );
+}
+
+function ProductoImagen({ producto }: { producto: Producto }) {
+  const [error, setError] = useState(false);
+
+  if (!producto.foto_url || error) {
+    return (
+      <div
+        className="flex h-full w-full items-center justify-center"
+        style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}
+      >
+        <Utensils className="h-9 w-9" strokeWidth={1.25} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={producto.foto_url}
+      alt={producto.nombre}
+      loading="lazy"
+      className="h-full w-full object-cover"
+      onError={() => setError(true)}
+    />
   );
 }
 
@@ -84,27 +112,18 @@ export default function ListadoPlatos() {
             style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
           >
             <div className="relative h-[116px] w-[34%] shrink-0 overflow-hidden bg-stone-100">
-              {producto.foto_url ? (
-                <img
-                  src={producto.foto_url}
-                  alt={producto.nombre}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
-                  <Utensils className="h-9 w-9" strokeWidth={1.25} />
-                </div>
-              )}
+              <ProductoImagen producto={producto} />
             </div>
 
             <div className="flex min-w-0 flex-1 items-center gap-2 px-3.5 py-3">
               <div className="flex min-w-0 flex-1 flex-col self-stretch">
                 <div className="min-w-0">
-                  <h2 className="line-clamp-1 text-[16px] font-extrabold leading-tight">{producto.nombre}</h2>
-                  <p className="mt-1 line-clamp-2 text-xs leading-4" style={{ color: 'var(--app-muted)' }}>
-                    {producto.descripcion || ' '}
-                  </p>
+                  <h2 className="line-clamp-2 text-[16px] font-extrabold leading-[1.12]">{producto.nombre}</h2>
+                  {producto.descripcion && (
+                    <p className="mt-1 line-clamp-2 text-xs leading-4" style={{ color: 'var(--app-muted)' }}>
+                      {producto.descripcion}
+                    </p>
+                  )}
                 </div>
 
                 <div className="mt-auto flex items-end justify-between gap-2 pt-2">
@@ -116,7 +135,7 @@ export default function ListadoPlatos() {
               </div>
 
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)' }}>
-                <ChevronRight className="h-4.5 w-4.5" />
+                <ChevronRight className="h-5 w-5" />
               </span>
             </div>
           </button>
