@@ -14,6 +14,7 @@ export default function Portada() {
   const [config, setConfig] = useState<Configuracion | null>(null);
   const [sugerencias, setSugerencias] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pizarraAmpliada, setPizarraAmpliada] = useState(false);
 
   useEffect(() => {
     Promise.all([api.getConfiguracion(), api.getSugerencias()]).then(([data, productos]) => {
@@ -46,32 +47,43 @@ export default function Portada() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/60" />
 
       {sugerencias.length > 0 && (
-        <div
-          className="absolute right-[2cm] top-[42%] z-10 w-[34vw] max-w-[230px] min-w-[145px] -translate-y-1/2"
-          aria-label="Sugerencias del día"
+        <button
+          type="button"
+          onClick={() => setPizarraAmpliada((actual) => !actual)}
+          aria-label={pizarraAmpliada ? 'Reducir sugerencias del día' : 'Ampliar sugerencias del día'}
+          aria-pressed={pizarraAmpliada}
+          className={[
+            'absolute z-20 m-0 border-0 bg-transparent p-0 text-left transition-all duration-300 ease-out',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
+            pizarraAmpliada
+              ? 'bottom-[145px] right-[4%] w-[min(72vw,360px)]'
+              : 'bottom-[150px] right-[4%] w-[min(30vw,190px)]',
+          ].join(' ')}
         >
-          <img
-            src={PIZARRA_IMAGE}
-            alt="Pizarra de sugerencias del día"
-            className="block h-auto w-full"
-          />
-          <div
-            className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
-            style={{
-              fontFamily: 'Segoe Print, Bradley Hand, Marker Felt, Comic Sans MS, cursive',
-              textShadow: '0 1px 2px rgba(0,0,0,.85)',
-            }}
-          >
-            {sugerencias.map((producto) => (
-              <div
-                key={producto.id}
-                className="break-words text-[clamp(10px,2.4vw,16px)] font-semibold leading-[1.15]"
-              >
-                - {producto.nombre}
-              </div>
-            ))}
+          <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
+            <img
+              src={PIZARRA_IMAGE}
+              alt="Pizarra de sugerencias del día"
+              className="block h-auto w-full"
+            />
+            <div
+              className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
+              style={{
+                fontFamily: 'Segoe Print, Bradley Hand, Marker Felt, Comic Sans MS, cursive',
+                textShadow: '0 1px 2px rgba(0,0,0,.85)',
+              }}
+            >
+              {sugerencias.map((producto) => (
+                <div
+                  key={producto.id}
+                  className="break-words text-[clamp(10px,2.4vw,16px)] font-semibold leading-[1.15]"
+                >
+                  - {producto.nombre}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </button>
       )}
 
       <button
