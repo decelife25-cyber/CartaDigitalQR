@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, Image as ImageIcon, Lightbulb, Save, Star, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Image as ImageIcon, Lightbulb, Save, Star, Trash2, Camera } from 'lucide-react';
 import AppModal from '../../components/ui/AppModal';
 import { adminApi } from '../../services/adminApi';
 import type { Alergeno, Familia, Producto } from '../../types/database';
@@ -48,11 +48,58 @@ export default function AdminProductoForm() {
   const [nombre,setNombre]=useState(''); const [descripcion,setDescripcion]=useState(''); const [precio,setPrecio]=useState('0.00'); const [familiaId,setFamiliaId]=useState(''); const [fotoUrl,setFotoUrl]=useState('');
   const [activo,setActivo]=useState(true); const [agotado,setAgotado]=useState(false); const [destacado,setDestacado]=useState(false); const [sugerido,setSugerido]=useState(false); const [familiaOpen,setFamiliaOpen]=useState(false); const [selectedAlergenos,setSelectedAlergenos]=useState<Set<string>>(new Set());
   const [deleteOpen,setDeleteOpen]=useState(false); const [feedback,setFeedback]=useState<FeedbackModal|null>(null);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [deleteFotoOpen, setDeleteFotoOpen] = useState(false);
 
   useEffect(()=>{const load=async()=>{setLoading(true);try{const [f,a]=await Promise.all([adminApi.getFamiliasAdmin(),adminApi.getAlergenosAdmin()]);setFamilias(f);setAlergenos(a);if(isEditing&&id){const p=await adminApi.getProductoByIdAdmin(id);if(!p){navigate('/admin/productos');return;}setNombre(p.nombre);setDescripcion(p.descripcion??'');setPrecio(Number(p.precio).toFixed(2));setFamiliaId(p.familia_id);setFotoUrl(p.foto_url??'');setActivo(p.activo);setAgotado(p.agotado);setDestacado(p.destacado);setSugerido(p.sugerido??false);setSelectedAlergenos(new Set((p.alergenos??[]).map(x=>x.id)));}else if(f[0])setFamiliaId(f[0].id);}catch(e){console.error(e);setFeedback({title:'No se pudo cargar',message:errorMessage(e)});}finally{setLoading(false);}};void load();},[id,navigate,isEditing]);
-  const toggleAlergeno=(aid:string)=>setSelectedAlergenos(cur=>{const n=new Set(cur);n.has(aid)?n.delete(aid):n.add(aid);return n;});
+  const toggleAlergeno = (aid: string) => setSelectedAlergenos((cur) => {
+    const n = new Set(cur);
+    if (n.has(aid)) {
+      n.delete(aid);
+    } else {
+      n.add(aid);
+    }
+    return n;
+  });
   const normalizePrecio=()=>{const v=Number(precio.replace(',','.'));if(Number.isFinite(v)&&v>=0)setPrecio(v.toFixed(2));};
   const handleDelete=()=>{if(!id||saving)return;setDeleteOpen(true);};
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setFeedback({ title: 'Formato inválido', message: 'Por favor selecciona un archivo de imagen (JPG, PNG, WEBP).' });
+      return;
+    }
+
+    setUploadingFoto(true);
+    try {
+      const url = await adminApi.uploadProductoFoto(file);
+      setFotoUrl(url);
+      setUploadSuccess(true);
+      setTimeout(() => setUploadSuccess(false), 2000);
+    } catch (err) {
+      setFeedback({ title: 'Error al subir', message: errorMessage(err), danger: true });
+    } finally {
+      setUploadingFoto(false);
+      e.target.value = ''; // Reset input
+    }
+  };
+
+  const confirmDeleteFoto = async () => {
+    setDeleteFotoOpen(false);
+    if (!fotoUrl) return;
+    setSaving(true);
+    try {
+      await adminApi.deleteProductoFoto(fotoUrl);
+      setFotoUrl('');
+    } catch (err) {
+      setFeedback({ title: 'Error al eliminar', message: errorMessage(err), danger: true });
+    } finally {
+      setSaving(false);
+    }
+  };
   const confirmDelete=async()=>{if(!id)return;setDeleteOpen(false);setSaving(true);try{await adminApi.deleteProducto(id);navigate('/admin/productos');}catch(e){setFeedback({title:'No se pudo eliminar',message:errorMessage(e),danger:true});setSaving(false);}};
   const handleSubmit=async(e:FormEvent)=>{e.preventDefault();const clean=nombre.trim();const p=Number(precio.replace(',','.'));if(!clean){setFeedback({title:'Falta el nombre',message:'El producto necesita un nombre.'});return;}if(!familiaId){setFeedback({title:'Falta la familia',message:'Debes seleccionar una familia.'});return;}if(!Number.isFinite(p)||p<0){setFeedback({title:'Precio no válido',message:'Introduce un precio válido.'});return;}setSaving(true);try{const data:Partial<Producto>={nombre:clean,descripcion:descripcion.trim()||null,precio:p,familia_id:familiaId,foto_url:fotoUrl.trim()||null,activo,agotado,destacado,sugerido};if(isEditing&&id)await adminApi.updateProducto(id,data,[...selectedAlergenos]);else await adminApi.createProducto(data,[...selectedAlergenos]);navigate('/admin/productos');}catch(e){setFeedback({title:'No se pudo guardar',message:errorMessage(e),danger:true});}finally{setSaving(false);}};
   const familiaNombre=familias.find(f=>f.id===familiaId)?.nombre??'Selecciona una familia';
@@ -67,7 +114,38 @@ export default function AdminProductoForm() {
     <form id="producto-form" onSubmit={handleSubmit} className="w-full space-y-2 px-0 pb-14 pt-2">
       <section className="w-full rounded-xl border p-2.5 shadow-sm" style={{background:'var(--app-surface)',borderColor:'var(--app-border)',boxShadow:'var(--app-shadow)'}}>
         <div className="grid grid-cols-[32%_minmax(0,1fr)] gap-2 max-[430px]:grid-cols-[31%_minmax(0,1fr)] sm:grid-cols-[34%_minmax(0,1fr)]">
-          <div className="min-w-0"><div className="overflow-hidden rounded-lg border" style={{borderColor:'var(--app-border)',background:'var(--app-surface-soft)'}}><div className="aspect-square w-full">{fotoUrl?<img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={e=>{e.currentTarget.style.display='none'}}/>:<div className="flex h-full items-center justify-center" style={{color:'var(--app-muted)'}}><ImageIcon size={30}/></div>}</div></div><label className="mt-1.5 block"><span className="mb-0.5 block text-[8px] font-semibold uppercase" style={{color:'var(--app-muted)'}}>URL de imagen</span><input type="url" value={fotoUrl} onChange={e=>setFotoUrl(e.target.value)} placeholder="Pega el enlace de la imagen" className="h-7 w-full rounded-lg border bg-transparent px-2 text-[9px] outline-none" style={{borderColor:'var(--app-border)',color:'var(--app-text)'}}/></label></div>
+          <div className="min-w-0">
+            <div className="relative overflow-hidden rounded-lg border" style={{borderColor:'var(--app-border)',background:'var(--app-surface-soft)'}}>
+              <div className="aspect-square w-full">
+                {fotoUrl ? <img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={e=>{e.currentTarget.style.display='none'}}/> : <div className="flex h-full items-center justify-center" style={{color:'var(--app-muted)'}}><ImageIcon size={30}/></div>}
+                {uploadingFoto && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white backdrop-blur-sm z-10">
+                    <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white mb-2" />
+                    <span className="text-[10px] font-bold">Subiendo...</span>
+                  </div>
+                )}
+                {uploadSuccess && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-emerald-500/80 text-white backdrop-blur-sm z-10 transition-opacity">
+                    <Check size={24} className="mb-1" />
+                    <span className="text-[10px] font-bold">✓ Foto subida</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-1.5 flex flex-col gap-1">
+              <label className="flex h-7 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-orange-500 px-2 text-[9px] font-bold text-white transition-opacity active:opacity-80">
+                <Camera size={13} />
+                {fotoUrl ? 'Cambiar foto' : 'Añadir foto'}
+                <input type="file" accept="image/jpeg, image/png, image/webp" onChange={handleFileSelect} disabled={uploadingFoto || saving} className="hidden" />
+              </label>
+              {fotoUrl && (
+                <button type="button" onClick={() => setDeleteFotoOpen(true)} disabled={uploadingFoto || saving} className="flex h-7 w-full items-center justify-center rounded-lg border bg-transparent text-[9px] font-bold text-red-500" style={{borderColor:'var(--app-border)'}}>
+                  Eliminar foto
+                </button>
+              )}
+            </div>
+          </div>
           <div className="min-w-0 space-y-1.5"><label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase" style={{color:'var(--app-muted)'}}>Nombre del artículo *</span><input required value={nombre} onChange={e=>setNombre(e.target.value)} maxLength={100} className="h-9 w-full rounded-lg border bg-transparent px-2.5 text-[14px] font-semibold outline-none" style={{borderColor:'var(--app-border)',color:'var(--app-text)'}}/></label><label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase" style={{color:'var(--app-muted)'}}>Descripción</span><textarea value={descripcion} onChange={e=>setDescripcion(e.target.value)} rows={4} maxLength={250} className="w-full resize-none rounded-lg border bg-transparent px-2.5 py-1.5 text-[11px] leading-4 outline-none" style={{borderColor:'var(--app-border)',color:'var(--app-text)'}}/></label></div>
         </div>
         <div className="mt-2 grid grid-cols-[minmax(0,1.25fr)_minmax(0,.75fr)] gap-2">
@@ -81,6 +159,7 @@ export default function AdminProductoForm() {
     </form>
 
     <AppModal open={deleteOpen} title="Eliminar artículo" message={`¿Eliminar «${nombre}»? Esta acción no se puede deshacer.`} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onConfirm={() => void confirmDelete()} onCancel={() => setDeleteOpen(false)} />
+    <AppModal open={deleteFotoOpen} title="Eliminar foto" message={`¿Deseas eliminar la fotografía de este producto?`} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onConfirm={() => void confirmDeleteFoto()} onCancel={() => setDeleteFotoOpen(false)} />
     <AppModal open={Boolean(feedback)} title={feedback?.title ?? ''} message={feedback?.message ?? ''} confirmLabel="Aceptar" cancelLabel="Cerrar" danger={feedback?.danger} onConfirm={() => setFeedback(null)} onCancel={() => setFeedback(null)} />
   </div>;
 }
