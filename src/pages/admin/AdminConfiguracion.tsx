@@ -24,6 +24,18 @@ const EMPTY: ConfiguracionRestaurante = {
   dominio: null, activo: true,
 };
 
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object') {
+    const value = error as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown };
+    if (typeof value.message === 'string' && value.message.trim()) return value.message;
+    if (typeof value.details === 'string' && value.details.trim()) return value.details;
+    if (typeof value.hint === 'string' && value.hint.trim()) return value.hint;
+    if (typeof value.code === 'string' && value.code.trim()) return `Error ${value.code}`;
+  }
+  return 'Se produjo un error inesperado.';
+}
+
 function Field({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) {
   return <label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/45">{label}</span><input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="h-9 w-full rounded-md border border-white/10 bg-[#202020] px-2.5 text-xs text-white outline-none placeholder:text-white/25 focus:border-orange-400/60" /></label>;
 }
@@ -41,7 +53,7 @@ export default function AdminConfiguracion() {
       const { data, error: queryError } = await supabase.from('configuracion_restaurante').select('*').eq('activo', true).limit(1).maybeSingle();
       if (queryError) throw queryError;
       if (data) setConfig({ ...EMPTY, ...data, redes_sociales: data.redes_sociales ?? {} });
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
     finally { setLoading(false); }
   };
 
@@ -62,7 +74,7 @@ export default function AdminConfiguracion() {
       }).eq('id', config.id);
       if (updateError) throw updateError;
       setSaved(true); window.setTimeout(() => setSaved(false), 2200);
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    } catch (e) { setError(errorMessage(e)); }
     finally { setSaving(false); }
   };
 
