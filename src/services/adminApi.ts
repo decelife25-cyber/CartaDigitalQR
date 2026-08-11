@@ -71,6 +71,7 @@ export const adminApi = {
         activo: producto.activo ?? true,
         agotado: producto.agotado ?? false,
         destacado: producto.destacado ?? false,
+        sugerido: producto.sugerido ?? false,
         orden: producto.orden ?? 0,
       }])
       .select()
@@ -100,6 +101,7 @@ export const adminApi = {
         activo: producto.activo,
         agotado: producto.agotado,
         destacado: producto.destacado,
+        sugerido: producto.sugerido,
         orden: producto.orden ?? 0,
       })
       .eq('id', id);
@@ -107,7 +109,7 @@ export const adminApi = {
     await this.replaceAlergenos(id, alergenosIds);
   },
 
-  async updateProductoFields(id: string, fields: Partial<Pick<Producto, 'activo' | 'agotado' | 'destacado' | 'orden'>>): Promise<void> {
+  async updateProductoFields(id: string, fields: Partial<Pick<Producto, 'activo' | 'agotado' | 'destacado' | 'sugerido' | 'orden'>>): Promise<void> {
     await requireSession();
     const { error } = await supabase.from('productos').update(fields).eq('id', id);
     if (error) throw new Error(`No se puede actualizar el producto: ${getErrorMessage(error)}`);
