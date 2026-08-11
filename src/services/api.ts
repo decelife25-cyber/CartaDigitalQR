@@ -13,16 +13,31 @@ function mapProducto(producto: any): Producto {
 export const api = {
   async getConfiguracion(): Promise<Configuracion | null> {
     const { data, error } = await supabase
-      .from('configuracion')
+      .from('configuracion_restaurante')
       .select('*')
+      .eq('activo', true)
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching configuracion:', error);
+    if (error) {
+      console.error('Error fetching configuracion_restaurante:', error);
       return null;
     }
-    return data;
+
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      nombre_restaurante: data.nombre ?? '',
+      logotipo_url: data.logo_url ?? null,
+      color_principal: data.color_principal ?? null,
+      color_secundario: null,
+      telefono: data.telefono ?? null,
+      direccion: data.direccion ?? null,
+      moneda: '€',
+      idioma: 'es',
+      horario: data.horario ?? null,
+    };
   },
 
   async getFamilias(): Promise<Familia[]> {
