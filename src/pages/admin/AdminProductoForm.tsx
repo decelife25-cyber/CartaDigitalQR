@@ -42,17 +42,40 @@ function CompactStatus({ label, checked, icon, onChange }: { label: string; chec
 
 type FeedbackModal = { title: string; message: string; danger?: boolean };
 
+type ProductSnapshot = {
+  nombre: string;
+  descripcion: string;
+  precio: string;
+  familiaId: string;
+  fotoUrl: string;
+  activo: boolean;
+  agotado: boolean;
+  destacado: boolean;
+  sugerido: boolean;
+  alergenos: string[];
+};
+
+function makeSnapshot(values: ProductSnapshot): string {
+  return JSON.stringify({ ...values, alergenos: [...values.alergenos].sort() });
+}
+
 export default function AdminProductoForm() {
   const { id } = useParams<{ id: string }>(); const navigate = useNavigate(); const isEditing = Boolean(id);
   const [loading,setLoading]=useState(true); const [saving,setSaving]=useState(false); const [familias,setFamilias]=useState<Familia[]>([]); const [alergenos,setAlergenos]=useState<Alergeno[]>([]);
   const [nombre,setNombre]=useState(''); const [descripcion,setDescripcion]=useState(''); const [precio,setPrecio]=useState('0.00'); const [familiaId,setFamiliaId]=useState(''); const [fotoUrl,setFotoUrl]=useState('');
   const [activo,setActivo]=useState(true); const [agotado,setAgotado]=useState(false); const [destacado,setDestacado]=useState(false); const [sugerido,setSugerido]=useState(false); const [familiaOpen,setFamiliaOpen]=useState(false); const [selectedAlergenos,setSelectedAlergenos]=useState<Set<string>>(new Set());
-  const [deleteOpen,setDeleteOpen]=useState(false); const [feedback,setFeedback]=useState<FeedbackModal|null>(null);
+  const [deleteOpen,setDeleteOpen]=useState(false); const [feedback,setFeedback]=useState<FeedbackModal|null>(null); const [unsavedOpen,setUnsavedOpen]=useState(false); const [initialSnapshot,setInitialSnapshot]=useState<string|null>(null);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [deleteFotoOpen, setDeleteFotoOpen] = useState(false);
 
-  useEffect(()=>{const load=async()=>{setLoading(true);try{const [f,a]=await Promise.all([adminApi.getFamiliasAdmin(),adminApi.getAlergenosAdmin()]);setFamilias(f);setAlergenos(a);if(isEditing&&id){const p=await adminApi.getProductoByIdAdmin(id);if(!p){navigate('/admin/productos');return;}setNombre(p.nombre);setDescripcion(p.descripcion??'');setPrecio(Number(p.precio).toFixed(2));setFamiliaId(p.familia_id);setFotoUrl(p.foto_url??'');setActivo(p.activo);setAgotado(p.agotado);setDestacado(p.destacado);setSugerido(p.sugerido??false);setSelectedAlergenos(new Set((p.alergenos??[]).map(x=>x.id)));}else if(f[0])setFamiliaId(f[0].id);}catch(e){console.error(e);setFeedback({title:'No se pudo cargar',message:errorMessage(e)});}finally{setLoading(false);}};void load();},[id,navigate,isEditing]);
+  useEffect(()=>{const load=async()=>{setLoading(true);try{const [f,a]=await Promise.all([adminApi.getFamiliasAdmin(),adminApi.getAlergenosAdmin()]);setFamilias(f);setAlergenos(a);if(isEditing&&id){const p=await adminApi.getProductoByIdAdmin(id);if(!p){navigate('/admin/productos');return;}const loadedAlergenos=new Set((p.alergenos??[]).map(x=>x.id));setNombre(p.nombre);setDescripcion(p.descripcion??'');setPrecio(Number(p.precio).toFixed(2));setFamiliaId(p.familia_id);setFotoUrl(p.foto_url??'');setActivo(p.activo);setAgotado(p.agotado);setDestacado(p.destacado);setSugerido(p.sugerido??false);setSelectedAlergenos(loadedAlergenos);setInitialSnapshot(makeSnapshot({nombre:p.nombre,descripcion:p.descripcion??'',precio:Number(p.precio).toFixed(2),familiaId:p.familia_id,fotoUrl:p.foto_url??'',activo:p.activo,agotado:p.agotado,destacado:p.destacado,sugerido:p.sugerido??false,alergenos:[...loadedAlergenos]}));}else{const defaultFamiliaId=f[0]?.id??'';setFamiliaId(defaultFamiliaId);setInitialSnapshot(makeSnapshot({nombre:'',descripcion:'',precio:'0.00',familiaId:defaultFamiliaId,fotoUrl:'',activo:true,agotado:false,destacado:false,sugerido:false,alergenos:[]}));}}catch(e){console.error(e);setFeedback({title:'No se pudo cargar',message:errorMessage(e)});}finally{setLoading(false);}};void load();},[id,navigate,isEditing]);
+
+  const currentSnapshot=makeSnapshot({nombre,descripcion,precio,familiaId,fotoUrl,activo,agotado,destacado,sugerido,alergenos:[...selectedAlergenos]});
+  const dirty=initialSnapshot!==null&&currentSnapshot!==initialSnapshot;
+
+  useEffect(()=>{const onBeforeUnload=(event:BeforeUnloadEvent)=>{if(!dirty)return;event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',onBeforeUnload);return()=>window.removeEventListener('beforeunload',onBeforeUnload);},[dirty]);
+
   const toggleAlergeno = (aid: string) => setSelectedAlergenos((cur) => {
     const n = new Set(cur);
     if (n.has(aid)) {
@@ -64,6 +87,9 @@ export default function AdminProductoForm() {
   });
   const normalizePrecio=()=>{const v=Number(precio.replace(',','.'));if(Number.isFinite(v)&&v>=0)setPrecio(v.toFixed(2));};
   const handleDelete=()=>{if(!id||saving)return;setDeleteOpen(true);};
+  const handleExit=()=>{if(saving)return;if(dirty)setUnsavedOpen(true);else navigate('/admin/productos');};
+  const handleSaveFromModal=()=>{setUnsavedOpen(false);const form=document.getElementById('producto-form');if(form instanceof HTMLFormElement)form.requestSubmit();};
+  const handleDiscardAndExit=()=>{setUnsavedOpen(false);navigate('/admin/productos');};
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -83,7 +109,7 @@ export default function AdminProductoForm() {
       setFeedback({ title: 'Error al subir', message: errorMessage(err), danger: true });
     } finally {
       setUploadingFoto(false);
-      e.target.value = ''; // Reset input
+      e.target.value = '';
     }
   };
 
@@ -101,12 +127,12 @@ export default function AdminProductoForm() {
     }
   };
   const confirmDelete=async()=>{if(!id)return;setDeleteOpen(false);setSaving(true);try{await adminApi.deleteProducto(id);navigate('/admin/productos');}catch(e){setFeedback({title:'No se pudo eliminar',message:errorMessage(e),danger:true});setSaving(false);}};
-  const handleSubmit=async(e:FormEvent)=>{e.preventDefault();const clean=nombre.trim();const p=Number(precio.replace(',','.'));if(!clean){setFeedback({title:'Falta el nombre',message:'El producto necesita un nombre.'});return;}if(!familiaId){setFeedback({title:'Falta la familia',message:'Debes seleccionar una familia.'});return;}if(!Number.isFinite(p)||p<0){setFeedback({title:'Precio no válido',message:'Introduce un precio válido.'});return;}setSaving(true);try{const data:Partial<Producto>={nombre:clean,descripcion:descripcion.trim()||null,precio:p,familia_id:familiaId,foto_url:fotoUrl.trim()||null,activo,agotado,destacado,sugerido};if(isEditing&&id)await adminApi.updateProducto(id,data,[...selectedAlergenos]);else await adminApi.createProducto(data,[...selectedAlergenos]);navigate('/admin/productos');}catch(e){setFeedback({title:'No se pudo guardar',message:errorMessage(e),danger:true});}finally{setSaving(false);}};
+  const handleSubmit=async(e:FormEvent)=>{e.preventDefault();if(!dirty&&!saving)return;const clean=nombre.trim();const p=Number(precio.replace(',','.'));if(!clean){setFeedback({title:'Falta el nombre',message:'El producto necesita un nombre.'});return;}if(!familiaId){setFeedback({title:'Falta la familia',message:'Debes seleccionar una familia.'});return;}if(!Number.isFinite(p)||p<0){setFeedback({title:'Precio no válido',message:'Introduce un precio válido.'});return;}setSaving(true);try{const data:Partial<Producto>={nombre:clean,descripcion:descripcion.trim()||null,precio:p,familia_id:familiaId,foto_url:fotoUrl.trim()||null,activo,agotado,destacado,sugerido};if(isEditing&&id)await adminApi.updateProducto(id,data,[...selectedAlergenos]);else await adminApi.createProducto(data,[...selectedAlergenos]);navigate('/admin/productos');}catch(e){setFeedback({title:'No se pudo guardar',message:errorMessage(e),danger:true});}finally{setSaving(false);}};
   const familiaNombre=familias.find(f=>f.id===familiaId)?.nombre??'Selecciona una familia';
   if(loading)return <div className="flex min-h-[60vh] items-center justify-center" style={{background:'var(--app-bg)',color:'var(--app-text)'}}><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-500"/></div>;
   return <div className="min-h-[calc(100dvh-4rem)] w-screen max-w-none overflow-x-clip" style={{background:'var(--app-bg)',color:'var(--app-text)',width:'100vw',marginLeft:'calc(50% - 50vw)'}}>
     <header className="sticky top-0 z-30 flex h-11 items-center gap-1 border-b px-2" style={{borderColor:'var(--app-border)',background:'color-mix(in srgb, var(--app-bg) 94%, transparent)',backdropFilter:'blur(10px)'}}>
-      <button type="button" onClick={()=>navigate('/admin/productos')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver"><ArrowLeft size={20}/></button>
+      <button type="button" onClick={handleExit} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver"><ArrowLeft size={20}/></button>
       <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight">{isEditing?'Editar artículo':'Nuevo artículo'}</h1>
       {isEditing&&<button type="button" onClick={handleDelete} disabled={saving} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500"><Trash2 size={15}/><span className="hidden min-[390px]:inline">Eliminar</span></button>}
       <label className="flex shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 text-center"><span className="text-[8px] font-extrabold uppercase leading-none" style={{color:'var(--app-muted)'}}>Visible</span><StatusSwitch checked={activo}/><input type="checkbox" checked={activo} onChange={e=>setActivo(e.target.checked)} className="sr-only"/></label>
@@ -155,11 +181,12 @@ export default function AdminProductoForm() {
         <div className="mt-2 grid grid-cols-3 gap-1.5 border-t pt-2" style={{borderColor:'var(--app-border)'}}><CompactStatus label="Disponible" checked={!agotado} onChange={v=>setAgotado(!v)}/><CompactStatus label="Destacado" checked={destacado} icon={<Star size={11}/>} onChange={setDestacado}/><CompactStatus label="Sugerencia" checked={sugerido} icon={<Lightbulb size={11}/>} onChange={setSugerido}/></div>
       </section>
       <section className="w-full rounded-xl border p-2.5 shadow-sm" style={{background:'var(--app-surface)',borderColor:'var(--app-border)',boxShadow:'var(--app-shadow)'}}><div className="mb-1.5 flex items-end justify-between"><div><h2 className="text-[15px] font-extrabold">Alérgenos</h2><p className="text-[9px]" style={{color:'var(--app-muted)'}}>Selecciona los alérgenos que contiene este artículo.</p></div><span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-500" style={{background:'var(--app-surface-soft)'}}>{selectedAlergenos.size}</span></div><div className="grid grid-cols-2 gap-1">{alergenos.map(a=>{const selected=selectedAlergenos.has(a.id);return <label key={a.id} title={a.nombre} className="flex min-h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-1.5 transition" style={{borderColor:selected?'rgba(249,115,22,.85)':'var(--app-border)',background:selected?'rgba(249,115,22,.10)':'var(--app-surface-soft)'}}><input type="checkbox" checked={selected} onChange={()=>toggleAlergeno(a.id)} className="sr-only"/><span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border" style={selected?{borderColor:'#f97316',background:'#f97316',color:'#fff'}:{borderColor:'var(--app-muted)',color:'transparent'}}><Check size={11} strokeWidth={3}/></span><AlergenoIcon alergeno={a}/><span className="min-w-0 break-words text-[10px] font-semibold leading-[1.05]" style={{color:'var(--app-text)'}}>{a.nombre}</span></label>})}</div></section>
-      <div className="sticky bottom-0 z-20 w-full border-t px-2 py-2 backdrop-blur" style={{borderColor:'var(--app-border)',background:'color-mix(in srgb, var(--app-bg) 94%, transparent)'}}><div className="flex w-full gap-2"><button type="button" onClick={()=>navigate('/admin/productos')} className="h-9 flex-1 rounded-lg border text-xs font-bold" style={{borderColor:'var(--app-border)',background:'var(--app-surface)',color:'var(--app-muted)'}}>Cancelar</button><button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-lg bg-orange-500 text-xs font-extrabold text-white shadow-sm disabled:opacity-50"><span className="inline-flex items-center justify-center gap-1.5"><Save size={15}/>{saving?'Guardando…':'Guardar cambios'}</span></button></div></div>
+      <div className="sticky bottom-0 z-20 w-full border-t px-2 py-2 backdrop-blur" style={{borderColor:'var(--app-border)',background:'color-mix(in srgb, var(--app-bg) 94%, transparent)'}}><div className="flex w-full gap-2"><button type="button" onClick={handleExit} className="h-9 flex-1 rounded-lg border text-xs font-bold" style={{borderColor:'var(--app-border)',background:'var(--app-surface)',color:'var(--app-muted)'}}>Cancelar</button><button type="submit" disabled={saving||!dirty} className="h-9 flex-[1.7] rounded-lg bg-orange-500 text-xs font-extrabold text-white shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-400"><span className="inline-flex items-center justify-center gap-1.5"><Save size={15}/>{saving?'Guardando…':'Guardar cambios'}</span></button></div></div>
     </form>
 
     <AppModal open={deleteOpen} title="Eliminar artículo" message={`¿Eliminar «${nombre}»? Esta acción no se puede deshacer.`} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onConfirm={() => void confirmDelete()} onCancel={() => setDeleteOpen(false)} />
     <AppModal open={deleteFotoOpen} title="Eliminar foto" message={`¿Deseas eliminar la fotografía de este producto?`} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onConfirm={() => void confirmDeleteFoto()} onCancel={() => setDeleteFotoOpen(false)} />
     <AppModal open={Boolean(feedback)} title={feedback?.title ?? ''} message={feedback?.message ?? ''} confirmLabel="Aceptar" cancelLabel="Cerrar" danger={feedback?.danger} onConfirm={() => setFeedback(null)} onCancel={() => setFeedback(null)} />
+    <AppModal open={unsavedOpen} title="Cambios sin guardar" message="Has modificado este artículo. ¿Qué quieres hacer antes de salir?" confirmLabel="Guardar cambios" cancelLabel="Seguir editando" onConfirm={handleSaveFromModal} onCancel={() => setUnsavedOpen(false)} content={<div className="mt-3"><button type="button" onClick={handleDiscardAndExit} className="h-11 w-full rounded-xl border text-sm font-extrabold text-red-500" style={{borderColor:'rgba(239,68,68,.25)',background:'rgba(239,68,68,.06)'}}>Salir sin guardar</button></div>} />
   </div>;
 }
