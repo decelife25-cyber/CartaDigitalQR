@@ -16,8 +16,6 @@ export default function AdminFamilias() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [newName, setNewName] = useState('');
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Familia | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -37,22 +35,6 @@ export default function AdminFamilias() {
   useEffect(() => { void load(); }, []);
 
   const ordered = useMemo(() => [...familias].sort((a, b) => a.orden - b.orden), [familias]);
-
-  const create = async () => {
-    const nombre = newName.trim();
-    if (!nombre) return;
-    setSaving(true);
-    try {
-      const familia = await adminApi.createFamilia({ nombre, orden: familias.length, activo: true });
-      if (familia) setFamilias((items) => [...items, familia].sort((a, b) => a.orden - b.orden));
-      setNewName('');
-      setCreateOpen(false);
-    } catch (e) {
-      setModalError(errorMessage(e));
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const reorder = async (sourceId: string, targetId: string) => {
     if (sourceId === targetId || saving) return;
@@ -104,7 +86,7 @@ export default function AdminFamilias() {
           <h1 className="ml-1 text-[22px] font-extrabold tracking-tight sm:text-3xl">Familias</h1>
         </div>
         <span className="justify-self-center text-[13px] font-extrabold" style={{ color: 'var(--app-muted)' }}>({ordered.length})</span>
-        <button type="button" disabled={saving} onClick={() => { setNewName(''); setCreateOpen(true); }} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white disabled:opacity-40"><Plus size={17} /><span>Añadir</span></button>
+        <button type="button" disabled={saving} onClick={() => navigate('/admin/familias/nuevo')} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white disabled:opacity-40"><Plus size={17} /><span>Añadir</span></button>
       </header>
 
       {error && <div className="mx-2 mt-2 rounded-xl border p-2 text-sm" style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}>{error}<button type="button" onClick={() => void load()} className="ml-2 font-bold text-orange-600">Reintentar</button></div>}
@@ -137,7 +119,6 @@ export default function AdminFamilias() {
         {!ordered.length && <div className="mx-2 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}><p className="text-sm font-bold">No hay familias creadas.</p><p className="mt-1 text-xs">Pulsa Añadir para crear la primera.</p></div>}
       </section>
 
-      <AppModal open={createOpen} title="Nueva familia" message="Escribe el nombre de la nueva familia." confirmLabel="Añadir" cancelLabel="Cancelar" mobilePosition="top" onCancel={() => { setCreateOpen(false); setNewName(''); }} onConfirm={() => void create()} content={<input autoFocus value={newName} onChange={(event) => setNewName(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') void create(); }} placeholder="Nombre de la familia..." aria-label="Nombre de la nueva familia" className="mt-4 h-11 w-full rounded-xl border bg-transparent px-3 text-sm font-medium outline-none focus:border-orange-500" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} />} />
       <AppModal open={Boolean(deleteTarget)} title="¿Eliminar familia?" message={deleteTarget ? `Se eliminará «${deleteTarget.nombre}». Esta acción no se puede deshacer.` : ''} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onCancel={() => setDeleteTarget(null)} onConfirm={() => void remove()} />
       <AppModal open={Boolean(modalError)} title="No se ha podido completar" message={modalError ?? ''} confirmLabel="Aceptar" cancelLabel="Cerrar" onCancel={() => setModalError(null)} onConfirm={() => setModalError(null)} />
     </div>
