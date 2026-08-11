@@ -42,6 +42,7 @@ export interface Producto {
   activo: boolean;
   agotado: boolean;
   destacado: boolean;
+  sugerido: boolean;
   orden: number;
   created_at: string;
   updated_at: string;
