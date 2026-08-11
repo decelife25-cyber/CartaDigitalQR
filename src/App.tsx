@@ -9,6 +9,7 @@ import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/admin/Login';
 import HomePrivado from './pages/admin/HomePrivado';
 import AdminFamilias from './pages/admin/AdminFamilias';
+import AdminFamiliaForm from './pages/admin/AdminFamiliaForm';
 import AdminProductos from './pages/admin/AdminProductos';
 import AdminProductoForm from './pages/admin/AdminProductoForm';
 import AdminConfiguracion from './pages/admin/AdminConfiguracion';
@@ -28,6 +29,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<HomePrivado />} />
           <Route path="familias" element={<AdminFamilias />} />
+          <Route path="familias/:id/editar" element={<AdminFamiliaForm />} />
           <Route path="productos" element={<AdminProductos />} />
           <Route path="productos/nuevo" element={<AdminProductoForm />} />
           <Route path="productos/:id/editar" element={<AdminProductoForm />} />
