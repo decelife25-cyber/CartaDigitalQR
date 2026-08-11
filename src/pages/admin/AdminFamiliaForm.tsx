@@ -19,29 +19,30 @@ function StatusSwitch({ checked }: { checked: boolean }) {
   );
 }
 
+type FeedbackModal = { title: string; message: string; danger?: boolean };
+
 export default function AdminFamiliaForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const isEditing = Boolean(id);
   const [familia, setFamilia] = useState<Familia | null>(null);
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [fotoUrl, setFotoUrl] = useState('');
   const [activo, setActivo] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [feedback, setFeedback] = useState<{ title: string; message: string; danger?: boolean } | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackModal | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteFotoOpen, setDeleteFotoOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    if (!isEditing || !id) return;
+
     const load = async () => {
-      if (!id) {
-        navigate('/admin/familias', { replace: true });
-        return;
-      }
       setLoading(true);
       try {
         const data = await adminApi.getFamiliasAdmin();
@@ -61,8 +62,9 @@ export default function AdminFamiliaForm() {
         setLoading(false);
       }
     };
+
     void load();
-  }, [id, navigate]);
+  }, [id, isEditing, navigate]);
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -72,6 +74,7 @@ export default function AdminFamiliaForm() {
       setFeedback({ title: 'Formato inválido', message: 'Selecciona una imagen JPG, PNG o WEBP.' });
       return;
     }
+
     setUploading(true);
     try {
       const url = await familiaApi.uploadFoto(file);
@@ -102,18 +105,27 @@ export default function AdminFamiliaForm() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const cleanName = nombre.trim();
-    if (!familia || !cleanName) {
+    if (!cleanName) {
       setFeedback({ title: 'Falta el nombre', message: 'La familia necesita un nombre.' });
       return;
     }
+
     setSaving(true);
     try {
-      await adminApi.updateFamilia(familia.id, {
+      const fields: Partial<Familia> = {
         nombre: cleanName,
         descripcion: descripcion.trim() || null,
         foto_url: fotoUrl.trim() || null,
         activo,
-      });
+      };
+
+      if (isEditing && familia) {
+        await adminApi.updateFamilia(familia.id, fields);
+      } else {
+        const created = await adminApi.createFamilia(fields);
+        if (!created) throw new Error('No se pudo crear la familia.');
+      }
+
       navigate('/admin/familias');
     } catch (error) {
       setFeedback({ title: 'No se pudo guardar', message: errorMessage(error), danger: true });
@@ -139,14 +151,12 @@ export default function AdminFamiliaForm() {
     return <div className="flex min-h-[60vh] items-center justify-center" style={{ background: 'var(--app-bg)' }}><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-500" /></div>;
   }
 
-  if (!familia) return null;
-
   return (
     <div className="min-h-[calc(100dvh-4rem)] w-screen max-w-none overflow-x-clip" style={{ background: 'var(--app-bg)', color: 'var(--app-text)', width: '100vw', marginLeft: 'calc(50% - 50vw)' }}>
       <header className="sticky top-0 z-30 flex h-11 items-center gap-1 border-b px-2" style={{ borderColor: 'var(--app-border)', background: 'color-mix(in srgb, var(--app-bg) 94%, transparent)', backdropFilter: 'blur(10px)' }}>
         <button type="button" onClick={() => navigate('/admin/familias')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver"><ArrowLeft size={20} /></button>
-        <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight">Editar familia</h1>
-        <button type="button" onClick={() => setDeleteOpen(true)} disabled={saving || uploading} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500 disabled:opacity-40"><Trash2 size={15} /><span className="hidden min-[390px]:inline">Eliminar</span></button>
+        <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight">{isEditing ? 'Editar familia' : 'Nueva familia'}</h1>
+        {isEditing && <button type="button" onClick={() => setDeleteOpen(true)} disabled={saving || uploading} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500 disabled:opacity-40"><Trash2 size={15} /><span className="hidden min-[390px]:inline">Eliminar</span></button>}
         <label className="flex shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 text-center">
           <span className="text-[8px] font-extrabold uppercase leading-none" style={{ color: 'var(--app-muted)' }}>{activo ? 'Visible' : 'Oculta'}</span>
           <StatusSwitch checked={activo} />
@@ -160,7 +170,7 @@ export default function AdminFamiliaForm() {
             <div className="min-w-0">
               <div className="relative overflow-hidden rounded-lg border" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
                 <div className="aspect-square w-full">
-                  {fotoUrl ? <img src={fotoUrl} alt={`Foto de ${nombre}`} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none'; }} /> : <div className="flex h-full items-center justify-center" style={{ color: 'var(--app-muted)' }}><ImageIcon size={30} /></div>}
+                  {fotoUrl ? <img src={fotoUrl} alt={`Foto de ${nombre || 'la familia'}`} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none'; }} /> : <div className="flex h-full items-center justify-center" style={{ color: 'var(--app-muted)' }}><ImageIcon size={30} /></div>}
                   {uploading && <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 text-white backdrop-blur-sm"><div className="mb-2 h-5 w-5 animate-spin rounded-full border-b-2 border-white" /><span className="text-[10px] font-bold">Subiendo...</span></div>}
                   {uploadSuccess && <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-emerald-500/80 text-white"><Check size={24} /><span className="text-[10px] font-bold">Foto subida</span></div>}
                 </div>
@@ -180,11 +190,11 @@ export default function AdminFamiliaForm() {
         </section>
 
         <div className="px-2">
-          <button type="submit" disabled={saving || uploading || !nombre.trim()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 text-sm font-extrabold text-white disabled:opacity-40"><Save size={17} />Guardar cambios</button>
+          <button type="submit" disabled={saving || uploading || !nombre.trim()} className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-orange-500 text-sm font-extrabold text-white disabled:opacity-40"><Save size={17} />{isEditing ? 'Guardar cambios' : 'Crear familia'}</button>
         </div>
       </form>
 
-      <AppModal open={deleteOpen} title="¿Eliminar familia?" message={`Se eliminará «${familia.nombre}». Esta acción no se puede deshacer.`} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onCancel={() => setDeleteOpen(false)} onConfirm={() => void confirmDelete()} />
+      {isEditing && familia && <AppModal open={deleteOpen} title="¿Eliminar familia?" message={`Se eliminará «${familia.nombre}». Esta acción no se puede deshacer.`} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onCancel={() => setDeleteOpen(false)} onConfirm={() => void confirmDelete()} />}
       <AppModal open={deleteFotoOpen} title="¿Eliminar foto?" message="La foto se eliminará del almacenamiento y la familia quedará sin imagen." confirmLabel="Eliminar foto" cancelLabel="Cancelar" danger onCancel={() => setDeleteFotoOpen(false)} onConfirm={() => void confirmDeleteFoto()} />
       <AppModal open={Boolean(feedback)} title={feedback?.title ?? ''} message={feedback?.message ?? ''} confirmLabel="Aceptar" cancelLabel="Cerrar" danger={feedback?.danger} onCancel={() => setFeedback(null)} onConfirm={() => setFeedback(null)} />
     </div>
