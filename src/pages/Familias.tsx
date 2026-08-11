@@ -4,8 +4,6 @@ import { ChevronRight, Moon, Sun, Utensils } from 'lucide-react';
 import { api } from '../services/api';
 import type { Familia } from '../types/database';
 
-const PORTADA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/PUBLICO/portada.png?v=1';
-
 function toggleTheme() {
   const root = document.documentElement;
   const night = !root.classList.contains('theme-night');
@@ -47,7 +45,6 @@ export default function Familias() {
   return (
     <main className="min-h-[100dvh] w-full" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
       <div className="mx-auto w-full max-w-2xl">
-        {/* Cabecera: misma limpieza y proporción que el listado privado de Familias. */}
         <header
           className="sticky top-0 z-20 flex min-h-[74px] items-center justify-between border-b px-4"
           style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
@@ -79,41 +76,42 @@ export default function Familias() {
               key={familia.id}
               type="button"
               onClick={() => navigate(`/familias/${familia.id}`)}
-              className="flex min-h-[94px] w-full items-center border-b text-left transition-colors active:brightness-95"
+              className="flex min-h-[72px] w-full items-center border-b text-left transition-colors active:brightness-95"
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
             >
-              {/*
-                Imagen provisional: reutiliza la foto de portada hasta incorporar foto_url
-                específica de cada familia en la configuración. El contenedor ya queda
-                preparado para sustituirla por la foto propia sin cambiar el diseño.
-              */}
-              <div className="relative ml-3 h-[72px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-stone-200">
-                <img
-                  src={PORTADA_IMAGE}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-black/10" />
+              <div className="relative ml-3 h-[58px] w-[74px] shrink-0 overflow-hidden rounded-lg bg-stone-200">
+                {familia.foto_url ? (
+                  <img
+                    src={familia.foto_url}
+                    alt={`Foto de ${familia.nombre}`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center" style={{ color: 'var(--app-muted)' }}>
+                    <Utensils size={20} strokeWidth={1.6} />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/5" />
               </div>
 
-              <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3">
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2">
                 <div className="min-w-0">
-                  <h2 className="text-[17px] font-extrabold leading-tight">
+                  <h2 className="text-[16px] font-extrabold leading-tight">
                     {familia.nombre}
                   </h2>
                   {familia.descripcion && (
-                    <p className="mt-1 line-clamp-2 text-[12px] leading-4" style={{ color: 'var(--app-muted)' }}>
+                    <p className="mt-0.5 line-clamp-1 text-[11px] leading-4" style={{ color: 'var(--app-muted)' }}>
                       {familia.descripcion}
                     </p>
                   )}
                 </div>
 
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border"
                   style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface-soft)' }}
                 >
-                  <ChevronRight className="h-5 w-5" strokeWidth={2} />
+                  <ChevronRight className="h-4 w-4" strokeWidth={2} />
                 </span>
               </div>
             </button>
