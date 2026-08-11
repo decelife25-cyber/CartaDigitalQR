@@ -110,24 +110,6 @@ function ProductoImagen({ producto }: { producto: Producto }) {
   );
 }
 
-function PanelVisual({ producto }: { producto: Producto }) {
-  const hasAllergens = Boolean(producto.alergenos?.length);
-
-  return (
-    <div className="relative h-full w-full overflow-hidden">
-      <ProductoImagen producto={producto} />
-      {hasAllergens ? (
-        <div
-          className="absolute inset-x-1 bottom-1 rounded-xl px-1 py-1 backdrop-blur-[2px]"
-          style={{ background: 'rgba(255,255,255,.88)' }}
-        >
-          <AlergenoItem producto={producto} />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export default function ListadoPlatos() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -213,27 +195,28 @@ export default function ListadoPlatos() {
               className="relative flex min-h-[104px] w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]"
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
-              <div className="relative h-[104px] w-[34%] shrink-0 overflow-hidden bg-stone-100">
-                <PanelVisual producto={producto} />
+              {/* Foto: columna izquierda, deliberadamente más estrecha para liberar espacio al contenido. */}
+              <div className="relative h-[104px] w-[30%] shrink-0 overflow-hidden bg-stone-100">
+                <ProductoImagen producto={producto} />
               </div>
 
-              <div className="relative min-w-0 flex-1 px-3.5 pb-2.5 pt-3 pr-12">
-                <h2 className="line-clamp-2 text-[16px] font-extrabold leading-[1.1]">
-                  {producto.nombre}
-                </h2>
+              {/* Contenido: precio arriba a la derecha; alérgenos debajo y SIEMPRE a la derecha de la foto. */}
+              <div className="relative min-w-0 flex-1 px-3.5 pb-2.5 pt-2.5 pr-14">
+                <div className="flex min-w-0 items-start gap-2 pr-0">
+                  <h2 className="min-w-0 flex-1 pr-1 text-[16px] font-extrabold leading-[1.08]">
+                    {producto.nombre}
+                  </h2>
+                  <span
+                    className="shrink-0 whitespace-nowrap pt-0.5 text-[16px] font-extrabold leading-none text-primary"
+                    aria-label={`Precio ${producto.precio.toFixed(2)} euros`}
+                  >
+                    {producto.precio.toFixed(2)}€
+                  </span>
+                </div>
 
-                {producto.descripcion && (
-                  <p className="mt-1 line-clamp-2 text-xs leading-4" style={{ color: 'var(--app-muted)' }}>
-                    {producto.descripcion}
-                  </p>
-                )}
-
-                <span
-                  className="absolute right-12 top-3 text-[17px] font-extrabold leading-none text-primary"
-                  aria-label={`Precio ${producto.precio.toFixed(2)} euros`}
-                >
-                  {producto.precio.toFixed(2)}€
-                </span>
+                <div className="absolute bottom-2.5 left-3.5 right-14">
+                  <AlergenoItem producto={producto} />
+                </div>
               </div>
 
               <span
