@@ -58,7 +58,7 @@ export default function Portada() {
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
             pizarraAmpliada
               ? 'bottom-[145px] right-[4%] w-[min(78vw,360px)]'
-              : 'bottom-[145px] right-[4%] w-[min(40vw,180px)]',
+              : 'bottom-[100px] right-[4%] w-[min(40vw,180px)]',
           ].join(' ')}
         >
           <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
@@ -71,15 +71,15 @@ export default function Portada() {
               className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-y-auto text-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={{
                 fontFamily: 'Segoe Print, Bradley Hand, Marker Felt, Comic Sans MS, cursive',
+                fontSize: pizarraAmpliada ? 'clamp(17px, 4vw, 25px)' : 'clamp(10px, 2.4vw, 16px)',
+                lineHeight: 1.15,
                 textShadow: '0 1px 2px rgba(0,0,0,.85)',
               }}
             >
               {sugerencias.map((producto) => (
-                <div
-                  key={producto.id}
-                  className="whitespace-normal text-[clamp(10px,2.4vw,16px)] font-semibold leading-[1.15]"
-                >
-                  - {producto.nombre}
+                <div key={producto.id} className="flex min-w-0 items-start font-semibold">
+                  <span className="mr-[0.45em] shrink-0">-</span>
+                  <span className="min-w-0 break-words">{producto.nombre}</span>
                 </div>
               ))}
             </div>
