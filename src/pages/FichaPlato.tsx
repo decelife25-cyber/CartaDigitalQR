@@ -6,21 +6,57 @@ import type { Producto } from '../types/database';
 import { useSelectionStore } from '../store/selectionStore';
 import { clsx } from 'clsx';
 
+const ALERGENO_COLORS: Record<string, string> = {
+  apio: '#dff0d0',
+  cacahuetes: '#eadfce',
+  crustaceos: '#dcecf5',
+  huevos: '#fff0b5',
+  gluten: '#f3d9e2',
+  lacteos: '#dce4ee',
+  leche: '#dce4ee',
+  moluscos: '#dcecf5',
+  mostaza: '#f7e7b5',
+  pescado: '#d8eef7',
+  sesamo: '#e9dfcf',
+  soja: '#dff0d0',
+  sulfitos: '#eadcf0',
+  'frutos de cascara': '#eadfce',
+};
+
+function normalizeAlergenoNombre(nombre: string) {
+  return nombre
+    .trim()
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getAlergenoBackground(nombre: string) {
+  const normalized = normalizeAlergenoNombre(nombre);
+  return ALERGENO_COLORS[normalized] ?? 'var(--app-surface-soft)';
+}
+
 function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string }) {
   const [failed, setFailed] = useState(false);
-
-  if (!icono || failed) {
-    return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)' }}>•</span>;
-  }
+  const background = getAlergenoBackground(nombre);
 
   return (
-    <img
-      src={icono}
-      alt=""
-      title={nombre}
-      className="h-8 w-8 shrink-0 object-contain"
-      onError={() => setFailed(true)}
-    />
+    <span
+      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+      style={{ background }}
+    >
+      {icono && !failed ? (
+        <img
+          src={icono}
+          alt=""
+          title={nombre}
+          className="h-9 w-9 object-contain"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className="text-xl font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
+      )}
+    </span>
   );
 }
 
@@ -80,16 +116,18 @@ export default function FichaPlato() {
               className="h-full w-full object-cover"
               onError={(event) => {
                 event.currentTarget.style.display = 'none';
-                event.currentTarget.nextElementSibling?.removeAttribute('hidden');
+                const placeholder = event.currentTarget.parentElement?.querySelector('[data-image-placeholder]');
+                placeholder?.removeAttribute('hidden');
               }}
             />
           ) : null}
           <div
+            data-image-placeholder
             hidden={Boolean(producto.foto_url)}
-            className="flex h-full w-full items-center justify-center"
+            className="h-full w-full items-center justify-center"
             style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}
           >
-            <div className="flex flex-col items-center gap-2">
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2">
               <Utensils className="h-10 w-10" strokeWidth={1.2} />
               <span className="text-sm">Sin imagen</span>
             </div>
@@ -108,11 +146,12 @@ export default function FichaPlato() {
       </section>
 
       <section className="relative mx-3 -mt-5 rounded-3xl px-5 pb-7 pt-5 shadow-sm" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-[27px] leading-[1.08] font-extrabold tracking-tight">{producto.nombre}</h1>
-          </div>
-          <div className="shrink-0 rounded-2xl px-3 py-2 text-xl font-extrabold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>
+        <div className="min-w-0">
+          <h1 className="w-full text-[27px] leading-[1.08] font-extrabold tracking-tight break-words">{producto.nombre}</h1>
+        </div>
+
+        <div className="mt-4 flex w-full justify-end">
+          <div className="rounded-2xl px-4 py-2 text-xl font-extrabold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>
             {producto.precio.toFixed(2)}€
           </div>
         </div>
@@ -134,9 +173,9 @@ export default function FichaPlato() {
 
             <div className="grid grid-cols-2 gap-2.5">
               {producto.alergenos.map((alergeno) => (
-                <div key={alergeno.id} className="flex min-h-14 items-center gap-2.5 rounded-2xl px-3 py-2" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                <div key={alergeno.id} className="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} />
-                  <span className="text-sm font-semibold leading-tight">{alergeno.nombre}</span>
+                  <span className="text-[16px] font-semibold leading-tight break-words">{alergeno.nombre}</span>
                 </div>
               ))}
             </div>
