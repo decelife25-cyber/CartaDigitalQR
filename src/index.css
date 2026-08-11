@@ -85,13 +85,18 @@ body {
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="lupin.svg"]) { background-color: #e4d8f2 !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="molluscs.svg"]) { background-color: #d6e2f2 !important; }
 
-/* Altramuces: alias local explícito para garantizar que el pictograma se pinte. */
+/* Altramuces: usa el alias local visible en lugar del SVG original que estaba quedando vacío. */
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label[title="Altramuces"] > span:nth-of-type(2) {
   background-image: url('/CartaDigitalQR/icons/alergenos/erudus/altramuz.svg') !important;
   background-color: #e4d8f2 !important;
   background-size: 28px 28px !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
+}
+
+/* El SVG lupin que carga el componente no debe tapar el alias visible. */
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label[title="Altramuces"] > span:nth-of-type(2) > img {
+  display: none !important;
 }
 
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:last-child {
