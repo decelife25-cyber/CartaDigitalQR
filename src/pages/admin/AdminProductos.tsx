@@ -5,6 +5,8 @@ import AppSelectionModal from '../../components/ui/AppSelectionModal';
 import { adminApi } from '../../services/adminApi';
 import type { Familia, Producto } from '../../types/database';
 
+const FAMILIA_FILTER_STORAGE_KEY = 'admin-productos-familia-filter';
+
 function errorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message: unknown }).message);
@@ -32,13 +34,21 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: 'precio-desc', label: 'Precio ↓' },
 ];
 
+function getStoredFamiliaId(): string {
+  try {
+    return window.sessionStorage.getItem(FAMILIA_FILTER_STORAGE_KEY) || 'todas';
+  } catch {
+    return 'todas';
+  }
+}
+
 export default function AdminProductos() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [familiaId, setFamiliaId] = useState('todas');
+  const [familiaId, setFamiliaId] = useState(getStoredFamiliaId);
   const [status, setStatus] = useState<StatusFilter>('todos');
   const [sort, setSort] = useState<SortMode>('orden');
   const [filterModal, setFilterModal] = useState<FilterModal>(null);
@@ -58,6 +68,11 @@ export default function AdminProductos() {
       ]);
       setProductos(productosData);
       setFamilias(familiasData);
+      const storedFamiliaId = getStoredFamiliaId();
+      if (storedFamiliaId !== 'todas' && !familiasData.some((familia) => familia.id === storedFamiliaId)) {
+        setFamiliaId('todas');
+        try { window.sessionStorage.removeItem(FAMILIA_FILTER_STORAGE_KEY); } catch { /* ignore storage errors */ }
+      }
     } catch (err) {
       console.error('Error loading productos:', err);
       setError(errorMessage(err));
@@ -68,6 +83,13 @@ export default function AdminProductos() {
 
   useEffect(() => { void fetchData(); }, []);
   useEffect(() => { productosRef.current = productos; }, [productos]);
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(FAMILIA_FILTER_STORAGE_KEY, familiaId);
+    } catch {
+      // Ignore storage errors; the filter still works for the current render.
+    }
+  }, [familiaId]);
 
   const familiaMap = useMemo(
     () => new Map(familias.map((familia) => [familia.id, familia.nombre])),
