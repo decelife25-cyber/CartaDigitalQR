@@ -78,7 +78,7 @@ export default function Portada() {
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
             pizarraAmpliada
               ? 'bottom-[205px] right-[4%] w-[min(78vw,360px)]'
-              : 'bottom-[150px] right-[4%] w-[min(40vw,180px)]',
+              : 'bottom-[100px] right-[4%] w-[min(40vw,180px)]',
           ].join(' ')}
         >
           <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
@@ -115,8 +115,8 @@ export default function Portada() {
         <X size={20} strokeWidth={2.5} />
       </button>
 
-      {/* Pie fijo: se eleva para dejar espacio real a dirección y teléfono. */}
-      <div className="absolute inset-x-0 bottom-9 z-30 px-4">
+      {/* Pie: botones un poco más abajo y datos de contacto en una sola línea. */}
+      <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-2">
         <div className="mx-auto w-full max-w-lg">
           <div className="grid w-full grid-cols-4 gap-2">
             <button
@@ -148,9 +148,10 @@ export default function Portada() {
           </div>
 
           {(direccion || phone) && (
-            <div className="mt-2 rounded-lg bg-black/35 px-2 py-1 text-center text-[10px] font-semibold leading-tight text-white shadow-sm backdrop-blur-sm">
-              {direccion && <div>{direccion}</div>}
-              {phone && <div>{phone}</div>}
+            <div className="mt-2 whitespace-nowrap rounded-lg bg-black/35 px-2 py-1 text-center text-[10px] font-semibold leading-tight text-white shadow-sm backdrop-blur-sm">
+              {direccion && <span>{direccion}</span>}
+              {direccion && phone && <span className="mx-2">|</span>}
+              {phone && <span>{phone}</span>}
             </div>
           )}
         </div>
