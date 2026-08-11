@@ -29,6 +29,7 @@ function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<HomePrivado />} />
           <Route path="familias" element={<AdminFamilias />} />
+          <Route path="familias/nuevo" element={<AdminFamiliaForm />} />
           <Route path="familias/:id/editar" element={<AdminFamiliaForm />} />
           <Route path="productos" element={<AdminProductos />} />
           <Route path="productos/nuevo" element={<AdminProductoForm />} />
