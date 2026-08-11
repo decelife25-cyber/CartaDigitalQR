@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { ArrowLeft, GripVertical, ImageOff, Plus, Search, X } from 'lucide-react';
+import { ArrowLeft, Filter, GripVertical, ImageOff, Plus, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AppSelectionModal from '../../components/ui/AppSelectionModal';
 import { adminApi } from '../../services/adminApi';
@@ -197,7 +197,6 @@ export default function AdminProductos() {
     ? 'Familia: Todas'
     : `Familia: ${familiaMap.get(familiaId) ?? 'Todas'}`;
   const estadoLabel = statusOptions.find((option) => option.value === status)?.label ?? 'Estado: Todos';
-  const ordenLabel = sortOptions.find((option) => option.value === sort)?.label ?? 'Orden: Carta';
   const familiaOptions = [
     { value: 'todas', label: 'Familia: Todas' },
     ...familias.filter((familia) => familia.activo).map((familia) => ({ value: familia.id, label: familia.nombre })),
@@ -228,10 +227,10 @@ export default function AdminProductos() {
           {search && <button type="button" onClick={() => setSearch('')} className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg" style={{ color: 'var(--app-muted)' }} aria-label="Limpiar búsqueda"><X size={16} /></button>}
         </div>
 
-        <div className="mt-2 grid grid-cols-3 gap-2">
+        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_112px_38px] gap-2">
           <button type="button" onClick={() => setFilterModal('familia')} className="flex h-9 min-w-0 items-center justify-between rounded-xl border bg-transparent px-2.5 text-left text-[12px] font-semibold" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} aria-haspopup="dialog" aria-label="Filtrar por familia"><span className="min-w-0 truncate">{familiaLabel}</span><span className="ml-1 shrink-0 text-[12px]" style={{ color: 'var(--app-muted)' }}>⌄</span></button>
           <button type="button" onClick={() => setFilterModal('estado')} className="flex h-9 min-w-0 items-center justify-between rounded-xl border bg-transparent px-2.5 text-left text-[12px] font-semibold" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} aria-haspopup="dialog" aria-label="Filtrar por estado"><span className="min-w-0 truncate">{estadoLabel}</span><span className="ml-1 shrink-0 text-[12px]" style={{ color: 'var(--app-muted)' }}>⌄</span></button>
-          <button type="button" onClick={() => setFilterModal('orden')} className="flex h-9 min-w-0 items-center justify-between rounded-xl border bg-transparent px-2.5 text-left text-[12px] font-semibold" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} aria-haspopup="dialog" aria-label="Ordenar productos"><span className="min-w-0 truncate">{ordenLabel}</span><span className="ml-1 shrink-0 text-[12px]" style={{ color: 'var(--app-muted)' }}>⌄</span></button>
+          <button type="button" onClick={() => setFilterModal('orden')} className="flex h-9 w-[38px] items-center justify-center rounded-xl border bg-transparent" style={{ borderColor: sort !== 'orden' ? 'rgba(249,115,22,.65)' : 'var(--app-border)', color: sort !== 'orden' ? '#f97316' : 'var(--app-muted)' }} aria-haspopup="dialog" aria-label="Filtrar y ordenar productos" title="Filtrar y ordenar productos"><Filter size={17} strokeWidth={2.2} /></button>
         </div>
 
         {(search || familiaId !== 'todas' || status !== 'todos' || sort !== 'orden') && <div className="mt-1 flex items-center justify-between px-1 text-[12px]" style={{ color: 'var(--app-muted)' }}><span>{filteredProductos.length} resultados</span><button type="button" onClick={clearFilters} className="font-bold text-orange-500">Limpiar</button></div>}
