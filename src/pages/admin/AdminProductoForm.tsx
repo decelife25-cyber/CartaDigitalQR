@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, Image as ImageIcon, Lightbulb, Save, Star, Trash2 } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
@@ -56,7 +56,7 @@ function StatusSwitch({ checked }: { checked: boolean }) {
   );
 }
 
-function CompactStatus({ label, checked, icon, onChange }: { label: string; checked: boolean; icon?: React.ReactNode; onChange: (value: boolean) => void }) {
+function CompactStatus({ label, checked, icon, onChange }: { label: string; checked: boolean; icon?: ReactNode; onChange: (value: boolean) => void }) {
   return (
     <label className="flex cursor-pointer flex-col items-center justify-start gap-1 px-1 py-0.5 text-center">
       <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}>
