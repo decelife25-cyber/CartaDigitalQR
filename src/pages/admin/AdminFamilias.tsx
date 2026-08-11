@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, GripVertical, ImageOff, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { adminApi } from '../../services/adminApi';
 import type { Familia } from '../../types/database';
 import AppModal from '../../components/ui/AppModal';
 
@@ -98,17 +97,16 @@ export default function AdminFamilias() {
 
   return (
     <div className="min-h-[calc(100dvh-4rem)]" style={{ color: 'var(--app-text)', width: '100vw', maxWidth: '100vw', marginLeft: 'calc(50% - 50vw)', overflowX: 'clip' }}>
-      <header className="flex items-center gap-1 border-b px-2 pb-2" style={{ borderColor: 'var(--app-border)' }}>
-        <Link to="/admin" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver al panel privado"><ArrowLeft size={21} /></Link>
-        <div className="min-w-0 flex-1"><h1 className="text-[22px] font-extrabold tracking-tight sm:text-3xl">Familias</h1></div>
+      <header className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 border-b px-2" style={{ borderColor: 'var(--app-border)' }}>
+        <div className="flex items-center">
+          <Link to="/admin" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver al panel privado"><ArrowLeft size={21} /></Link>
+          <h1 className="ml-1 text-[22px] font-extrabold tracking-tight sm:text-3xl">Familias</h1>
+        </div>
+        <span className="justify-self-center text-[13px] font-extrabold" style={{ color: 'var(--app-muted)' }}>({ordered.length})</span>
+        <button type="button" disabled={saving} onClick={() => { setNewName(''); setCreateOpen(true); }} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white disabled:opacity-40"><Plus size={17} /><span>Añadir</span></button>
       </header>
 
       {error && <div className="mx-2 mt-2 rounded-xl border p-2 text-sm" style={{ borderColor: 'rgba(239,68,68,.25)', background: 'var(--app-surface)', color: '#dc2626' }}>{error}<button type="button" onClick={() => void load()} className="ml-2 font-bold text-orange-600">Reintentar</button></div>}
-
-      <div className="flex items-center justify-between px-2 py-2">
-        <p className="text-[15px] font-extrabold">{ordered.length} {ordered.length === 1 ? 'familia' : 'familias'}</p>
-        <button type="button" disabled={saving} onClick={() => { setNewName(''); setCreateOpen(true); }} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl bg-orange-500 px-2.5 text-sm font-extrabold text-white disabled:opacity-40"><Plus size={17} /><span>Añadir</span></button>
-      </div>
 
       <section className="space-y-1.5" aria-label="Listado de familias">
         {ordered.map((familia) => {
