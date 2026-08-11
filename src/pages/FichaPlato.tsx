@@ -1,10 +1,28 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, Heart } from 'lucide-react';
+import { ArrowLeft, Check, Heart, Utensils } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Producto } from '../types/database';
 import { useSelectionStore } from '../store/selectionStore';
 import { clsx } from 'clsx';
+
+function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!icono || failed) {
+    return <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)' }}>•</span>;
+  }
+
+  return (
+    <img
+      src={icono}
+      alt=""
+      title={nombre}
+      className="h-8 w-8 shrink-0 object-contain"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export default function FichaPlato() {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +40,7 @@ export default function FichaPlato() {
         setLoading(false);
       }
     }
-    loadData();
+    void loadData();
   }, [id]);
 
   if (loading) {
@@ -56,31 +74,45 @@ export default function FichaPlato() {
       <section className="relative w-full overflow-hidden" style={{ background: 'var(--app-surface)' }}>
         <div className="aspect-[4/3] w-full">
           {producto.foto_url ? (
-            <img src={producto.foto_url} alt={producto.nombre} className="h-full w-full object-cover" />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-sm" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
-              Sin imagen
+            <img
+              src={producto.foto_url}
+              alt={producto.nombre}
+              className="h-full w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+                event.currentTarget.nextElementSibling?.removeAttribute('hidden');
+              }}
+            />
+          ) : null}
+          <div
+            hidden={Boolean(producto.foto_url)}
+            className="flex h-full w-full items-center justify-center"
+            style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <Utensils className="h-10 w-10" strokeWidth={1.2} />
+              <span className="text-sm">Sin imagen</span>
             </div>
-          )}
+          </div>
         </div>
 
         <button
           type="button"
           aria-label="Volver"
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-4 h-11 w-11 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md"
+          className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full shadow-lg backdrop-blur-md"
           style={{ background: 'rgba(0,0,0,.58)', color: '#fff' }}
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
       </section>
 
-      <section className="mx-4 -mt-5 relative rounded-3xl px-5 pt-5 pb-6 shadow-sm" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <h1 className="text-[27px] leading-tight font-extrabold tracking-tight">{producto.nombre}</h1>
+      <section className="relative mx-3 -mt-5 rounded-3xl px-5 pb-7 pt-5 shadow-sm" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[27px] leading-[1.08] font-extrabold tracking-tight">{producto.nombre}</h1>
           </div>
-          <div className="shrink-0 rounded-2xl px-3 py-2 text-xl font-extrabold" style={{ background: 'var(--app-surface-soft)' }}>
+          <div className="shrink-0 rounded-2xl px-3 py-2 text-xl font-extrabold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>
             {producto.precio.toFixed(2)}€
           </div>
         </div>
@@ -93,21 +125,17 @@ export default function FichaPlato() {
 
         {producto.alergenos && producto.alergenos.length > 0 && (
           <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--app-border)' }}>
-            <div className="flex items-center justify-between mb-3">
+            <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-extrabold uppercase tracking-wider">Alérgenos</h2>
-              <span className="text-xs font-bold rounded-full px-2.5 py-1" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
+              <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
                 {producto.alergenos.length}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
               {producto.alergenos.map((alergeno) => (
-                <div key={alergeno.id} className="min-h-14 rounded-2xl px-3 py-2 flex items-center gap-2.5" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
-                  {alergeno.icono ? (
-                    <img src={alergeno.icono} alt="" className="h-8 w-8 object-contain shrink-0" />
-                  ) : (
-                    <span className="h-8 w-8 rounded-full shrink-0" style={{ background: 'var(--app-border)' }} />
-                  )}
+                <div key={alergeno.id} className="flex min-h-14 items-center gap-2.5 rounded-2xl px-3 py-2" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                  <AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} />
                   <span className="text-sm font-semibold leading-tight">{alergeno.nombre}</span>
                 </div>
               ))}
@@ -122,12 +150,12 @@ export default function FichaPlato() {
             type="button"
             onClick={toggleSelection}
             className={clsx(
-              'w-full min-h-14 rounded-2xl flex items-center justify-center gap-2.5 px-5 font-extrabold text-[17px] shadow-xl active:scale-[.99] transition-transform',
+              'flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[17px] font-extrabold shadow-xl transition-transform active:scale-[.99]',
               selected ? 'border-2' : 'border-0'
             )}
             style={selected
               ? { background: 'var(--app-surface)', color: 'var(--app-text)', borderColor: 'var(--app-text)' }
-              : { background: 'var(--color-primary)', color: '#fff' }}
+              : { background: '#18181b', color: '#fff' }}
           >
             {selected ? <Check className="h-5 w-5" /> : <Heart className="h-5 w-5" />}
             {selected ? 'En mi selección' : 'Añadir a mi selección'}
