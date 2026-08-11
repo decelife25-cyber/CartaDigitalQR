@@ -3,7 +3,7 @@ import Portada from './pages/Portada';
 import Familias from './pages/Familias';
 import ListadoPlatos from './pages/ListadoPlatos';
 import FichaPlato from './pages/FichaPlato';
-import Buscador from './pages/Buscador';
+import Buscador from './pages/Buscar';
 import MiSeleccion from './pages/MiSeleccion';
 import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/admin/Login';
