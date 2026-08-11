@@ -4,12 +4,7 @@ import { ChevronRight, Moon, Sun, Utensils } from 'lucide-react';
 import { api } from '../services/api';
 import type { Familia } from '../types/database';
 
-const visualSlots = [
-  'from-orange-100 via-amber-50 to-stone-100',
-  'from-rose-100 via-orange-50 to-stone-100',
-  'from-emerald-100 via-lime-50 to-stone-100',
-  'from-sky-100 via-cyan-50 to-stone-100',
-];
+const PORTADA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/PUBLICO/portada.png?v=1';
 
 function toggleTheme() {
   const root = document.documentElement;
@@ -50,15 +45,19 @@ export default function Familias() {
   }
 
   return (
-    <main className="min-h-[100dvh] w-full px-3 pb-6 pt-4 sm:px-5" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
+    <main className="min-h-[100dvh] w-full" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
       <div className="mx-auto w-full max-w-2xl">
-        <header className="mb-5 flex items-start justify-between gap-3 px-1">
+        {/* Cabecera: misma limpieza y proporción que el listado privado de Familias. */}
+        <header
+          className="sticky top-0 z-20 flex min-h-[74px] items-center justify-between border-b px-4"
+          style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
+        >
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--app-muted)' }}>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em]" style={{ color: 'var(--app-muted)' }}>
               Carta
             </p>
-            <h1 className="mt-1 text-[28px] font-extrabold leading-none tracking-[-0.03em]">
-              Nuestras familias
+            <h1 className="mt-0.5 text-[24px] font-extrabold leading-none tracking-tight">
+              Familias
             </h1>
           </div>
 
@@ -67,40 +66,40 @@ export default function Familias() {
             onClick={toggleTheme}
             aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
             title={night ? 'Modo día' : 'Modo noche'}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border shadow-sm transition-transform active:scale-95"
-            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)', boxShadow: 'var(--app-shadow)' }}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95"
+            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
           >
             {night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}
           </button>
         </header>
 
-        <section className="space-y-3" aria-label="Familias de la carta">
-          {familias.map((familia, index) => (
+        <section aria-label="Familias de la carta">
+          {familias.map((familia) => (
             <button
               key={familia.id}
               type="button"
               onClick={() => navigate(`/familias/${familia.id}`)}
-              className="group flex min-h-[112px] w-full overflow-hidden rounded-[22px] border text-left shadow-sm transition-transform active:scale-[0.985]"
-              style={{
-                background: 'var(--app-surface)',
-                borderColor: 'var(--app-border)',
-                boxShadow: 'var(--app-shadow)',
-              }}
+              className="flex min-h-[94px] w-full items-center border-b text-left transition-colors active:brightness-95"
+              style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
             >
-              <div className={`relative w-[38%] shrink-0 bg-gradient-to-br ${visualSlots[index % visualSlots.length]}`}>
-                <div className="absolute inset-0" style={{ background: 'var(--app-image-overlay)' }} />
-                <div className="flex h-full min-h-[112px] items-center justify-center">
-                  <Utensils
-                    className="h-11 w-11"
-                    strokeWidth={1.15}
-                    style={{ color: 'var(--app-muted)', opacity: 0.42 }}
-                  />
-                </div>
+              {/*
+                Imagen provisional: reutiliza la foto de portada hasta incorporar foto_url
+                específica de cada familia en la configuración. El contenedor ya queda
+                preparado para sustituirla por la foto propia sin cambiar el diseño.
+              */}
+              <div className="relative ml-3 h-[72px] w-[92px] shrink-0 overflow-hidden rounded-xl bg-stone-200">
+                <img
+                  src={PORTADA_IMAGE}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/10" />
               </div>
 
-              <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3.5">
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
-                  <h2 className="text-[18px] font-extrabold leading-tight tracking-[-0.015em]">
+                  <h2 className="text-[17px] font-extrabold leading-tight">
                     {familia.nombre}
                   </h2>
                   {familia.descripcion && (
@@ -111,7 +110,7 @@ export default function Familias() {
                 </div>
 
                 <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border"
                   style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface-soft)' }}
                 >
                   <ChevronRight className="h-5 w-5" strokeWidth={2} />
@@ -122,9 +121,10 @@ export default function Familias() {
         </section>
 
         {familias.length === 0 && (
-          <p className="mt-12 text-center text-sm" style={{ color: 'var(--app-muted)' }}>
-            No hay familias disponibles en este momento.
-          </p>
+          <div className="px-4 py-12 text-center" style={{ color: 'var(--app-muted)' }}>
+            <Utensils className="mx-auto mb-3 h-8 w-8 opacity-50" strokeWidth={1.5} />
+            <p className="text-sm">No hay familias disponibles en este momento.</p>
+          </div>
         )}
       </div>
     </main>
