@@ -17,7 +17,6 @@ export default function AdminFamilias() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Familia | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
 
   const load = async () => {
@@ -57,20 +56,6 @@ export default function AdminFamilias() {
     } finally {
       setSaving(false);
       setDraggedId(null);
-    }
-  };
-
-  const remove = async () => {
-    if (!deleteTarget) return;
-    setSaving(true);
-    try {
-      await adminApi.deleteFamilia(deleteTarget.id);
-      setFamilias((items) => items.filter((item) => item.id !== deleteTarget.id));
-      setDeleteTarget(null);
-    } catch (e) {
-      setModalError(errorMessage(e));
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -119,7 +104,6 @@ export default function AdminFamilias() {
         {!ordered.length && <div className="mx-2 rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}><p className="text-sm font-bold">No hay familias creadas.</p><p className="mt-1 text-xs">Pulsa Añadir para crear la primera.</p></div>}
       </section>
 
-      <AppModal open={Boolean(deleteTarget)} title="¿Eliminar familia?" message={deleteTarget ? `Se eliminará «${deleteTarget.nombre}». Esta acción no se puede deshacer.` : ''} confirmLabel="Eliminar" cancelLabel="Cancelar" danger onCancel={() => setDeleteTarget(null)} onConfirm={() => void remove()} />
       <AppModal open={Boolean(modalError)} title="No se ha podido completar" message={modalError ?? ''} confirmLabel="Aceptar" cancelLabel="Cerrar" onCancel={() => setModalError(null)} onConfirm={() => setModalError(null)} />
     </div>
   );
