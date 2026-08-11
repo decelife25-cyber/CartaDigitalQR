@@ -88,7 +88,7 @@ export default function AdminProductoForm() {
   const normalizePrecio=()=>{const v=Number(precio.replace(',','.'));if(Number.isFinite(v)&&v>=0)setPrecio(v.toFixed(2));};
   const handleDelete=()=>{if(!id||saving)return;setDeleteOpen(true);};
   const handleExit=()=>{if(saving)return;if(dirty)setUnsavedOpen(true);else navigate('/admin/productos');};
-  const handleSaveFromModal=()=>{setUnsavedOpen(false);document.getElementById('producto-form')?.requestSubmit();};
+  const handleSaveFromModal=()=>{setUnsavedOpen(false);const form=document.getElementById('producto-form');if(form instanceof HTMLFormElement)form.requestSubmit();};
   const handleDiscardAndExit=()=>{setUnsavedOpen(false);navigate('/admin/productos');};
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
