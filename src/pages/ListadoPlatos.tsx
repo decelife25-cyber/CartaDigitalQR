@@ -54,7 +54,10 @@ function AlergenoItem({ producto }: { producto: Producto }) {
   if (!producto.alergenos?.length) return null;
 
   return (
-    <div className="flex min-w-0 flex-wrap items-center justify-end gap-1" aria-label="Alérgenos">
+    <div
+      className="flex max-w-full flex-wrap items-center justify-start gap-1"
+      aria-label="Alérgenos"
+    >
       {producto.alergenos.map((alergeno) => (
         <span
           key={alergeno.id}
@@ -91,7 +94,7 @@ function ProductoImagen({ producto }: { producto: Producto }) {
         className="flex h-full w-full items-center justify-center"
         style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}
       >
-        <Utensils className="h-9 w-9" strokeWidth={1.25} />
+        <Utensils className="h-8 w-8" strokeWidth={1.2} />
       </div>
     );
   }
@@ -104,6 +107,24 @@ function ProductoImagen({ producto }: { producto: Producto }) {
       className="h-full w-full object-cover"
       onError={() => setError(true)}
     />
+  );
+}
+
+function PanelVisual({ producto }: { producto: Producto }) {
+  const hasAllergens = Boolean(producto.alergenos?.length);
+
+  return (
+    <div className="relative h-full w-full overflow-hidden">
+      <ProductoImagen producto={producto} />
+      {hasAllergens ? (
+        <div
+          className="absolute inset-x-1 bottom-1 rounded-xl px-1 py-1 backdrop-blur-[2px]"
+          style={{ background: 'rgba(255,255,255,.88)' }}
+        >
+          <AlergenoItem producto={producto} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -183,45 +204,44 @@ export default function ListadoPlatos() {
       </header>
 
       <section aria-label={`Productos de ${familyName}`} className="px-3 pb-5 pt-3">
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {productos.map((producto) => (
             <button
               key={producto.id}
               type="button"
               onClick={() => navigate(`/plato/${producto.id}`)}
-              className="flex min-h-[116px] w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]"
+              className="relative flex min-h-[104px] w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]"
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}
             >
-              <div className="relative h-[116px] w-[34%] shrink-0 overflow-hidden bg-stone-100">
-                <ProductoImagen producto={producto} />
+              <div className="relative h-[104px] w-[34%] shrink-0 overflow-hidden bg-stone-100">
+                <PanelVisual producto={producto} />
               </div>
 
-              <div className="flex min-w-0 flex-1 items-center gap-2 px-3.5 py-3">
-                <div className="flex min-w-0 flex-1 flex-col self-stretch">
-                  <div className="min-w-0">
-                    <h2 className="line-clamp-2 text-[16px] font-extrabold leading-[1.12]">{producto.nombre}</h2>
-                    {producto.descripcion && (
-                      <p className="mt-1 line-clamp-2 text-xs leading-4" style={{ color: 'var(--app-muted)' }}>
-                        {producto.descripcion}
-                      </p>
-                    )}
-                  </div>
+              <div className="relative min-w-0 flex-1 px-3.5 pb-2.5 pt-3 pr-12">
+                <h2 className="line-clamp-2 text-[16px] font-extrabold leading-[1.1]">
+                  {producto.nombre}
+                </h2>
 
-                  <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-                    <span className="shrink-0 text-lg font-extrabold leading-none text-primary">
-                      {producto.precio.toFixed(2)}€
-                    </span>
-                    <AlergenoItem producto={producto} />
-                  </div>
-                </div>
+                {producto.descripcion && (
+                  <p className="mt-1 line-clamp-2 text-xs leading-4" style={{ color: 'var(--app-muted)' }}>
+                    {producto.descripcion}
+                  </p>
+                )}
 
                 <span
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border"
-                  style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface)' }}
+                  className="absolute right-12 top-3 text-[17px] font-extrabold leading-none text-primary"
+                  aria-label={`Precio ${producto.precio.toFixed(2)} euros`}
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  {producto.precio.toFixed(2)}€
                 </span>
               </div>
+
+              <span
+                className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border"
+                style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface)' }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </span>
             </button>
           ))}
         </div>
