@@ -83,6 +83,23 @@ export const api = {
     return data ? mapProducto(data) : null;
   },
 
+  async getSugerencias(): Promise<Producto[]> {
+    const { data, error } = await supabase
+      .from('productos')
+      .select('*')
+      .eq('activo', true)
+      .eq('agotado', false)
+      .eq('sugerido', true)
+      .order('orden', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching sugerencias:', error);
+      return [];
+    }
+
+    return (data ?? []).map(mapProducto);
+  },
+
   async buscarProductos(query: string): Promise<Producto[]> {
     if (!query.trim()) return [];
 
