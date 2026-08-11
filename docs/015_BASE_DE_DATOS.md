@@ -12,8 +12,7 @@ Basado en la estructura del proyecto, las tablas existentes son:
 2. `productos`
 3. `alergenos`
 4. `producto_alergenos` (Tabla de relación)
-5. `producto_sugerencias` (Tabla de relación)
-6. `configuracion`
+5. `configuracion`
 
 ---
 
@@ -49,6 +48,7 @@ Basado en la estructura del proyecto, las tablas existentes son:
 - `imagen` (TEXT) - URL de la imagen
 - `estado` (TEXT) - 'Visible' u 'Oculto'
 - `disponibilidad` (BOOLEAN) - true/false (disponible o agotado)
+- `sugerido` (BOOLEAN) - true/false; marca temporal de producto sugerido
 - `created_at` (TIMESTAMP WITH TIME ZONE)
 - `updated_at` (TIMESTAMP WITH TIME ZONE)
 
@@ -56,7 +56,7 @@ Basado en la estructura del proyecto, las tablas existentes son:
 - **Claves primarias:** `id`
 - **Claves externas:** `familia_id` -> `familias.id`
 - **Campos obligatorios:** `nombre`, `precio`, `familia_id`, `estado`
-- **Valores por defecto:** `id` = gen_random_uuid(), `disponibilidad` = true, `estado` = 'Visible'
+- **Valores por defecto:** `id` = gen_random_uuid(), `disponibilidad` = true, `estado` = 'Visible', `sugerido` = false
 - **Restricciones:** `precio` >= 0
 
 ### 3. Tabla: `alergenos`
@@ -87,21 +87,7 @@ Basado en la estructura del proyecto, las tablas existentes son:
   - `alergeno_id` -> `alergenos.id`
 - **Campos obligatorios:** `producto_id`, `alergeno_id`
 
-### 5. Tabla: `producto_sugerencias`
-**Objetivo:** Asociar otros productos sugeridos a un producto principal.
-
-#### Todos los campos y Tipo de cada campo:
-- `producto_id` (UUID)
-- `sugerencia_id` (UUID)
-
-#### Propiedades:
-- **Claves primarias:** (`producto_id`, `sugerencia_id`)
-- **Claves externas:**
-  - `producto_id` -> `productos.id`
-  - `sugerencia_id` -> `productos.id`
-- **Campos obligatorios:** `producto_id`, `sugerencia_id`
-
-### 6. Tabla: `configuracion`
+### 5. Tabla: `configuracion`
 **Objetivo:** Almacenar la configuración general y opciones de personalización del restaurante (único registro).
 
 #### Todos los campos y Tipo de cada campo:
@@ -138,15 +124,15 @@ Basado en la estructura del proyecto, las tablas existentes son:
 ## Relaciones
 - `familias` tiene muchos `productos` (1:N).
 - `productos` tiene muchos `alergenos` a través de `producto_alergenos` (N:M).
-- `productos` tiene muchas sugerencias (otros `productos`) a través de `producto_sugerencias` (N:M).
 
 ## Índices
 - Índice en `productos.familia_id` para búsquedas rápidas por categoría.
 - Índice en `productos.nombre` (texto) para acelerar el buscador de platos.
 - Índice en `familias.orden` para ordenar rápidamente las categorías.
+- Índice parcial en `productos.sugerido` para localizar rápidamente los productos marcados como sugerencia.
 
 ## Reglas de borrado (ON DELETE)
-- Si se borra un producto, se borran en cascada sus registros en `producto_alergenos` y `producto_sugerencias`.
+- Si se borra un producto, se borran en cascada sus registros en `producto_alergenos`.
 - Si se borra un alérgeno, se borran en cascada los registros de `producto_alergenos`.
 - No se permite borrar una familia si tiene productos (RESTRICT), o debe solicitar confirmación en el panel (se asume RESTRICT a nivel base de datos para prevenir inconsistencias).
 
