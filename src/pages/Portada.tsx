@@ -2,21 +2,24 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, BookOpen, Phone, CalendarDays } from 'lucide-react';
 import { api } from '../services/api';
-import type { Configuracion } from '../types/database';
+import type { Configuracion, Producto } from '../types/database';
 
 // La portada aprobada se conserva como referencia oficial en el repositorio.
 // Se sirve directamente desde GitHub porque el archivo original está en docs/REFERENCIAS/PUBLICO.
 const PORTADA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/PUBLICO/portada.png?v=1';
+const PIZARRA_IMAGE = '/pizarra.png?v=1';
 
 export default function Portada() {
   const navigate = useNavigate();
   const [config, setConfig] = useState<Configuracion | null>(null);
+  const [sugerencias, setSugerencias] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.getConfiguracion().then((data) => {
+    Promise.all([api.getConfiguracion(), api.getSugerencias()]).then(([data, productos]) => {
       if (data?.color_principal) document.documentElement.style.setProperty('--color-primary', data.color_principal);
       setConfig(data);
+      setSugerencias(productos);
       setLoading(false);
     });
   }, []);
@@ -41,6 +44,35 @@ export default function Portada() {
         className="absolute inset-0 h-full w-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/60" />
+
+      {sugerencias.length > 0 && (
+        <div
+          className="absolute right-[2cm] top-[42%] z-10 w-[34vw] max-w-[230px] min-w-[145px] -translate-y-1/2"
+          aria-label="Sugerencias del día"
+        >
+          <img
+            src={PIZARRA_IMAGE}
+            alt="Pizarra de sugerencias del día"
+            className="block h-auto w-full"
+          />
+          <div
+            className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
+            style={{
+              fontFamily: 'Segoe Print, Bradley Hand, Marker Felt, Comic Sans MS, cursive',
+              textShadow: '0 1px 2px rgba(0,0,0,.85)',
+            }}
+          >
+            {sugerencias.map((producto) => (
+              <div
+                key={producto.id}
+                className="break-words text-[clamp(10px,2.4vw,16px)] font-semibold leading-[1.15]"
+              >
+                - {producto.nombre}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <button
         type="button"
