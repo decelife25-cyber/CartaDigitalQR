@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, BookOpen, Phone, CalendarDays } from 'lucide-react';
 import { api } from '../services/api';
@@ -16,6 +16,7 @@ export default function Portada() {
   const [sugerencias, setSugerencias] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [pizarraAmpliada, setPizarraAmpliada] = useState(false);
+  const textoPizarraRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     Promise.all([api.getConfiguracion(), api.getSugerencias()]).then(([data, productos]) => {
@@ -25,6 +26,44 @@ export default function Portada() {
       setLoading(false);
     });
   }, []);
+
+  // Ajusta automáticamente la tipografía para que TODAS las sugerencias entren
+  // dentro de la pizarra, sin scroll ni nombres cortados. Se recalcula al cambiar
+  // el tamaño de la pizarra (normal/ampliada) y al cambiar el ancho disponible.
+  useLayoutEffect(() => {
+    const element = textoPizarraRef.current;
+    if (!element || sugerencias.length === 0) return;
+
+    let frame = 0;
+    const fitText = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const maxSize = pizarraAmpliada ? 26 : 16;
+        const minSize = 7;
+        const step = 0.25;
+
+        element.style.fontSize = `${maxSize}px`;
+
+        let size = maxSize;
+        while (size > minSize && element.scrollHeight > element.clientHeight) {
+          size -= step;
+          element.style.fontSize = `${size}px`;
+        }
+
+        // Nunca dejamos que el navegador cree un scroll interno.
+        element.scrollTop = 0;
+      });
+    };
+
+    fitText();
+
+    const observer = new ResizeObserver(fitText);
+    observer.observe(element);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [sugerencias, pizarraAmpliada]);
 
   if (loading) return <div className="flex h-[100dvh] w-full items-center justify-center bg-black text-white">Cargando...</div>;
 
@@ -69,10 +108,11 @@ export default function Portada() {
               className="block h-auto w-full"
             />
             <div
-              className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-y-auto text-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              ref={textoPizarraRef}
+              className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
               style={{
                 fontFamily: '"Patrick Hand SC", "Chalkboard SE", "Marker Felt", "Segoe Print", cursive',
-                fontSize: pizarraAmpliada ? 'clamp(17px, 4vw, 25px)' : 'clamp(10px, 2.4vw, 16px)',
+                fontSize: pizarraAmpliada ? '26px' : '16px',
                 lineHeight: 1.12,
                 letterSpacing: '0.025em',
                 textTransform: 'uppercase',
@@ -80,7 +120,7 @@ export default function Portada() {
               }}
             >
               {sugerencias.map((producto) => (
-                <div key={producto.id} className="flex min-w-0 items-start font-normal">
+                <div key={producto.id} className="flex min-w-0 shrink-0 items-start font-normal">
                   <span className="mr-[0.45em] shrink-0">-</span>
                   <span className="min-w-0 break-words">{producto.nombre}</span>
                 </div>
