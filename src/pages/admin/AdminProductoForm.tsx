@@ -56,6 +56,19 @@ function StatusSwitch({ checked }: { checked: boolean }) {
   );
 }
 
+function CompactStatus({ label, checked, icon, onChange }: { label: string; checked: boolean; icon?: React.ReactNode; onChange: (value: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer flex-col items-center justify-start gap-1 px-1 py-0.5 text-center">
+      <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}>
+        {icon}
+        {label}
+      </span>
+      <StatusSwitch checked={checked} />
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="sr-only" />
+    </label>
+  );
+}
+
 export default function AdminProductoForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -69,7 +82,6 @@ export default function AdminProductoForm() {
   const [precio, setPrecio] = useState('0.00');
   const [familiaId, setFamiliaId] = useState('');
   const [fotoUrl, setFotoUrl] = useState('');
-  const [orden, setOrden] = useState('0');
   const [activo, setActivo] = useState(true);
   const [agotado, setAgotado] = useState(false);
   const [destacado, setDestacado] = useState(false);
@@ -94,7 +106,6 @@ export default function AdminProductoForm() {
           setPrecio(Number(p.precio).toFixed(2));
           setFamiliaId(p.familia_id);
           setFotoUrl(p.foto_url ?? '');
-          setOrden(String(p.orden ?? 0));
           setActivo(p.activo);
           setAgotado(p.agotado);
           setDestacado(p.destacado);
@@ -152,8 +163,6 @@ export default function AdminProductoForm() {
         precio: parsedPrecio,
         familia_id: familiaId,
         foto_url: fotoUrl.trim() || null,
-        // El orden se conserva aquí. Se modifica exclusivamente desde la lista de Productos mediante arrastre.
-        orden: Number(orden) || 0,
         activo,
         agotado,
         destacado,
@@ -180,7 +189,7 @@ export default function AdminProductoForm() {
 
   return (
     <div
-      className="min-h-[calc(100dvh-4rem)] w-full max-w-full overflow-x-clip"
+      className="min-h-[calc(100dvh-4rem)] w-screen max-w-none overflow-x-clip"
       style={{
         background: 'var(--app-bg)',
         color: 'var(--app-text)',
@@ -199,14 +208,15 @@ export default function AdminProductoForm() {
             <span className="hidden min-[390px]:inline">Eliminar</span>
           </button>
         )}
-        <button form="producto-form" type="submit" disabled={saving} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-orange-500 disabled:opacity-50">
-          <Save size={15} />
-          <span>Guardar</span>
-        </button>
+        <label className="flex shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 text-center" title="Cambiar visibilidad">
+          <span className="text-[8px] font-extrabold uppercase leading-none" style={{ color: 'var(--app-muted)' }}>Visible</span>
+          <StatusSwitch checked={activo} />
+          <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" />
+        </label>
       </header>
 
-      <form id="producto-form" onSubmit={handleSubmit} className="space-y-2 px-2 pb-14 pt-2 sm:px-3">
-        <section className="rounded-xl border p-2.5 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+      <form id="producto-form" onSubmit={handleSubmit} className="w-full space-y-2 px-0 pb-14 pt-2 sm:px-0">
+        <section className="w-full rounded-xl border p-2.5 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
           <div className="grid grid-cols-[32%_minmax(0,1fr)] gap-2 max-[430px]:grid-cols-[31%_minmax(0,1fr)] sm:grid-cols-[34%_minmax(0,1fr)]">
             <div className="min-w-0">
               <div className="relative overflow-hidden rounded-lg border" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
@@ -253,31 +263,14 @@ export default function AdminProductoForm() {
             </label>
           </div>
 
-          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
-              <span className="text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}>Visible</span>
-              <StatusSwitch checked={activo} />
-              <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" />
-            </label>
-            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
-              <span className="text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}>Disponible</span>
-              <StatusSwitch checked={!agotado} />
-              <input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="sr-only" />
-            </label>
-            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
-              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}><Star size={11} className={destacado ? 'text-orange-500' : ''} />Destacado</span>
-              <StatusSwitch checked={destacado} />
-              <input type="checkbox" checked={destacado} onChange={(e) => setDestacado(e.target.checked)} className="sr-only" />
-            </label>
-            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
-              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}><Lightbulb size={11} className={sugerido ? 'text-orange-500' : ''} />Sugerencia</span>
-              <StatusSwitch checked={sugerido} />
-              <input type="checkbox" checked={sugerido} onChange={(e) => setSugerido(e.target.checked)} className="sr-only" />
-            </label>
+          <div className="mt-2 grid grid-cols-3 gap-1.5 border-t pt-2" style={{ borderColor: 'var(--app-border)' }}>
+            <CompactStatus label="Disponible" checked={!agotado} onChange={(value) => setAgotado(!value)} />
+            <CompactStatus label="Destacado" checked={destacado} icon={<Star size={11} className={destacado ? 'text-orange-500' : ''} />} onChange={setDestacado} />
+            <CompactStatus label="Sugerencia" checked={sugerido} icon={<Lightbulb size={11} className={sugerido ? 'text-orange-500' : ''} />} onChange={setSugerido} />
           </div>
         </section>
 
-        <section className="rounded-xl border p-2.5 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+        <section className="w-full rounded-xl border p-2.5 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
           <div className="mb-1.5 flex items-end justify-between">
             <div>
               <h2 className="text-[15px] font-extrabold">Alérgenos</h2>
@@ -302,8 +295,8 @@ export default function AdminProductoForm() {
           </div>
         </section>
 
-        <div className="sticky bottom-0 z-20 -mx-2 border-t p-2 backdrop-blur sm:-mx-3" style={{ borderColor: 'var(--app-border)', background: 'color-mix(in srgb, var(--app-bg) 94%, transparent)' }}>
-          <div className="mx-auto flex max-w-3xl gap-2">
+        <div className="sticky bottom-0 z-20 w-full border-t px-2 py-2 backdrop-blur" style={{ borderColor: 'var(--app-border)', background: 'color-mix(in srgb, var(--app-bg) 94%, transparent)' }}>
+          <div className="flex w-full gap-2">
             <button type="button" onClick={() => navigate('/admin/productos')} className="h-9 flex-1 rounded-lg border text-xs font-bold" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>Cancelar</button>
             <button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-lg bg-orange-500 text-xs font-extrabold text-white shadow-sm disabled:opacity-50">
               <span className="inline-flex items-center justify-center gap-1.5"><Save size={15} />{saving ? 'Guardando…' : 'Guardar cambios'}</span>
