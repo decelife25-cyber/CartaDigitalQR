@@ -97,8 +97,8 @@ export default function Portada() {
             'absolute z-20 m-0 border-0 bg-transparent p-0 text-left transition-all duration-300 ease-out',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
             pizarraAmpliada
-              ? 'bottom-[155px] right-[4%] w-[min(78vw,360px)]'
-              : 'bottom-[100px] right-[4%] w-[min(40vw,180px)]',
+              ? 'bottom-[165px] right-[4%] w-[min(78vw,360px)]'
+              : 'bottom-[110px] right-[4%] w-[min(40vw,180px)]',
           ].join(' ')}
         >
           <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
@@ -139,7 +139,8 @@ export default function Portada() {
         <X size={20} strokeWidth={2.5} />
       </button>
 
-      <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(.65rem,env(safe-area-inset-bottom))] pt-6">
+      {/* Acciones y datos del local: se elevan ligeramente para dejar una zona limpia debajo. */}
+      <div className="absolute inset-x-0 bottom-[10px] z-10 px-4 pb-0 pt-6">
         <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2">
           <div className="grid w-full grid-cols-4 gap-2">
             <button
@@ -170,8 +171,9 @@ export default function Portada() {
             </button>
           </div>
 
+          {/* Solo información real introducida en Configuración; sin repetir el nombre del restaurante. */}
           {(direccion || phone) && (
-            <div className="max-w-[92%] text-center text-[10px] font-medium leading-snug text-white/85 drop-shadow-[0_1px_3px_rgba(0,0,0,.9)]">
+            <div className="mt-1 max-w-[94%] text-center text-[10px] font-medium leading-snug text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,.95)]">
               {direccion && <div>{direccion}</div>}
               {phone && <div>{phone}</div>}
             </div>
