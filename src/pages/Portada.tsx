@@ -4,10 +4,7 @@ import { X, BookOpen, Phone, CalendarDays } from 'lucide-react';
 import { api } from '../services/api';
 import type { Configuracion, Producto } from '../types/database';
 
-// La portada aprobada se conserva como referencia oficial en el repositorio.
-// Se sirve directamente desde GitHub porque el archivo original está en docs/REFERENCIAS/PUBLICO.
 const PORTADA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/PUBLICO/portada.png?v=1';
-// La pizarra está en docs/REFERENCIAS/ICONOS; no se debe tratar como /pizarra.png del sitio.
 const PIZARRA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/ICONOS/pizarra.png?v=1';
 
 export default function Portada() {
@@ -27,13 +24,9 @@ export default function Portada() {
     });
   }, []);
 
-  // Ajusta automáticamente la tipografía para que TODAS las sugerencias entren
-  // dentro de la pizarra, sin scroll ni nombres cortados. Se recalcula al cambiar
-  // el tamaño de la pizarra (normal/ampliada) y al cambiar el ancho disponible.
   useLayoutEffect(() => {
     const element = textoPizarraRef.current;
     if (!element || sugerencias.length === 0) return;
-
     let frame = 0;
     const fitText = () => {
       cancelAnimationFrame(frame);
@@ -41,22 +34,16 @@ export default function Portada() {
         const maxSize = pizarraAmpliada ? 26 : 16;
         const minSize = 7;
         const step = 0.25;
-
         element.style.fontSize = `${maxSize}px`;
-
         let size = maxSize;
         while (size > minSize && element.scrollHeight > element.clientHeight) {
           size -= step;
           element.style.fontSize = `${size}px`;
         }
-
-        // Nunca dejamos que el navegador cree un scroll interno.
         element.scrollTop = 0;
       });
     };
-
     fitText();
-
     const observer = new ResizeObserver(fitText);
     observer.observe(element);
     return () => {
@@ -71,20 +58,13 @@ export default function Portada() {
   const direccion = config?.direccion?.trim();
 
   const salirDePortada = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/familias', { replace: true });
-    }
+    if (window.history.length > 1) navigate(-1);
+    else navigate('/familias', { replace: true });
   };
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-black">
-      <img
-        src={PORTADA_IMAGE}
-        alt="Taberna Camborio"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      <img src={PORTADA_IMAGE} alt="Taberna Camborio" className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/60" />
 
       {sugerencias.length > 0 && (
@@ -102,11 +82,7 @@ export default function Portada() {
           ].join(' ')}
         >
           <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
-            <img
-              src={PIZARRA_IMAGE}
-              alt="Pizarra de sugerencias del día"
-              className="block h-auto w-full"
-            />
+            <img src={PIZARRA_IMAGE} alt="Pizarra de sugerencias del día" className="block h-auto w-full" />
             <div
               ref={textoPizarraRef}
               className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
@@ -139,9 +115,9 @@ export default function Portada() {
         <X size={20} strokeWidth={2.5} />
       </button>
 
-      {/* Acciones y datos del local: se elevan ligeramente para dejar una zona limpia debajo. */}
-      <div className="absolute inset-x-0 bottom-[10px] z-10 px-4 pb-0 pt-6">
-        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2">
+      {/* Footer independiente del fondo: los botones quedan arriba y los datos siempre debajo. */}
+      <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-[max(6px,env(safe-area-inset-bottom))]">
+        <div className="mx-auto w-full max-w-lg">
           <div className="grid w-full grid-cols-4 gap-2">
             <button
               type="button"
@@ -171,9 +147,8 @@ export default function Portada() {
             </button>
           </div>
 
-          {/* Solo información real introducida en Configuración; sin repetir el nombre del restaurante. */}
           {(direccion || phone) && (
-            <div className="mt-1 max-w-[94%] text-center text-[10px] font-medium leading-snug text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,.95)]">
+            <div className="mt-2 w-full text-center text-[10px] font-medium leading-tight text-white/95 drop-shadow-[0_1px_4px_rgba(0,0,0,.95)]">
               {direccion && <div>{direccion}</div>}
               {phone && <div>{phone}</div>}
             </div>
