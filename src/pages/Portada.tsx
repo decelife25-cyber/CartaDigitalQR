@@ -7,7 +7,8 @@ import type { Configuracion, Producto } from '../types/database';
 // La portada aprobada se conserva como referencia oficial en el repositorio.
 // Se sirve directamente desde GitHub porque el archivo original está en docs/REFERENCIAS/PUBLICO.
 const PORTADA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/PUBLICO/portada.png?v=1';
-const PIZARRA_IMAGE = '/pizarra.png?v=1';
+// La pizarra está en docs/REFERENCIAS/ICONOS; no se debe tratar como /pizarra.png del sitio.
+const PIZARRA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/ICONOS/pizarra.png?v=1';
 
 export default function Portada() {
   const navigate = useNavigate();
@@ -56,8 +57,8 @@ export default function Portada() {
             'absolute z-20 m-0 border-0 bg-transparent p-0 text-left transition-all duration-300 ease-out',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
             pizarraAmpliada
-              ? 'bottom-[145px] right-[4%] w-[min(72vw,360px)]'
-              : 'bottom-[150px] right-[4%] w-[min(30vw,190px)]',
+              ? 'bottom-[145px] right-[4%] w-[min(78vw,360px)]'
+              : 'bottom-[145px] right-[4%] w-[min(40vw,180px)]',
           ].join(' ')}
         >
           <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
@@ -67,7 +68,7 @@ export default function Portada() {
               className="block h-auto w-full"
             />
             <div
-              className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
+              className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-y-auto text-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={{
                 fontFamily: 'Segoe Print, Bradley Hand, Marker Felt, Comic Sans MS, cursive',
                 textShadow: '0 1px 2px rgba(0,0,0,.85)',
@@ -76,7 +77,7 @@ export default function Portada() {
               {sugerencias.map((producto) => (
                 <div
                   key={producto.id}
-                  className="break-words text-[clamp(10px,2.4vw,16px)] font-semibold leading-[1.15]"
+                  className="whitespace-normal text-[clamp(10px,2.4vw,16px)] font-semibold leading-[1.15]"
                 >
                   - {producto.nombre}
                 </div>
