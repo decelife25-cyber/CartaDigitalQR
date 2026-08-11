@@ -9,22 +9,30 @@ import { clsx } from 'clsx';
 const ALERGENO_COLORS: Record<string, string> = {
   apio: '#dff0d0',
   cacahuetes: '#eadfce',
-  crustáceos: '#dcecf5',
+  crustaceos: '#dcecf5',
   huevos: '#fff0b5',
   gluten: '#f3d9e2',
-  lácteos: '#dce4ee',
+  lacteos: '#dce4ee',
   leche: '#dce4ee',
   moluscos: '#dcecf5',
   mostaza: '#f7e7b5',
   pescado: '#d8eef7',
-  sésamo: '#e9dfcf',
+  sesamo: '#e9dfcf',
   soja: '#dff0d0',
   sulfitos: '#eadcf0',
-  frutos de cáscara: '#eadfce',
+  'frutos de cascara': '#eadfce',
 };
 
+function normalizeAlergenoNombre(nombre: string) {
+  return nombre
+    .trim()
+    .toLocaleLowerCase('es')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 function getAlergenoBackground(nombre: string) {
-  const normalized = nombre.trim().toLocaleLowerCase('es');
+  const normalized = normalizeAlergenoNombre(nombre);
   return ALERGENO_COLORS[normalized] ?? 'var(--app-surface-soft)';
 }
 
