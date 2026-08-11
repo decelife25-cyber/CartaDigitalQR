@@ -29,6 +29,7 @@ export default function Portada() {
   if (loading) return <div className="flex h-[100dvh] w-full items-center justify-center bg-black text-white">Cargando...</div>;
 
   const phone = config?.telefono?.trim();
+  const direccion = config?.direccion?.trim();
 
   const salirDePortada = () => {
     if (window.history.length > 1) {
@@ -70,10 +71,12 @@ export default function Portada() {
             <div
               className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-y-auto text-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               style={{
-                fontFamily: 'Segoe Print, Bradley Hand, Marker Felt, Comic Sans MS, cursive',
+                fontFamily: 'Chalkboard SE, Marker Felt, Segoe Print, Comic Sans MS, sans-serif',
                 fontSize: pizarraAmpliada ? 'clamp(17px, 4vw, 25px)' : 'clamp(10px, 2.4vw, 16px)',
                 lineHeight: 1.15,
-                textShadow: '0 1px 2px rgba(0,0,0,.85)',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase',
+                textShadow: '0 1px 2px rgba(0,0,0,.9)',
               }}
             >
               {sugerencias.map((producto) => (
@@ -96,34 +99,43 @@ export default function Portada() {
         <X size={20} strokeWidth={2.5} />
       </button>
 
-      <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-10">
-        <div className="mx-auto grid w-full max-w-lg grid-cols-4 gap-2">
-          <button
-            type="button"
-            onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined}
-            className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
-          >
-            <CalendarDays size={17} className="shrink-0" />
-            <span>Reservar mesa</span>
-          </button>
+      <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(.65rem,env(safe-area-inset-bottom))] pt-6">
+        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-2">
+          <div className="grid w-full grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined}
+              className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
+            >
+              <CalendarDays size={17} className="shrink-0" />
+              <span>Reservar mesa</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => navigate('/familias')}
-            className="col-span-2 flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl border border-white/30 bg-black/55 px-3 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
-          >
-            <BookOpen size={17} className="shrink-0" />
-            <span>Ver carta</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => navigate('/familias')}
+              className="col-span-2 flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl border border-white/30 bg-black/55 px-3 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
+            >
+              <BookOpen size={17} className="shrink-0" />
+              <span>Ver carta</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined}
-            className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
-          >
-            <Phone size={17} className="shrink-0" />
-            <span>Llamar</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined}
+              className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
+            >
+              <Phone size={17} className="shrink-0" />
+              <span>Llamar</span>
+            </button>
+          </div>
+
+          {(direccion || phone) && (
+            <div className="max-w-[92%] text-center text-[10px] font-medium leading-snug text-white/85 drop-shadow-[0_1px_3px_rgba(0,0,0,.9)]">
+              {direccion && <div>{direccion}</div>}
+              {phone && <div>{phone}</div>}
+            </div>
+          )}
         </div>
       </div>
     </main>
