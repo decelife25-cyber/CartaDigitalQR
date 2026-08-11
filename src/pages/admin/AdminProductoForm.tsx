@@ -28,7 +28,7 @@ function erudusIconPath(nombre: string): string | null {
   if (key.includes('mostaza')) return `${base}/mustard.svg`;
   if (key.includes('sesamo')) return `${base}/sesame.svg`;
   if (key.includes('sulf') || key.includes('dioxido') || key.includes('azufre')) return `${base}/so2.svg`;
-  if (key.includes('altramuc')) return `${base}/lupin.svg`;
+  if (key.includes('altram')) return `${base}/lupin.svg`;
   if (key.includes('molusc')) return `${base}/molluscs.svg`;
   return null;
 }
@@ -39,13 +39,13 @@ function AlergenoIcon({ alergeno }: { alergeno: Alergeno }) {
 
   if (iconPath && !failed) {
     return (
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/95 p-1">
+      <span style={{ width: 30, height: 30 }} className="flex shrink-0 items-center justify-center rounded-full bg-white/95 p-1">
         <img src={iconPath} alt="" className="h-full w-full object-contain" onError={() => setFailed(true)} />
       </span>
     );
   }
 
-  return <span className="h-7 w-7 shrink-0 rounded-full border border-white/20 bg-white/5" aria-hidden="true" />;
+  return <span style={{ width: 30, height: 30 }} className="shrink-0 rounded-full border border-white/20 bg-white/5" aria-hidden="true" />;
 }
 
 export default function AdminProductoForm() {
