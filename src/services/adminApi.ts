@@ -214,11 +214,7 @@ export const adminApi = {
 
   async uploadProductoFoto(file: File): Promise<string> {
     await requireSession();
-
-    // Comprimir la imagen si es demasiado grande o pesada.
     const compressedFile = await compressImage(file);
-
-    // Generar un nombre de archivo único
     const fileExt = compressedFile.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     const filePath = `${fileName}`;
@@ -235,18 +231,15 @@ export const adminApi = {
     }
 
     const { data } = supabase.storage.from('productos').getPublicUrl(filePath);
-
     if (!data.publicUrl) {
       throw new Error('No se pudo obtener la URL pública de la imagen.');
     }
-
     return data.publicUrl;
   },
 
   async deleteProductoFoto(fotoUrl: string): Promise<void> {
     await requireSession();
     if (!fotoUrl) return;
-
     try {
       const url = new URL(fotoUrl);
       const parts = url.pathname.split('/');
@@ -260,10 +253,8 @@ export const adminApi = {
         }
       }
     } catch (e) {
-       console.error('Error al intentar eliminar fotoUrl:', fotoUrl, e);
-       if (e instanceof Error) {
-         throw e;
-       }
+      console.error('Error al intentar eliminar fotoUrl:', fotoUrl, e);
+      if (e instanceof Error) throw e;
     }
   },
 
@@ -289,13 +280,29 @@ export const adminApi = {
 
   async createFamilia(fields: Partial<Familia>): Promise<Familia | null> {
     await requireSession();
+
+    let configuracionRestauranteId = fields.configuracion_restaurante_id ?? null;
+    if (!configuracionRestauranteId) {
+      const { data: familiaExistente, error: familiaError } = await supabase
+        .from('familias')
+        .select('configuracion_restaurante_id')
+        .not('configuracion_restaurante_id', 'is', null)
+        .order('orden', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (familiaError) throw new Error(`No se puede determinar el restaurante de la familia: ${getErrorMessage(familiaError)}`);
+      configuracionRestauranteId = familiaExistente?.configuracion_restaurante_id ?? null;
+    }
+
     const { data, error } = await supabase
       .from('familias')
       .insert([{
         nombre: fields.nombre,
+        descripcion: fields.descripcion ?? null,
+        foto_url: fields.foto_url ?? null,
         activo: fields.activo ?? true,
         orden: fields.orden ?? 0,
-        configuracion_restaurante_id: fields.configuracion_restaurante_id ?? null,
+        configuracion_restaurante_id: configuracionRestauranteId,
       }])
       .select()
       .single();
