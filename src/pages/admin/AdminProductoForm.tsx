@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, Image as ImageIcon, Save, Star } from 'lucide-react';
+import { ArrowLeft, Check, Image as ImageIcon, Lightbulb, Save, Star, Trash2 } from 'lucide-react';
 import { adminApi } from '../../services/adminApi';
 import type { Alergeno, Familia, Producto } from '../../types/database';
 
@@ -39,13 +39,21 @@ function AlergenoIcon({ alergeno }: { alergeno: Alergeno }) {
 
   if (iconPath && !failed) {
     return (
-      <span style={{ width: 30, height: 30 }} className="flex shrink-0 items-center justify-center rounded-full bg-white/95 p-1">
-        <img src={iconPath} alt="" className="h-full w-full object-contain" onError={() => setFailed(true)} />
+      <span className="alergeno-icon flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full p-0">
+        <img src={iconPath} alt="" className="h-[28px] w-[28px] object-contain" onError={() => setFailed(true)} />
       </span>
     );
   }
 
-  return <span style={{ width: 30, height: 30 }} className="shrink-0 rounded-full border border-white/20 bg-white/5" aria-hidden="true" />;
+  return <span className="alergeno-icon h-[30px] w-[30px] shrink-0 rounded-full border" aria-hidden="true" />;
+}
+
+function StatusSwitch({ checked }: { checked: boolean }) {
+  return (
+    <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition ${checked ? 'justify-end bg-orange-500' : 'justify-start'}`} style={!checked ? { background: 'rgba(148,163,184,.28)' } : undefined}>
+      <span className="h-4 w-4 rounded-full bg-white shadow-sm" />
+    </span>
+  );
 }
 
 export default function AdminProductoForm() {
@@ -58,13 +66,14 @@ export default function AdminProductoForm() {
   const [alergenos, setAlergenos] = useState<Alergeno[]>([]);
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [precio, setPrecio] = useState('');
+  const [precio, setPrecio] = useState('0.00');
   const [familiaId, setFamiliaId] = useState('');
   const [fotoUrl, setFotoUrl] = useState('');
   const [orden, setOrden] = useState('0');
   const [activo, setActivo] = useState(true);
   const [agotado, setAgotado] = useState(false);
   const [destacado, setDestacado] = useState(false);
+  const [sugerido, setSugerido] = useState(false);
   const [selectedAlergenos, setSelectedAlergenos] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -82,13 +91,14 @@ export default function AdminProductoForm() {
           }
           setNombre(p.nombre);
           setDescripcion(p.descripcion ?? '');
-          setPrecio(String(p.precio));
+          setPrecio(Number(p.precio).toFixed(2));
           setFamiliaId(p.familia_id);
           setFotoUrl(p.foto_url ?? '');
           setOrden(String(p.orden ?? 0));
           setActivo(p.activo);
           setAgotado(p.agotado);
           setDestacado(p.destacado);
+          setSugerido(p.sugerido ?? false);
           setSelectedAlergenos(new Set((p.alergenos ?? []).map((x) => x.id)));
         } else if (f[0]) {
           setFamiliaId(f[0].id);
@@ -109,15 +119,31 @@ export default function AdminProductoForm() {
     return next;
   });
 
+  const normalizePrecio = () => {
+    const value = Number(precio.replace(',', '.'));
+    if (Number.isFinite(value) && value >= 0) setPrecio(value.toFixed(2));
+  };
+
+  const handleDelete = async () => {
+    if (!id || !window.confirm(`¿Eliminar «${nombre}»? Esta acción no se puede deshacer.`)) return;
+    setSaving(true);
+    try {
+      await adminApi.deleteProducto(id);
+      navigate('/admin/productos');
+    } catch (err) {
+      console.error(err);
+      alert(errorMessage(err));
+      setSaving(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const cleanName = nombre.trim();
     const parsedPrecio = Number(precio.replace(',', '.'));
-    const parsedOrden = Number(orden);
     if (!cleanName) return alert('El producto necesita un nombre.');
     if (!familiaId) return alert('Debes seleccionar una familia.');
     if (!Number.isFinite(parsedPrecio) || parsedPrecio < 0) return alert('Introduce un precio válido.');
-    if (!Number.isInteger(parsedOrden) || parsedOrden < 0) return alert('El orden debe ser un número entero igual o mayor que 0.');
     setSaving(true);
     try {
       const data: Partial<Producto> = {
@@ -126,10 +152,12 @@ export default function AdminProductoForm() {
         precio: parsedPrecio,
         familia_id: familiaId,
         foto_url: fotoUrl.trim() || null,
-        orden: parsedOrden,
+        // El orden se conserva aquí. Se modifica exclusivamente desde la lista de Productos mediante arrastre.
+        orden: Number(orden) || 0,
         activo,
         agotado,
         destacado,
+        sugerido,
       };
       if (isEditing && id) await adminApi.updateProducto(id, data, [...selectedAlergenos]);
       else await adminApi.createProducto(data, [...selectedAlergenos]);
@@ -143,50 +171,145 @@ export default function AdminProductoForm() {
   };
 
   if (loading) {
-    return <div className="flex min-h-[50vh] items-center justify-center bg-[#111111]"><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-400" /></div>;
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
+        <div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-500" />
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto min-h-[calc(100dvh-1rem)] w-full max-w-3xl bg-[#111111] px-2 pb-2 text-white sm:px-3">
-      <header className="sticky top-0 z-20 flex h-12 items-center gap-2 border-b border-white/10 bg-[#111111]/95 backdrop-blur">
-        <button type="button" onClick={() => navigate('/admin/productos')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 hover:bg-white/5" aria-label="Volver"><ArrowLeft size={19} /></button>
-        <h1 className="truncate text-lg font-extrabold">{isEditing ? 'Editar artículo' : 'Nuevo artículo'}</h1>
-        <div className="ml-auto flex items-center gap-3">
-          {isEditing && <span className="text-xs font-semibold text-red-400">Eliminar</span>}
-          <button form="producto-form" type="submit" disabled={saving} className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-extrabold text-orange-400 hover:bg-orange-400/10 disabled:opacity-50"><Save size={15} />{saving ? 'Guardando…' : 'Guardar'}</button>
-        </div>
+    <div
+      className="min-h-[calc(100dvh-4rem)] w-full max-w-full overflow-x-clip"
+      style={{
+        background: 'var(--app-bg)',
+        color: 'var(--app-text)',
+        width: '100vw',
+        marginLeft: 'calc(50% - 50vw)',
+      }}
+    >
+      <header className="sticky top-0 z-20 flex h-11 items-center gap-1 border-b px-2" style={{ borderColor: 'var(--app-border)', background: 'color-mix(in srgb, var(--app-bg) 94%, transparent)', backdropFilter: 'blur(10px)' }}>
+        <button type="button" onClick={() => navigate('/admin/productos')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver">
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight">{isEditing ? 'Editar artículo' : 'Nuevo artículo'}</h1>
+        {isEditing && (
+          <button type="button" onClick={() => void handleDelete()} disabled={saving} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500 disabled:opacity-50">
+            <Trash2 size={15} />
+            <span className="hidden min-[390px]:inline">Eliminar</span>
+          </button>
+        )}
+        <button form="producto-form" type="submit" disabled={saving} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-orange-500 disabled:opacity-50">
+          <Save size={15} />
+          <span>Guardar</span>
+        </button>
       </header>
 
-      <form id="producto-form" onSubmit={handleSubmit} className="space-y-2 pb-14 pt-2">
-        <section className="rounded-xl border border-white/10 bg-[#171717] p-2.5 shadow-sm">
-          <div className="grid grid-cols-[38%_minmax(0,1fr)] gap-2 max-[430px]:grid-cols-[35%_minmax(0,1fr)]">
+      <form id="producto-form" onSubmit={handleSubmit} className="space-y-2 px-2 pb-14 pt-2 sm:px-3">
+        <section className="rounded-xl border p-2.5 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+          <div className="grid grid-cols-[32%_minmax(0,1fr)] gap-2 max-[430px]:grid-cols-[31%_minmax(0,1fr)] sm:grid-cols-[34%_minmax(0,1fr)]">
             <div className="min-w-0">
-              <div className="relative overflow-hidden rounded-lg border border-white/10 bg-[#202020]"><div className="aspect-square w-full">{fotoUrl ? <img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} /> : <div className="flex h-full items-center justify-center text-white/30"><ImageIcon size={34} /></div>}</div></div>
-              <label className="mt-1.5 block"><span className="sr-only">URL de imagen</span><input type="url" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="URL imagen" className="h-7 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-[10px] text-white outline-none placeholder:text-white/30 focus:border-orange-400/60" /></label>
+              <div className="relative overflow-hidden rounded-lg border" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
+                <div className="aspect-square w-full">
+                  {fotoUrl ? (
+                    <img src={fotoUrl} alt="Imagen del artículo" className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  ) : (
+                    <div className="flex h-full items-center justify-center" style={{ color: 'var(--app-muted)' }}><ImageIcon size={30} /></div>
+                  )}
+                </div>
+              </div>
+              <label className="mt-1.5 block">
+                <span className="mb-0.5 block text-[8px] font-semibold uppercase tracking-wide" style={{ color: 'var(--app-muted)' }}>URL de imagen</span>
+                <input type="url" value={fotoUrl} onChange={(e) => setFotoUrl(e.target.value)} placeholder="Pega el enlace de la imagen" className="h-7 w-full rounded-lg border bg-transparent px-2 text-[9px] outline-none focus:border-orange-500" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} />
+              </label>
             </div>
+
             <div className="min-w-0 space-y-1.5">
-              <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Nombre del artículo *</span><input required value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={100} className="h-9 w-full rounded-md border border-white/10 bg-[#202020] px-2.5 text-sm font-semibold text-white outline-none focus:border-orange-400/70" /></label>
-              <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Descripción</span><textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} maxLength={250} className="w-full resize-none rounded-md border border-white/10 bg-[#202020] px-2.5 py-1.5 text-xs leading-4 text-white outline-none focus:border-orange-400/70" /></label>
+              <label className="block">
+                <span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide" style={{ color: 'var(--app-muted)' }}>Nombre del artículo *</span>
+                <input required value={nombre} onChange={(e) => setNombre(e.target.value)} maxLength={100} className="h-9 w-full rounded-lg border bg-transparent px-2.5 text-[14px] font-semibold outline-none focus:border-orange-500" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} />
+              </label>
+              <label className="block">
+                <span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide" style={{ color: 'var(--app-muted)' }}>Descripción</span>
+                <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} maxLength={250} className="w-full resize-none rounded-lg border bg-transparent px-2.5 py-1.5 text-[11px] leading-4 outline-none focus:border-orange-500" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} />
+              </label>
             </div>
           </div>
-          <div className="mt-2 grid grid-cols-[1.35fr_.75fr_.55fr] gap-2 max-[430px]:grid-cols-[1.2fr_.7fr_.55fr]">
-            <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Categoría (familia) *</span><select required value={familiaId} onChange={(e) => setFamiliaId(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70"><option value="">Selecciona</option>{familias.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}</select></label>
-            <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Precio *</span><div className="relative"><input inputMode="decimal" required value={precio} onChange={(e) => setPrecio(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70" /><span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-white/40">€</span></div></label>
-            <label className="block"><span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide text-white/50">Orden</span><input type="number" min="0" step="1" value={orden} onChange={(e) => setOrden(e.target.value)} className="h-8 w-full rounded-md border border-white/10 bg-[#202020] px-2 text-xs text-white outline-none focus:border-orange-400/70" /></label>
+
+          <div className="mt-2 grid grid-cols-[minmax(0,1.25fr)_minmax(0,.75fr)] gap-2">
+            <label className="block min-w-0">
+              <span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide" style={{ color: 'var(--app-muted)' }}>Categoría (familia) *</span>
+              <select required value={familiaId} onChange={(e) => setFamiliaId(e.target.value)} className="h-9 w-full truncate rounded-lg border bg-transparent px-2 text-[11px] outline-none focus:border-orange-500" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>
+                <option value="">Selecciona una familia</option>
+                {familias.map((f) => <option key={f.id} value={f.id}>{f.nombre}</option>)}
+              </select>
+            </label>
+            <label className="block min-w-0">
+              <span className="mb-0.5 block text-[9px] font-semibold uppercase tracking-wide" style={{ color: 'var(--app-muted)' }}>Precio *</span>
+              <div className="relative">
+                <input inputMode="decimal" required value={precio} onChange={(e) => setPrecio(e.target.value)} onBlur={normalizePrecio} className="h-9 w-full rounded-lg border bg-transparent px-2 pr-7 text-[12px] font-semibold outline-none focus:border-orange-500" style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }} />
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px]" style={{ color: 'var(--app-muted)' }}>€</span>
+              </div>
+            </label>
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="text-[10px] font-semibold uppercase text-white/55">Visible</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${activo ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" /></label>
-            <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="text-[10px] font-semibold uppercase text-white/55">Disponible</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${!agotado ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="sr-only" /></label>
-            <label className="flex h-8 cursor-pointer items-center justify-between rounded-md border border-white/10 bg-[#202020] px-2.5"><span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-white/55"><Star size={12} className={destacado ? 'text-orange-400' : ''} />Destacado</span><span className={`flex h-4 w-7 items-center rounded-full p-0.5 transition ${destacado ? 'bg-orange-400 justify-end' : 'bg-white/20 justify-start'}`}><span className="h-3 w-3 rounded-full bg-white shadow" /></span><input type="checkbox" checked={destacado} onChange={(e) => setDestacado(e.target.checked)} className="sr-only" /></label>
+
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
+              <span className="text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}>Visible</span>
+              <StatusSwitch checked={activo} />
+              <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="sr-only" />
+            </label>
+            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
+              <span className="text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}>Disponible</span>
+              <StatusSwitch checked={!agotado} />
+              <input type="checkbox" checked={!agotado} onChange={(e) => setAgotado(!e.target.checked)} className="sr-only" />
+            </label>
+            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}><Star size={11} className={destacado ? 'text-orange-500' : ''} />Destacado</span>
+              <StatusSwitch checked={destacado} />
+              <input type="checkbox" checked={destacado} onChange={(e) => setDestacado(e.target.checked)} className="sr-only" />
+            </label>
+            <label className="flex min-h-[50px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-center" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface-soft)' }}>
+              <span className="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase" style={{ color: 'var(--app-muted)' }}><Lightbulb size={11} className={sugerido ? 'text-orange-500' : ''} />Sugerencia</span>
+              <StatusSwitch checked={sugerido} />
+              <input type="checkbox" checked={sugerido} onChange={(e) => setSugerido(e.target.checked)} className="sr-only" />
+            </label>
           </div>
         </section>
 
-        <section className="rounded-xl border border-white/10 bg-[#171717] p-2.5 shadow-sm">
-          <div className="mb-1.5 flex items-end justify-between"><div><h2 className="text-sm font-extrabold">Alérgenos</h2><p className="text-[9px] text-white/40">Selecciona los alérgenos que contiene este artículo.</p></div><span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-orange-400">{selectedAlergenos.size}</span></div>
-          <div className="grid grid-cols-2 gap-1">{alergenos.map((a) => { const selected = selectedAlergenos.has(a.id); return <label key={a.id} title={a.nombre} className={`flex h-8 cursor-pointer items-center gap-2 rounded-md border px-1.5 transition ${selected ? 'border-orange-400/60 bg-orange-400/10' : 'border-white/10 bg-[#202020] hover:border-white/20'}`}><input type="checkbox" checked={selected} onChange={() => toggleAlergeno(a.id)} className="sr-only" /><span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${selected ? 'border-orange-400 bg-orange-400 text-[#111]' : 'border-white/30 bg-transparent text-transparent'}`}><Check size={12} strokeWidth={3} /></span><AlergenoIcon alergeno={a} /><span className="min-w-0 truncate text-[10px] font-semibold text-white/80">{a.nombre}</span></label>; })}</div>
+        <section className="rounded-xl border p-2.5 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+          <div className="mb-1.5 flex items-end justify-between">
+            <div>
+              <h2 className="text-[15px] font-extrabold">Alérgenos</h2>
+              <p className="text-[9px]" style={{ color: 'var(--app-muted)' }}>Selecciona los alérgenos que contiene este artículo.</p>
+            </div>
+            <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-orange-500" style={{ background: 'var(--app-surface-soft)' }}>{selectedAlergenos.size}</span>
+          </div>
+          <div className="alergenos-grid grid grid-cols-2 gap-1">
+            {alergenos.map((a) => {
+              const selected = selectedAlergenos.has(a.id);
+              return (
+                <label key={a.id} title={a.nombre} className="flex min-h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-1.5 transition" style={{ borderColor: selected ? 'rgba(249,115,22,.75)' : 'var(--app-border)', background: selected ? 'rgba(249,115,22,.10)' : 'var(--app-surface-soft)' }}>
+                  <input type="checkbox" checked={selected} onChange={() => toggleAlergeno(a.id)} className="sr-only" />
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border" style={selected ? { borderColor: '#f97316', background: '#f97316', color: '#111' } : { borderColor: 'var(--app-muted)', color: 'transparent' }}>
+                    <Check size={11} strokeWidth={3} />
+                  </span>
+                  <AlergenoIcon alergeno={a} />
+                  <span className="min-w-0 break-words text-[10px] font-semibold leading-[1.05]" style={{ color: 'var(--app-text)' }}>{a.nombre}</span>
+                </label>
+              );
+            })}
+          </div>
         </section>
 
-        <div className="sticky bottom-0 z-20 -mx-2 border-t border-white/10 bg-[#111111]/95 p-2 backdrop-blur sm:-mx-3"><div className="mx-auto flex max-w-3xl gap-2"><button type="button" onClick={() => navigate('/admin/productos')} className="h-9 flex-1 rounded-md border border-white/10 bg-[#202020] text-xs font-bold text-white/65">Cancelar</button><button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-md bg-orange-400 text-xs font-extrabold text-[#111] shadow-sm disabled:opacity-50"><span className="inline-flex items-center justify-center gap-1.5"><Save size={15} />{saving ? 'Guardando…' : 'Guardar cambios'}</span></button></div></div>
+        <div className="sticky bottom-0 z-20 -mx-2 border-t p-2 backdrop-blur sm:-mx-3" style={{ borderColor: 'var(--app-border)', background: 'color-mix(in srgb, var(--app-bg) 94%, transparent)' }}>
+          <div className="mx-auto flex max-w-3xl gap-2">
+            <button type="button" onClick={() => navigate('/admin/productos')} className="h-9 flex-1 rounded-lg border text-xs font-bold" style={{ borderColor: 'var(--app-border)', background: 'var(--app-surface)', color: 'var(--app-muted)' }}>Cancelar</button>
+            <button type="submit" disabled={saving} className="h-9 flex-[1.7] rounded-lg bg-orange-500 text-xs font-extrabold text-white shadow-sm disabled:opacity-50">
+              <span className="inline-flex items-center justify-center gap-1.5"><Save size={15} />{saving ? 'Guardando…' : 'Guardar cambios'}</span>
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   );
