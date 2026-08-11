@@ -25,6 +25,86 @@ async function requireSession(): Promise<void> {
   }
 }
 
+/**
+ * Comprime una imagen utilizando Canvas.
+ */
+async function compressImage(file: File): Promise<File> {
+  // Limitar tamaños
+  const MAX_WIDTH = 1080;
+  const MAX_HEIGHT = 1080;
+  const QUALITY = 0.8;
+
+  return new Promise((resolve, reject) => {
+    // Si no es imagen, o es muy pequeña en bytes (<200KB), devolver tal cual
+    if (!file.type.startsWith('image/') || file.size < 200 * 1024) {
+      return resolve(file);
+    }
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      let width = img.width;
+      let height = img.height;
+
+      if (width <= MAX_WIDTH && height <= MAX_HEIGHT) {
+         // Ya es pequeña, devolver original (aunque podría re-comprimirse si pesa mucho)
+         if (file.size < 500 * 1024) {
+            return resolve(file);
+         }
+      }
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height = Math.round(height * (MAX_WIDTH / width));
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width = Math.round(width * (MAX_HEIGHT / height));
+          height = MAX_HEIGHT;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return resolve(file); // fallback
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      const fileExtension = mimeType === 'image/png' ? 'png' : 'jpg';
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return resolve(file);
+          const compressed = new File([blob], file.name.replace(/\.[^/.]+$/, "") + `.${fileExtension}`, {
+            type: mimeType,
+            lastModified: Date.now(),
+          });
+          resolve(compressed);
+        },
+        mimeType,
+        QUALITY
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Error al leer la imagen para comprimir'));
+    };
+
+    img.src = url;
+  });
+}
+
 export const adminApi = {
   async getProductosAdmin(): Promise<Producto[]> {
     await requireSession();
@@ -130,6 +210,61 @@ export const adminApi = {
     await requireSession();
     const { error } = await supabase.from('productos').delete().eq('id', id);
     if (error) throw new Error(`No se puede eliminar el producto: ${getErrorMessage(error)}`);
+  },
+
+  async uploadProductoFoto(file: File): Promise<string> {
+    await requireSession();
+
+    // Comprimir la imagen si es demasiado grande o pesada.
+    const compressedFile = await compressImage(file);
+
+    // Generar un nombre de archivo único
+    const fileExt = compressedFile.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('productos')
+      .upload(filePath, compressedFile, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw new Error(`No se pudo subir la imagen: ${getErrorMessage(uploadError)}`);
+    }
+
+    const { data } = supabase.storage.from('productos').getPublicUrl(filePath);
+
+    if (!data.publicUrl) {
+      throw new Error('No se pudo obtener la URL pública de la imagen.');
+    }
+
+    return data.publicUrl;
+  },
+
+  async deleteProductoFoto(fotoUrl: string): Promise<void> {
+    await requireSession();
+    if (!fotoUrl) return;
+
+    try {
+      const url = new URL(fotoUrl);
+      const parts = url.pathname.split('/');
+      const bucketIndex = parts.indexOf('productos');
+      if (bucketIndex !== -1 && bucketIndex < parts.length - 1) {
+        const filePath = parts.slice(bucketIndex + 1).join('/');
+        const { error } = await supabase.storage.from('productos').remove([filePath]);
+        if (error) {
+          console.error('Error eliminando la foto de Supabase Storage:', error);
+          throw new Error(`No se pudo eliminar la imagen: ${getErrorMessage(error)}`);
+        }
+      }
+    } catch (e) {
+       console.error('Error al intentar eliminar fotoUrl:', fotoUrl, e);
+       if (e instanceof Error) {
+         throw e;
+       }
+    }
   },
 
   async getAlergenosAdmin(): Promise<Alergeno[]> {
