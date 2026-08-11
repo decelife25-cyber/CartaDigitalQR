@@ -1,12 +1,47 @@
 import { supabase } from '../lib/supabase';
-import type { Configuracion, Familia, Producto } from '../types/database';
+import type { Alergeno, Configuracion, Familia, Producto } from '../types/database';
+
+function normalize(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function localAlergenoIconPath(nombre: string): string | null {
+  const key = normalize(nombre);
+  const base = `${import.meta.env.BASE_URL}icons/alergenos/erudus`;
+
+  if (key.includes('gluten') || key.includes('cereal')) return `${base}/cereal.svg`;
+  if (key.includes('crustace')) return `${base}/crustaceans.svg`;
+  if (key.includes('huevo')) return `${base}/eggs.svg`;
+  if (key.includes('pescado')) return `${base}/fish.svg`;
+  if (key.includes('cacahuet')) return `${base}/peanuts.svg`;
+  if (key.includes('soja')) return `${base}/soya.svg`;
+  if (key.includes('leche') || key.includes('lact')) return `${base}/milk.svg`;
+  if (key.includes('fruto') && key.includes('cascara')) return `${base}/nuts.svg`;
+  if (key.includes('apio')) return `${base}/celery.svg`;
+  if (key.includes('mostaza')) return `${base}/mustard.svg`;
+  if (key.includes('sesamo')) return `${base}/sesame.svg`;
+  if (key.includes('sulf') || key.includes('dioxido') || key.includes('azufre')) return `${base}/so2.svg`;
+  if (key.includes('altram')) return `${base}/lupin.svg`;
+  if (key.includes('molusc')) return `${base}/molluscs.svg`;
+  return null;
+}
+
+function mapAlergeno(alergeno: Alergeno): Alergeno {
+  return {
+    ...alergeno,
+    // Los pictogramas oficiales ahora viven dentro de la aplicación.
+    // Se priorizan sobre las URLs antiguas que puedan quedar guardadas en Supabase.
+    icono: localAlergenoIconPath(alergeno.nombre) ?? alergeno.icono ?? null,
+  };
+}
 
 function mapProducto(producto: any): Producto {
   return {
     ...producto,
     alergenos: (producto.producto_alergeno ?? [])
       .map((pa: any) => pa.alergenos)
-      .filter(Boolean),
+      .filter(Boolean)
+      .map(mapAlergeno),
   };
 }
 
