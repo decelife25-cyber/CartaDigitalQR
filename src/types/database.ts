@@ -16,6 +16,7 @@ export interface Familia {
   configuracion_restaurante_id: string;
   nombre: string;
   descripcion: string | null;
+  foto_url: string | null;
   activo: boolean;
   orden: number;
   created_at: string;
