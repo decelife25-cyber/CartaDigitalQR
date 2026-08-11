@@ -95,15 +95,21 @@ export default function ListadoPlatos() {
               <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
 
               <div className="relative h-full min-w-0 flex-1">
-                {/* El nombre tiene reservada una columna para que nunca invada la zona del precio. */}
-                <h2 className="absolute left-3.5 top-3 min-w-0 max-w-[calc(100%-112px)] overflow-hidden text-[16px] font-extrabold leading-[1.08] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">{producto.nombre}</h2>
+                {/* Cabecera independiente: nombre a la izquierda y precio en una columna propia a la derecha. */}
+                <div className="absolute left-3.5 right-12 top-3 flex items-start gap-2">
+                  <h2 className="min-w-0 flex-1 overflow-hidden text-[16px] font-extrabold leading-[1.08] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+                    {producto.nombre}
+                  </h2>
+                  <span
+                    className="w-[90px] shrink-0 whitespace-nowrap text-right text-[16px] font-extrabold leading-none"
+                    style={{ color: 'var(--app-text)' }}
+                    aria-label={`Precio ${producto.precio.toFixed(2)} euros`}
+                  >
+                    {producto.precio.toFixed(2)}€
+                  </span>
+                </div>
 
-                {/* Precio: columna propia, anchura fija y texto alineado a la DERECHA. */}
-                <span className="absolute right-12 top-3 w-[82px] whitespace-nowrap text-right text-[16px] font-extrabold leading-none text-primary" aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>
-                  {producto.precio.toFixed(2)}€
-                </span>
-
-                {/* Alérgenos separados del nombre y exclusivamente debajo de él. */}
+                {/* Los alérgenos quedan siempre debajo del nombre, separados de él y sin ocupar la foto. */}
                 <div className="absolute bottom-3 left-3.5 right-12 overflow-hidden pt-1">
                   <AlergenoItem producto={producto} />
                 </div>
