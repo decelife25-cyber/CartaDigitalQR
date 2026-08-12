@@ -34,13 +34,13 @@ function allergenBackground(nombre: string): string {
 function AlergenoItem({ producto }: { producto: Producto }) {
   if (!producto.alergenos?.length) return null;
   return (
-    <div className="flex w-full flex-wrap items-center justify-start gap-1" aria-label="Alérgenos">
+    <div className="flex w-full flex-wrap items-center justify-start gap-1.5" aria-label="Alérgenos">
       {producto.alergenos.map((alergeno) => (
-        <span key={alergeno.id} title={alergeno.nombre} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ background: allergenBackground(alergeno.nombre) }}>
+        <span key={alergeno.id} title={alergeno.nombre} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: allergenBackground(alergeno.nombre) }}>
           {alergeno.icono ? (
-            <img src={alergeno.icono} alt={alergeno.nombre} className="h-5 w-5 object-contain" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
+            <img src={alergeno.icono} alt={alergeno.nombre} className="h-6 w-6 object-contain" onError={(event) => { event.currentTarget.style.display = 'none'; }} />
           ) : (
-            <span className="text-[9px] font-extrabold" style={{ color: 'var(--app-text)' }}>{alergeno.sigla || '•'}</span>
+            <span className="text-[10px] font-extrabold" style={{ color: 'var(--app-text)' }}>{alergeno.sigla || '•'}</span>
           )}
         </span>
       ))}
@@ -51,7 +51,7 @@ function AlergenoItem({ producto }: { producto: Producto }) {
 function ProductoImagen({ producto }: { producto: Producto }) {
   const [error, setError] = useState(false);
   if (!producto.foto_url || error) return <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}><Utensils className="h-8 w-8" strokeWidth={1.2} /></div>;
-  return <img src={producto.foto_url} alt={producto.nombre} loading="lazy" className="h-full w-full object-cover" onError={() => setError(true)} />;
+  return <div className="flex h-full w-full items-center justify-center overflow-hidden" style={{ background: 'var(--app-surface-soft)' }}><img src={producto.foto_url} alt={producto.nombre} loading="lazy" className="h-full w-full object-contain" onError={() => setError(true)} /></div>;
 }
 
 export default function ListadoPlatos() {
@@ -109,14 +109,7 @@ export default function ListadoPlatos() {
           <h1 className="text-[21px] font-extrabold leading-tight tracking-tight">{heading}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={() => navigate('/seleccion')}
-            aria-label={`Abrir mi selección${selectedIds.length ? ` (${selectedIds.length})` : ''}`}
-            title="Mi selección"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95"
-            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
-          >
+          <button type="button" onClick={() => navigate('/seleccion')} aria-label={`Abrir mi selección${selectedIds.length ? ` (${selectedIds.length})` : ''}`} title="Mi selección" className="relative flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>
             <Heart size={20} strokeWidth={2.2} />
             {selectedIds.length > 0 && <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white" style={{ background: '#e11d48' }}>{selectedIds.length}</span>}
           </button>
@@ -130,7 +123,7 @@ export default function ListadoPlatos() {
             const selected = isSelected(producto.id);
             return (
               <div key={producto.id} className="relative h-[124px] w-full">
-                <button key={producto.id} type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-full w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+                <button type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-full w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
                   <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
 
                   <div className="relative h-full min-w-0 flex-1">
@@ -138,11 +131,7 @@ export default function ListadoPlatos() {
                       {producto.nombre}
                     </h2>
 
-                    <span
-                      className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none"
-                      style={{ color: 'var(--app-text)' }}
-                      aria-label={`Precio ${producto.precio.toFixed(2)} euros`}
-                    >
+                    <span className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none" style={{ color: 'var(--app-text)' }} aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>
                       {producto.precio.toFixed(2)}€
                     </span>
 
@@ -154,14 +143,7 @@ export default function ListadoPlatos() {
                   <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface)' }}><ChevronRight className="h-5 w-5" /></span>
                 </button>
 
-                <button
-                  type="button"
-                  aria-label={selected ? `Quitar ${producto.nombre} de mi selección` : `Añadir ${producto.nombre} a mi selección`}
-                  aria-pressed={selected}
-                  onClick={() => toggleSelection(producto.id)}
-                  className="absolute right-3 top-[46%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full transition-transform active:scale-90"
-                  style={{ color: selected ? '#e11d48' : 'var(--app-text)', background: 'var(--app-surface)' }}
-                >
+                <button type="button" aria-label={selected ? `Quitar ${producto.nombre} de mi selección` : `Añadir ${producto.nombre} a mi selección`} aria-pressed={selected} onClick={() => toggleSelection(producto.id)} className="absolute right-3 top-[46%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full transition-transform active:scale-90" style={{ color: selected ? '#e11d48' : 'var(--app-text)', background: 'var(--app-surface)' }}>
                   <Heart className="h-5 w-5" strokeWidth={2.2} fill={selected ? 'currentColor' : 'none'} />
                 </button>
               </div>
