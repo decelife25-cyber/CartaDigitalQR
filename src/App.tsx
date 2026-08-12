@@ -22,6 +22,7 @@ function App() {
         <Route path="/familias/buscar" element={<ListadoPlatos />} />
         <Route path="/familias/:id" element={<ListadoPlatos />} />
         <Route path="/plato/:id" element={<FichaPlato />} />
+        <Route path="/buscar" element={<Navigate to="/familias?buscar=1" replace />} />
         <Route path="/seleccion" element={<MiSeleccion />} />
 
         <Route path="/admin/login" element={<Login />} />
