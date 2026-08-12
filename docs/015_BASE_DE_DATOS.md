@@ -1,170 +1,147 @@
-# BASE DE DATOS
+# BASE DE DATOS — CARTADIGITALQR
 
-## Objetivo de la base de datos
-Centralizar y gestionar toda la información de la CartaDigitalQR para un restaurante específico, proporcionando acceso inmediato y persistencia de datos tanto para la carta pública como para el panel privado. La base de datos es la única fuente de la verdad para todo el sistema.
+## Fuente única de verdad
 
-## Arquitectura
-El sistema utiliza una arquitectura de base de datos relacional sobre PostgreSQL mediante **Supabase**. Cada restaurante utiliza su propia instancia o proyecto de Supabase, de forma que el acceso a los datos está segmentado mediante la URL y la Anon Key de Supabase.
+CartaDigitalQR utiliza **Supabase PostgreSQL** como backend único de datos.
 
-## Todas las tablas
-Basado en la estructura del proyecto, las tablas existentes son:
-1. `familias`
-2. `productos`
-3. `alergenos`
-4. `producto_alergenos` (Tabla de relación)
-5. `configuracion`
+La aplicación pública y el panel privado utilizan Supabase mediante `@supabase/supabase-js`.
 
----
+Este documento describe el modelo que utiliza actualmente el código. Para cambios estructurales, la referencia ejecutable son las migraciones SQL de `supabase/migrations/`.
 
-## Detalle de Tablas y Campos
+## Entidades actuales
 
-### 1. Tabla: `familias`
-**Objetivo:** Almacenar las categorías de la carta.
+### `configuracion_restaurante`
 
-#### Todos los campos y Tipo de cada campo:
-- `id` (UUID)
-- `nombre` (TEXT)
-- `imagen` (TEXT) - URL de la imagen
-- `orden` (INTEGER)
-- `estado` (TEXT) - 'Visible' u 'Oculta'
-- `created_at` (TIMESTAMP WITH TIME ZONE)
-- `updated_at` (TIMESTAMP WITH TIME ZONE)
+Configuración del restaurante utilizada por el panel y por la carta pública.
 
-#### Propiedades:
-- **Claves primarias:** `id`
-- **Campos obligatorios:** `nombre`, `orden`, `estado`
-- **Valores por defecto:** `id` = gen_random_uuid(), `estado` = 'Visible', `created_at` = now()
-- **Restricciones:** El nombre no puede estar vacío.
+Campos utilizados actualmente:
 
-### 2. Tabla: `productos`
-**Objetivo:** Almacenar la información de los platos y productos de la carta.
+- `id`
+- `nombre`
+- `logo_url`
+- `color_principal`
+- `descripcion`
+- `direccion`
+- `telefono`
+- `redes_sociales`
+- `horario`
+- `qr_url`
+- `dominio`
+- `url_reservas_mesa`
+- `activo`
 
-#### Todos los campos y Tipo de cada campo:
-- `id` (UUID)
-- `nombre` (TEXT)
-- `descripcion` (TEXT)
-- `precio` (NUMERIC)
-- `familia_id` (UUID)
-- `imagen` (TEXT) - URL de la imagen
-- `estado` (TEXT) - 'Visible' u 'Oculto'
-- `disponibilidad` (BOOLEAN) - true/false (disponible o agotado)
-- `sugerido` (BOOLEAN) - true/false; marca temporal de producto sugerido
-- `created_at` (TIMESTAMP WITH TIME ZONE)
-- `updated_at` (TIMESTAMP WITH TIME ZONE)
+### `familias`
 
-#### Propiedades:
-- **Claves primarias:** `id`
-- **Claves externas:** `familia_id` -> `familias.id`
-- **Campos obligatorios:** `nombre`, `precio`, `familia_id`, `estado`
-- **Valores por defecto:** `id` = gen_random_uuid(), `disponibilidad` = true, `estado` = 'Visible', `sugerido` = false
-- **Restricciones:** `precio` >= 0
+Categorías de la carta.
 
-### 3. Tabla: `alergenos`
-**Objetivo:** Catálogo de alérgenos disponibles.
+Campos utilizados actualmente:
 
-#### Todos los campos y Tipo de cada campo:
-- `id` (UUID)
-- `nombre` (TEXT)
-- `icono` (TEXT) - URL del icono o identificador
-- `created_at` (TIMESTAMP WITH TIME ZONE)
+- `id`
+- `configuracion_restaurante_id`
+- `nombre`
+- `descripcion`
+- `foto_url`
+- `activo`
+- `orden`
+- `created_at`
+- `updated_at`
 
-#### Propiedades:
-- **Claves primarias:** `id`
-- **Campos obligatorios:** `nombre`, `icono`
-- **Valores por defecto:** `id` = gen_random_uuid()
+### `productos`
 
-### 4. Tabla: `producto_alergenos`
-**Objetivo:** Asociar múltiples alérgenos a cada producto.
+Artículos de la carta.
 
-#### Todos los campos y Tipo de cada campo:
-- `producto_id` (UUID)
-- `alergeno_id` (UUID)
+Campos utilizados actualmente:
 
-#### Propiedades:
-- **Claves primarias:** (`producto_id`, `alergeno_id`)
-- **Claves externas:**
-  - `producto_id` -> `productos.id`
-  - `alergeno_id` -> `alergenos.id`
-- **Campos obligatorios:** `producto_id`, `alergeno_id`
+- `id`
+- `configuracion_restaurante_id`
+- `familia_id`
+- `nombre`
+- `descripcion`
+- `precio`
+- `foto_url`
+- `activo`
+- `agotado`
+- `destacado`
+- `sugerido`
+- `orden`
+- `created_at`
+- `updated_at`
 
-### 5. Tabla: `configuracion`
-**Objetivo:** Almacenar la configuración general y opciones de personalización del restaurante (único registro).
+### `alergenos`
 
-#### Todos los campos y Tipo de cada campo:
-- `id` (UUID)
-- `nombre_restaurante` (TEXT)
-- `logotipo` (TEXT)
-- `imagen_principal` (TEXT)
-- `telefono` (TEXT)
-- `direccion` (TEXT)
-- `horario` (TEXT)
-- `redes_sociales` (JSONB)
-- `pagina_web` (TEXT)
-- `texto_bienvenida` (TEXT)
-- `orden_familias` (JSONB) - Opcional si se usa orden en la tabla familias
-- `mostrar_productos_agotados` (BOOLEAN)
-- `imagen_generica_productos` (TEXT)
-- `imagen_generica_familias` (TEXT)
-- `calidad_fotografias` (TEXT)
-- `compresion_automatica` (BOOLEAN)
-- `tema_claro` (BOOLEAN)
-- `tema_oscuro` (BOOLEAN)
-- `moneda` (TEXT)
-- `idioma` (TEXT)
-- `color_principal` (TEXT)
-- `color_secundario` (TEXT)
+Catálogo de alérgenos.
 
-#### Propiedades:
-- **Claves primarias:** `id`
-- **Campos obligatorios:** `nombre_restaurante`
-- **Valores por defecto:** `id` = gen_random_uuid(), `mostrar_productos_agotados` = true
+Campos utilizados actualmente:
 
----
+- `id`
+- `nombre`
+- `sigla`
+- `icono`
+- `descripcion`
+- `orden`
+
+### `producto_alergeno`
+
+Tabla de relación muchos-a-muchos entre productos y alérgenos.
+
+Campos:
+
+- `producto_id`
+- `alergeno_id`
 
 ## Relaciones
-- `familias` tiene muchos `productos` (1:N).
-- `productos` tiene muchos `alergenos` a través de `producto_alergenos` (N:M).
 
-## Índices
-- Índice en `productos.familia_id` para búsquedas rápidas por categoría.
-- Índice en `productos.nombre` (texto) para acelerar el buscador de platos.
-- Índice en `familias.orden` para ordenar rápidamente las categorías.
-- Índice parcial en `productos.sugerido` para localizar rápidamente los productos marcados como sugerencia.
+```text
+configuracion_restaurante
+   │
+   ├── familias
+   │      │
+   │      └── productos
+   │              │
+   │              └── producto_alergeno ── alergenos
+```
 
-## Reglas de borrado (ON DELETE)
-- Si se borra un producto, se borran en cascada sus registros en `producto_alergenos`.
-- Si se borra un alérgeno, se borran en cascada los registros de `producto_alergenos`.
-- No se permite borrar una familia si tiene productos (RESTRICT), o debe solicitar confirmación en el panel (se asume RESTRICT a nivel base de datos para prevenir inconsistencias).
+## Seguridad
 
-## Reglas de actualización (ON UPDATE)
-- Cascada en todas las relaciones mediante las Claves Primarias UUID (CASCADE), aunque al ser UUID es raro que se actualicen.
+La API de Supabase está protegida mediante Row Level Security (RLS).
 
-## RLS (Row Level Security)
-- **Carta Pública:** Las tablas de solo lectura (`familias`, `productos`, `alergenos`, configuración) tienen políticas de lectura (`SELECT`) permitidas de forma anónima (con Anon Key) cuando el estado es 'Visible'.
-- **Panel Privado:** Todas las operaciones de escritura (`INSERT`, `UPDATE`, `DELETE`) y lectura completa requieren autenticación del administrador o personal del restaurante (Authenticated Role en Supabase).
+### Público
 
-## Flujo de lectura
-1. La aplicación realiza las consultas a Supabase utilizando la librería oficial (`@supabase/supabase-js`).
-2. Se consultan primero las configuraciones y familias ordenadas.
-3. Al navegar, se filtran los productos por `familia_id`.
-4. El buscador de platos realiza consultas con filtro `ilike` sobre el nombre del producto o ingredientes.
-5. Los componentes siempre consultan la información fresca si hay cambios (o usan caché optimista).
+El rol `anon` debe poder consultar únicamente los datos que la carta pública necesita y que estén permitidos por las políticas RLS.
 
-## Flujo de escritura
-1. Sólo disponible desde el panel privado de administración.
-2. Todas las modificaciones se hacen mediante peticiones autenticadas.
-3. Se actualiza únicamente el campo o registro modificado, minimizando la recarga de datos (optimización móvil).
-4. El guardado es manual, mediante el botón "Guardar" y los cambios se persisten inmediatamente en Supabase.
+### Privado
 
-## Buenas prácticas
-- No usar consultas pesadas que traigan todo si no es necesario (usar limitación y selección específica de columnas para listados).
-- Aprovechar las funciones `JSONB` para campos sin una estructura estricta como las redes sociales.
-- Mantener siempre actualizado `updated_at` a través de un trigger de base de datos.
-- Nunca almacenar información sensible sin cifrar o exponer endpoints sin RLS.
-- Nunca utilizar datos `mock`; si una tabla está vacía, mostrar estado vacío.
+El panel privado requiere una sesión Supabase autenticada.
 
-## Criterios de aceptación
-- La documentación abarca completamente la estructura actual de Supabase y las funcionalidades requeridas.
-- Todos los apartados listados están presentes y detallados en español.
-- No se han inventado tablas que no estén respaldadas por la documentación y capturas previas.
-- El documento es coherente y respeta la filosofía de ser la única fuente de verdad y servir para multi-restaurante.
+Las operaciones de escritura se realizan con el rol `authenticated` y están sujetas a las políticas RLS vigentes.
+
+Las políticas exactas no deben duplicarse manualmente en esta documentación: la fuente ejecutable es `supabase/migrations/`.
+
+## Migraciones actuales
+
+El repositorio mantiene migraciones para:
+
+- permisos/RLS de la carta;
+- permisos de `configuracion_restaurante`;
+- campo `sugerido` de productos;
+- URL de reservas de mesa.
+
+Todas las modificaciones de esquema deben quedar registradas como migración SQL.
+
+## Imágenes
+
+Las imágenes administradas desde el panel se almacenan mediante Supabase Storage. Los servicios del frontend comprimen imágenes grandes antes de subirlas cuando corresponde.
+
+## Reglas de desarrollo
+
+1. No introducir Google Sheets, Apps Script ni otro backend paralelo.
+2. No utilizar datos mock para sustituir la base real.
+3. No inventar tablas o nombres de columnas que no existan en el esquema actual.
+4. Mantener `src/types/database.ts` sincronizado con el modelo utilizado.
+5. Toda modificación de esquema debe tener su migración SQL.
+6. Las operaciones privadas deben comprobar sesión antes de modificar datos.
+7. Las políticas RLS deben considerarse parte de la aplicación, no una configuración opcional.
+
+## Nota de arquitectura multi-restaurante
+
+`configuracion_restaurante_id` ya forma parte de familias y productos. Sin embargo, las políticas actuales para `authenticated` deben endurecerse si el producto pasa a operar con múltiples restaurantes y usuarios independientes, para impedir que un usuario autenticado pueda modificar datos de otro restaurante.
