@@ -13,7 +13,6 @@ function exists(relativePath) {
   assert.ok(fs.existsSync(path.join(root, relativePath)), `Falta ${relativePath}`);
 }
 
-// Estructura mínima de producción.
 for (const file of [
   'index.html',
   'public/manifest.json',
@@ -41,8 +40,10 @@ assert.ok(!serviceWorker.includes("caches.open('api-cache')"), 'No debe existir 
 assert.ok(!serviceWorker.includes('cache.put(event.request, response.clone())'), 'No debe almacenarse la respuesta de Supabase en caché');
 
 const app = read('src/App.tsx');
-for (const route of ['/admin/login', '/admin', '/admin/familias', '/admin/productos', '/admin/configuracion']) {
-  assert.ok(app.includes(route), `No se encuentra la ruta ${route}`);
+assert.ok(app.includes('path="/admin/login"'), 'No se encuentra la ruta de login');
+assert.ok(app.includes('path="/admin"'), 'No se encuentra la ruta raíz del panel privado');
+for (const route of ['path="familias"', 'path="productos"', 'path="configuracion"']) {
+  assert.ok(app.includes(route), `No se encuentra la ruta privada ${route}`);
 }
 
 const databaseTypes = read('src/types/database.ts');
