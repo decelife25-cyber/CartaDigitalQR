@@ -42,7 +42,7 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
 
   return (
     <span
-      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
       style={{ background }}
     >
       {icono && !failed ? (
@@ -50,11 +50,11 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
           src={icono}
           alt=""
           title={nombre}
-          className="h-9 w-9 object-contain"
+          className="h-6 w-6 object-contain"
           onError={() => setFailed(true)}
         />
       ) : (
-        <span className="text-xl font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
+        <span className="text-sm font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
       )}
     </span>
   );
@@ -173,9 +173,9 @@ export default function FichaPlato() {
 
             <div className="grid grid-cols-2 gap-2.5">
               {producto.alergenos.map((alergeno) => (
-                <div key={alergeno.id} className="flex min-h-14 items-center gap-3 rounded-2xl px-3 py-2" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                <div key={alergeno.id} className="flex min-h-12 min-w-0 items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} />
-                  <span className="text-[16px] font-semibold leading-tight break-words">{alergeno.nombre}</span>
+                  <span className="min-w-0 text-[14px] font-semibold leading-tight break-words">{alergeno.nombre}</span>
                 </div>
               ))}
             </div>

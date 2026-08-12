@@ -95,14 +95,14 @@ export default function ListadoPlatos() {
               <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
 
               <div className="relative h-full min-w-0 flex-1">
-                {/* Nombre con todo el ancho útil posible. El precio ya no le roba espacio innecesariamente. */}
-                <h2 className="absolute left-3.5 right-[100px] top-3 overflow-hidden text-[16px] font-extrabold leading-[1.08] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+                {/* El nombre dispone de casi todo el ancho. Solo se reserva el espacio real necesario para el precio. */}
+                <h2 className="absolute left-3.5 right-[76px] top-3 overflow-hidden text-[16px] font-extrabold leading-[1.08]">
                   {producto.nombre}
                 </h2>
 
-                {/* Precio: pegado a la derecha de la tarjeta y alineado por su borde derecho. */}
+                {/* Precio: ancho fijo pequeno y alineado por su borde derecho. */}
                 <span
-                  className="absolute right-3 top-3 whitespace-nowrap text-right text-[16px] font-extrabold leading-none"
+                  className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none"
                   style={{ color: 'var(--app-text)' }}
                   aria-label={`Precio ${producto.precio.toFixed(2)} euros`}
                 >
