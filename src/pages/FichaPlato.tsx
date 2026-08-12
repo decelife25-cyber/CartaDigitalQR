@@ -42,7 +42,7 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
 
   return (
     <span
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
       style={{ background }}
     >
       {icono && !failed ? (
@@ -50,11 +50,11 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
           src={icono}
           alt=""
           title={nombre}
-          className="h-5 w-5 object-contain"
+          className="h-6 w-6 object-contain"
           onError={() => setFailed(true)}
         />
       ) : (
-        <span className="text-xs font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
+        <span className="text-sm font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
       )}
     </span>
   );
@@ -145,9 +145,9 @@ export default function FichaPlato() {
         </button>
       </section>
 
-      <section className="relative mx-3 -mt-5 rounded-3xl px-5 pb-7 pt-5 shadow-sm" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+      <section className="relative mx-0 -mt-5 rounded-3xl px-4 pb-7 pt-5 shadow-sm sm:px-6" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
         <div className="min-w-0">
-          <h1 className="w-full text-[27px] leading-[1.08] font-extrabold tracking-tight break-words">{producto.nombre}</h1>
+          <h1 className="w-full text-[28px] leading-[1.08] font-extrabold tracking-tight break-words sm:text-[30px]">{producto.nombre}</h1>
         </div>
 
         <div className="mt-4 flex w-full justify-end">
@@ -164,18 +164,18 @@ export default function FichaPlato() {
 
         {producto.alergenos && producto.alergenos.length > 0 && (
           <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--app-border)' }}>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-extrabold uppercase tracking-wider">Alérgenos</h2>
-              <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-extrabold uppercase tracking-wider">Alérgenos</h2>
+              <span className="rounded-full px-3 py-1.5 text-sm font-bold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>
                 {producto.alergenos.length}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
               {producto.alergenos.map((alergeno) => (
-                <div key={alergeno.id} className="flex min-h-10 min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                <div key={alergeno.id} className="flex min-h-[92px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} />
-                  <span className="min-w-0 text-[13px] font-semibold leading-tight break-words">{alergeno.nombre}</span>
+                  <span className="min-w-0 max-w-full text-[14px] font-bold leading-tight break-words">{alergeno.nombre}</span>
                 </div>
               ))}
             </div>
@@ -184,12 +184,12 @@ export default function FichaPlato() {
       </section>
 
       <div className="fixed inset-x-0 bottom-0 z-30 p-3" style={{ background: 'linear-gradient(to top, var(--app-bg) 72%, transparent)' }}>
-        <div className="mx-auto max-w-xl">
+        <div className="mx-auto w-full">
           <button
             type="button"
             onClick={toggleSelection}
             className={clsx(
-              'flex min-h-12 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[16px] font-extrabold shadow-xl transition-transform active:scale-[.99]',
+              'flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[17px] font-extrabold shadow-xl transition-transform active:scale-[.99]',
               selected ? 'border-2' : 'border-0'
             )}
             style={selected
