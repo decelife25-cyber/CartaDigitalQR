@@ -34,7 +34,7 @@ function allergenBackground(nombre: string): string {
 function AlergenoItem({ producto }: { producto: Producto }) {
   if (!producto.alergenos?.length) return null;
   return (
-    <div className="flex w-full flex-wrap items-center justify-start gap-1.5" aria-label="Alérgenos">
+    <div className="grid w-full grid-cols-4 items-center justify-items-start gap-1.5" aria-label="Alérgenos">
       {producto.alergenos.map((alergeno) => (
         <span key={alergeno.id} title={alergeno.nombre} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ background: allergenBackground(alergeno.nombre) }}>
           {alergeno.icono ? (
