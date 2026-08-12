@@ -56,10 +56,22 @@ export default function Portada() {
 
   const phone = config?.telefono?.trim();
   const direccion = config?.direccion?.trim();
+  const urlReservasMesa = config?.url_reservas_mesa?.trim();
 
   const salirDePortada = () => {
     if (window.history.length > 1) navigate(-1);
     else navigate('/familias', { replace: true });
+  };
+
+  const reservarMesa = () => {
+    if (!urlReservasMesa) return;
+    try {
+      const url = new URL(urlReservasMesa, window.location.origin);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+      window.location.assign(url.href);
+    } catch {
+      // URL no valida: no abrir destinos no configurados correctamente.
+    }
   };
 
   return (
@@ -121,8 +133,10 @@ export default function Portada() {
           <div className="grid w-full grid-cols-4 gap-2">
             <button
               type="button"
-              onClick={() => phone ? (window.location.href = `tel:${phone}`) : undefined}
-              className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99]"
+              onClick={reservarMesa}
+              disabled={!urlReservasMesa}
+              aria-label={urlReservasMesa ? 'Reservar mesa' : 'Reservar mesa no configurado'}
+              className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-45"
             >
               <CalendarDays size={17} className="shrink-0" />
               <span>Reservar mesa</span>
