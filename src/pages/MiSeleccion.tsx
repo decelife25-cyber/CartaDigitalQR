@@ -1,41 +1,52 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Share2, Copy, Check, ClipboardList } from 'lucide-react';
+import { Trash2, ClipboardList } from 'lucide-react';
 import { api } from '../services/api';
-import type { Producto } from '../types/database';
+import type { Familia, Producto } from '../types/database';
 import { useSelectionStore } from '../store/selectionStore';
+
+function normalize(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 
 export default function MiSeleccion() {
   const navigate = useNavigate();
   const { selectedIds, removeSelection, clearSelection } = useSelectionStore();
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [familias, setFamilias] = useState<Familia[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function loadSelectedProducts() {
-      if (selectedIds.length === 0) { setProductos([]); setLoading(false); return; }
+      if (selectedIds.length === 0) {
+        setProductos([]);
+        setFamilias([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      try { setProductos(await api.getProductosByIds(selectedIds)); }
-      finally { setLoading(false); }
+      try {
+        const [productosData, familiasData] = await Promise.all([
+          api.getProductosByIds(selectedIds),
+          api.getFamilias(),
+        ]);
+        setProductos(productosData);
+        setFamilias(familiasData);
+      } finally {
+        setLoading(false);
+      }
     }
     void loadSelectedProducts();
   }, [selectedIds]);
 
-  const total = productos.reduce((sum, p) => sum + p.precio, 0);
-  const generateTextFormat = () => `Mi selección de Carta Digital:\n\n${productos.map(p => `- ${p.nombre} (${p.precio.toFixed(2)}€)`).join('\n')}\n\nTotal estimado: ${total.toFixed(2)}€`;
+  const familiaById = new Map(familias.map((familia) => [familia.id, familia.nombre]));
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(generateTextFormat());
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Mi selección', text: generateTextFormat() }); }
-      catch (err) { console.log('Error sharing', err); }
-    } else await handleCopy();
+  const displayName = (producto: Producto): string => {
+    const familiaNombre = familiaById.get(producto.familia_id) ?? '';
+    return normalize(familiaNombre).startsWith('tapa')
+      ? `Tapa ${producto.nombre}`
+      : producto.nombre;
   };
 
   const handleClear = () => {
@@ -66,17 +77,15 @@ export default function MiSeleccion() {
         {productos.map((producto) => (
           <article key={producto.id} className="flex min-h-[92px] items-center gap-3 rounded-2xl border p-2 shadow-sm" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
             {producto.foto_url ? <img src={producto.foto_url} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" /> : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl text-[10px]" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>Sin imagen</div>}
-            <div className="min-w-0 flex-1 py-1"><h2 className="line-clamp-2 text-base font-extrabold leading-tight">{producto.nombre}</h2><p className="mt-1 text-sm font-extrabold" style={{ color: 'var(--color-primary)' }}>{producto.precio.toFixed(2)}€</p></div>
-            <button type="button" onClick={() => removeSelection(producto.id)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--app-muted)' }} aria-label={`Eliminar ${producto.nombre}`}><Trash2 className="h-5 w-5" /></button>
+            <div className="min-w-0 flex-1 py-1"><h2 className="line-clamp-2 text-base font-extrabold leading-tight">{displayName(producto)}</h2><p className="mt-1 text-sm font-extrabold" style={{ color: 'var(--color-primary)' }}>{producto.precio.toFixed(2)}€</p></div>
+            <button type="button" onClick={() => removeSelection(producto.id)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ color: 'var(--app-muted)' }} aria-label={`Eliminar ${displayName(producto)}`}><Trash2 className="h-5 w-5" /></button>
           </article>
         ))}
       </div>
 
-      <section className="sticky bottom-0 rounded-2xl border p-3 shadow-lg backdrop-blur" style={{ background: 'color-mix(in srgb, var(--app-surface) 94%, transparent)', borderColor: 'var(--app-border)' }}>
-        <div className="mb-3 flex items-center justify-between"><span className="text-sm font-semibold" style={{ color: 'var(--app-muted)' }}>Total de la selección</span><strong className="text-2xl font-extrabold">{total.toFixed(2)}€</strong></div>
-        <button type="button" onClick={handleShare} className="mb-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-extrabold text-white shadow-md active:scale-[.99]"><Share2 className="h-5 w-5" />Mostrar al camarero</button>
-        <div className="grid grid-cols-2 gap-2"><button type="button" onClick={handleCopy} className="flex h-10 items-center justify-center gap-1.5 rounded-xl border text-xs font-bold" style={{ background: 'var(--app-surface-soft)', borderColor: 'var(--app-border)' }}>{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? '¡Copiado!' : 'Copiar'}</button><button type="button" onClick={() => navigate('/familias')} className="h-10 rounded-xl border text-xs font-bold" style={{ background: 'var(--app-surface-soft)', borderColor: 'var(--app-border)' }}>Volver a la carta</button></div>
-      </section>
+      <div className="pt-2">
+        <button type="button" onClick={() => navigate('/familias')} className="h-11 w-full rounded-xl border text-sm font-extrabold" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>Volver a la carta</button>
+      </div>
     </main>
   );
 }
