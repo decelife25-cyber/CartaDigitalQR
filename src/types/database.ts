@@ -9,6 +9,7 @@ export interface Configuracion {
   moneda: string | null;
   idioma: string | null;
   horario: string | null;
+  url_reservas_mesa: string | null;
 }
 
 export interface Familia {
