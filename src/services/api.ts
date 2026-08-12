@@ -29,8 +29,6 @@ function localAlergenoIconPath(nombre: string): string | null {
 function mapAlergeno(alergeno: Alergeno): Alergeno {
   return {
     ...alergeno,
-    // Los pictogramas oficiales ahora viven dentro de la aplicación.
-    // Se priorizan sobre las URLs antiguas que puedan quedar guardadas en Supabase.
     icono: localAlergenoIconPath(alergeno.nombre) ?? alergeno.icono ?? null,
   };
 }
@@ -151,7 +149,8 @@ export const api = {
   },
 
   async buscarProductos(query: string): Promise<Producto[]> {
-    if (!query.trim()) return [];
+    const term = normalize(query.trim());
+    if (!term) return [];
 
     const { data, error } = await supabase
       .from('productos')
@@ -163,7 +162,6 @@ export const api = {
       `)
       .eq('activo', true)
       .eq('agotado', false)
-      .ilike('nombre', `%${query}%`)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -171,7 +169,13 @@ export const api = {
       return [];
     }
 
-    return (data ?? []).map(mapProducto);
+    return (data ?? [])
+      .filter((producto: any) => {
+        const name = normalize(producto.nombre ?? '');
+        const description = normalize(producto.descripcion ?? '');
+        return name.includes(term) || description.includes(term);
+      })
+      .map(mapProducto);
   },
 
   async getProductosByIds(ids: string[]): Promise<Producto[]> {

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Moon, Sun, Utensils } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronRight, Moon, Search, Sun, Utensils, X } from 'lucide-react';
 import { api } from '../services/api';
 import type { Familia } from '../types/database';
 
@@ -14,9 +15,13 @@ function toggleTheme() {
 
 export default function Familias() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [loading, setLoading] = useState(true);
   const [night, setNight] = useState(() => document.documentElement.classList.contains('theme-night'));
+  const [searchOpen, setSearchOpen] = useState(() => searchParams.get('buscar') === '1');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     async function loadFamilias() {
@@ -33,6 +38,31 @@ export default function Familias() {
     window.addEventListener('carta-theme-change', syncTheme);
     return () => window.removeEventListener('carta-theme-change', syncTheme);
   }, []);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const timer = window.setTimeout(() => inputRef.current?.focus(), 80);
+    return () => window.clearTimeout(timer);
+  }, [searchOpen]);
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearchTerm('');
+    if (searchParams.get('buscar') === '1') {
+      setSearchParams({}, { replace: true });
+    }
+  }
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const term = searchTerm.trim();
+    if (!term) {
+      inputRef.current?.focus();
+      return;
+    }
+    closeSearch();
+    navigate(`/familias/buscar?q=${encodeURIComponent(term)}`);
+  }
 
   if (loading) {
     return (
@@ -58,16 +88,28 @@ export default function Familias() {
             </h1>
           </div>
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
-            title={night ? 'Modo día' : 'Modo noche'}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95"
-            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
-          >
-            {night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Buscar artículos"
+              title="Buscar artículos"
+              className="flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95"
+              style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
+            >
+              <Search size={20} strokeWidth={2.2} />
+            </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
+              title={night ? 'Modo día' : 'Modo noche'}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95"
+              style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
+            >
+              {night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}
+            </button>
+          </div>
         </header>
 
         <section aria-label="Familias de la carta">
@@ -125,6 +167,69 @@ export default function Familias() {
           </div>
         )}
       </div>
+
+      {searchOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="search-title"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) closeSearch();
+          }}
+        >
+          <form
+            onSubmit={submitSearch}
+            className="w-full max-w-2xl overflow-hidden rounded-3xl border p-4 shadow-2xl"
+            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em]" style={{ color: 'var(--app-muted)' }}>
+                  Carta
+                </p>
+                <h2 id="search-title" className="mt-1 text-xl font-extrabold">
+                  Buscar artículos
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closeSearch}
+                aria-label="Cerrar búsqueda"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border"
+                style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)' }}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2" style={{ color: 'var(--app-muted)' }} />
+              <input
+                ref={inputRef}
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                type="search"
+                inputMode="search"
+                autoComplete="off"
+                placeholder="Atún, choco, gambas..."
+                aria-label="Buscar artículos"
+                className="h-14 w-full rounded-2xl border bg-transparent pl-12 pr-4 text-base font-semibold outline-none focus:ring-2 focus:ring-orange-400/30"
+                style={{ borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={!searchTerm.trim()}
+              className="mt-3 h-12 w-full rounded-2xl text-sm font-extrabold transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ background: 'var(--color-primary)', color: '#fff' }}
+            >
+              Buscar
+            </button>
+          </form>
+        </div>
+      )}
     </main>
   );
 }
