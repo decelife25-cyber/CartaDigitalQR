@@ -15,13 +15,14 @@ type ConfiguracionRestaurante = {
   horario: string | null;
   qr_url: string | null;
   dominio: string | null;
+  url_reservas_mesa: string | null;
   activo: boolean | null;
 };
 
 const EMPTY: ConfiguracionRestaurante = {
   id: '', nombre: '', logo_url: null, color_principal: '#c8a96e', descripcion: null,
   direccion: null, telefono: null, redes_sociales: {}, horario: null, qr_url: null,
-  dominio: null, activo: true,
+  dominio: null, url_reservas_mesa: null, activo: true,
 };
 
 function errorMessage(error: unknown): string {
@@ -70,6 +71,7 @@ export default function AdminConfiguracion() {
         color_principal: config.color_principal?.trim() || null,
         descripcion: config.descripcion?.trim() || null, direccion: config.direccion?.trim() || null,
         telefono: config.telefono?.trim() || null, horario: config.horario?.trim() || null,
+        url_reservas_mesa: config.url_reservas_mesa?.trim() || null,
         redes_sociales: config.redes_sociales ?? {}, updated_at: new Date().toISOString(),
       }).eq('id', config.id);
       if (updateError) throw updateError;
@@ -98,6 +100,11 @@ export default function AdminConfiguracion() {
         <div className="min-w-0 sm:col-span-2"><label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Descripción</span><textarea value={config.descripcion ?? ''} onChange={(e) => set('descripcion', e.target.value)} rows={2} className="w-full min-w-0 resize-none rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--app-text)] outline-none focus:border-orange-400/60" style={{ borderColor: 'var(--app-border)' }} /></label></div>
         <div className="min-w-0 sm:col-span-2"><label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Horario</span><textarea value={config.horario ?? ''} onChange={(e) => set('horario', e.target.value)} rows={2} className="w-full min-w-0 resize-none rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--app-text)] outline-none focus:border-orange-400/60" style={{ borderColor: 'var(--app-border)' }} /></label></div>
       </div>
+    </section>
+
+    <section className="mt-2 w-full min-w-0 rounded-xl border bg-[var(--app-surface)] p-2.5" style={{ borderColor: 'var(--app-border)' }}>
+      <h2 className="text-sm font-extrabold">Reserva de mesa</h2><p className="mb-2 text-[9px] text-[var(--app-muted)]">Aplicación externa que se abrirá al pulsar "Reservar mesa" en la portada.</p>
+      <Field label="Programa de reservas de mesa" value={config.url_reservas_mesa ?? ''} onChange={(v) => set('url_reservas_mesa', v)} placeholder="https://…" type="url" />
     </section>
 
     <section className="mt-2 w-full min-w-0 rounded-xl border bg-[var(--app-surface)] p-2.5" style={{ borderColor: 'var(--app-border)' }}>
