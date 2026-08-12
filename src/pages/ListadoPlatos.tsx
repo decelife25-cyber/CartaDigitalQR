@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ChevronRight, Moon, Sun, Utensils } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Familia, Producto } from '../types/database';
 
@@ -55,7 +55,10 @@ function ProductoImagen({ producto }: { producto: Producto }) {
 
 export default function ListadoPlatos() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const searchQuery = searchParams.get('q')?.trim() ?? '';
+  const isSearch = Boolean(searchQuery) && !id;
   const [productos, setProductos] = useState<Producto[]>([]);
   const [familia, setFamilia] = useState<Familia | null>(null);
   const [night, setNight] = useState(() => document.documentElement.classList.contains('theme-night'));
@@ -63,44 +66,55 @@ export default function ListadoPlatos() {
 
   useEffect(() => {
     async function loadData() {
-      if (!id) return;
       try {
+        if (isSearch) {
+          setProductos(await api.buscarProductos(searchQuery));
+          setFamilia(null);
+          return;
+        }
+
+        if (!id) return;
         const [productosData, familiasData] = await Promise.all([api.getProductosByFamilia(id), api.getFamilias()]);
         setProductos(productosData);
         const currentFamilia = familiasData.find((f) => f.id === id);
         if (currentFamilia) setFamilia(currentFamilia);
-      } finally { setLoading(false); }
+      } finally {
+        setLoading(false);
+      }
     }
     void loadData();
     const syncTheme = () => setNight(document.documentElement.classList.contains('theme-night'));
     window.addEventListener('carta-theme-change', syncTheme);
     return () => window.removeEventListener('carta-theme-change', syncTheme);
-  }, [id]);
+  }, [id, isSearch, searchQuery]);
 
   if (loading) return <div className="flex min-h-[60vh] items-center justify-center" style={{ background: 'var(--app-bg)' }}><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" /></div>;
 
-  const familyName = familia?.nombre || 'Platos';
+  const familyName = familia?.nombre || 'Resultados de búsqueda';
+  const heading = isSearch ? `Resultados para «${searchQuery}»` : familyName;
+
   return (
     <main className="min-h-[100dvh] w-full" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
-      <header className="sticky top-0 z-20 flex h-16 items-center border-b px-3" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
+      <header className="sticky top-0 z-20 flex min-h-16 items-center border-b px-3" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
         <button type="button" onClick={() => navigate('/familias')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" aria-label="Volver a familias"><ArrowLeft className="h-6 w-6" /></button>
-        <div className="min-w-0 flex-1 px-2"><p className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>Familia</p><h1 className="truncate text-[21px] font-extrabold leading-tight tracking-tight">{familyName}</h1></div>
+        <div className="min-w-0 flex-1 px-2">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>{isSearch ? 'Búsqueda' : 'Familia'}</p>
+          <h1 className="text-[21px] font-extrabold leading-tight tracking-tight">{heading}</h1>
+        </div>
         <button type="button" onClick={toggleTheme} aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'} title={night ? 'Modo día' : 'Modo noche'} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>{night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}</button>
       </header>
 
-      <section aria-label={`Productos de ${familyName}`} className="px-3 pb-5 pt-3">
+      <section aria-label={isSearch ? `Resultados de búsqueda para ${searchQuery}` : `Productos de ${familyName}`} className="px-3 pb-5 pt-3">
         <div className="space-y-2.5">
           {productos.map((producto) => (
             <button key={producto.id} type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-[124px] w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
               <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
 
               <div className="relative h-full min-w-0 flex-1">
-                {/* El nombre dispone de casi todo el ancho. Solo se reserva el espacio real necesario para el precio. */}
                 <h2 className="absolute left-3.5 right-[76px] top-3 overflow-hidden text-[16px] font-extrabold leading-[1.08]">
                   {producto.nombre}
                 </h2>
 
-                {/* Precio: ancho fijo pequeno y alineado por su borde derecho. */}
                 <span
                   className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none"
                   style={{ color: 'var(--app-text)' }}
@@ -109,7 +123,6 @@ export default function ListadoPlatos() {
                   {producto.precio.toFixed(2)}€
                 </span>
 
-                {/* Los alérgenos quedan debajo del nombre, sin invadirlo ni entrar en la columna de la foto. */}
                 <div className="absolute bottom-3 left-3.5 right-14 overflow-hidden pt-1">
                   <AlergenoItem producto={producto} />
                 </div>
@@ -119,7 +132,7 @@ export default function ListadoPlatos() {
             </button>
           ))}
         </div>
-        {productos.length === 0 && <p className="mt-12 text-center text-sm" style={{ color: 'var(--app-muted)' }}>No hay productos disponibles en esta categoría.</p>}
+        {productos.length === 0 && <p className="mt-12 text-center text-sm" style={{ color: 'var(--app-muted)' }}>{isSearch ? 'No se han encontrado artículos. Prueba con otra palabra.' : 'No hay productos disponibles en esta categoría.'}</p>}
       </section>
     </main>
   );
