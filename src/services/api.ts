@@ -70,6 +70,7 @@ export const api = {
       moneda: '€',
       idioma: 'es',
       horario: data.horario ?? null,
+      url_reservas_mesa: data.url_reservas_mesa ?? null,
     };
   },
 
