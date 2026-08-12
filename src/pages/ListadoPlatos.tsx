@@ -121,13 +121,14 @@ export default function ListadoPlatos() {
         <div className="space-y-2.5">
           {productos.map((producto) => {
             const selected = isSelected(producto.id);
+            const manyAllergens = (producto.alergenos?.length ?? 0) > 4;
             return (
-              <div key={producto.id} className="relative h-[124px] w-full">
+              <div key={producto.id} className={`relative w-full ${manyAllergens ? 'h-[160px]' : 'h-[124px]'}`}>
                 <button type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-full w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
                   <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
 
-                  <div className="relative h-full min-w-0 flex-1">
-                    <h2 className="absolute left-3.5 right-[76px] top-3 overflow-hidden text-[16px] font-extrabold leading-[1.08]">
+                  <div className="relative h-full min-w-0 flex-1 px-3.5 py-3">
+                    <h2 className="pr-[76px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">
                       {producto.nombre}
                     </h2>
 
@@ -135,7 +136,7 @@ export default function ListadoPlatos() {
                       {producto.precio.toFixed(2)}€
                     </span>
 
-                    <div className="absolute bottom-3 left-3.5 right-14 overflow-hidden pt-1">
+                    <div className="mt-3 pr-12">
                       <AlergenoItem producto={producto} />
                     </div>
                   </div>
