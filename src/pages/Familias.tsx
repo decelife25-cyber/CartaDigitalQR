@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import { ChevronRight, Heart, Moon, Search, Sun, Utensils, X } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Moon, Search, Sun, Utensils, X } from 'lucide-react';
 import { api } from '../services/api';
 import type { Familia } from '../types/database';
+import { useSelectionStore } from '../store/selectionStore';
 
 function toggleTheme() {
   const root = document.documentElement;
@@ -22,6 +23,7 @@ export default function Familias() {
   const [night, setNight] = useState(() => document.documentElement.classList.contains('theme-night'));
   const [searchOpen, setSearchOpen] = useState(() => searchParams.get('buscar') === '1');
   const [searchTerm, setSearchTerm] = useState('');
+  const selectedCount = useSelectionStore((state) => state.selectedIds.length);
 
   useEffect(() => {
     async function loadFamilias() {
@@ -88,7 +90,7 @@ export default function Familias() {
             </h1>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
@@ -98,6 +100,17 @@ export default function Familias() {
               style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
             >
               <Search size={20} strokeWidth={2.2} />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/seleccion')}
+              aria-label={`Abrir mi selección${selectedCount ? ` (${selectedCount})` : ''}`}
+              title="Mi selección"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95"
+              style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
+            >
+              <Heart size={20} strokeWidth={2.2} />
+              {selectedCount > 0 && <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white" style={{ background: '#e11d48' }}>{selectedCount}</span>}
             </button>
             <button
               type="button"
