@@ -25,6 +25,12 @@ export default function Portada() {
     });
   }, []);
 
+  useEffect(() => {
+    const resetReservationLoading = () => setReservandoMesa(false);
+    window.addEventListener('pageshow', resetReservationLoading);
+    return () => window.removeEventListener('pageshow', resetReservationLoading);
+  }, []);
+
   useLayoutEffect(() => {
     const element = textoPizarraRef.current;
     if (!element || sugerencias.length === 0) return;
@@ -101,7 +107,7 @@ export default function Portada() {
               ref={textoPizarraRef}
               className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
               style={{
-                fontFamily: '"Patrick Hand SC", "Chalkboard SE", "Marker Felt", "Segoe Print", cursive',
+                fontFamily: '\"Patrick Hand SC\", \"Chalkboard SE\", \"Marker Felt\", \"Segoe Print\", cursive',
                 fontSize: pizarraAmpliada ? '26px' : '16px',
                 lineHeight: 1.12,
                 letterSpacing: '0.025em',
