@@ -42,7 +42,7 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
 
   return (
     <span
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
       style={{ background }}
     >
       {icono && !failed ? (
@@ -50,11 +50,11 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
           src={icono}
           alt=""
           title={nombre}
-          className="h-6 w-6 object-contain"
+          className="h-5 w-5 object-contain"
           onError={() => setFailed(true)}
         />
       ) : (
-        <span className="text-sm font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
+        <span className="text-xs font-bold" style={{ color: 'var(--app-muted)' }}>•</span>
       )}
     </span>
   );
@@ -171,11 +171,11 @@ export default function FichaPlato() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
               {producto.alergenos.map((alergeno) => (
-                <div key={alergeno.id} className="flex min-h-12 min-w-0 items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
+                <div key={alergeno.id} className="flex min-h-10 min-w-0 items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}>
                   <AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} />
-                  <span className="min-w-0 text-[14px] font-semibold leading-tight break-words">{alergeno.nombre}</span>
+                  <span className="min-w-0 text-[13px] font-semibold leading-tight break-words">{alergeno.nombre}</span>
                 </div>
               ))}
             </div>
@@ -189,7 +189,7 @@ export default function FichaPlato() {
             type="button"
             onClick={toggleSelection}
             className={clsx(
-              'flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[17px] font-extrabold shadow-xl transition-transform active:scale-[.99]',
+              'flex min-h-12 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[16px] font-extrabold shadow-xl transition-transform active:scale-[.99]',
               selected ? 'border-2' : 'border-0'
             )}
             style={selected
