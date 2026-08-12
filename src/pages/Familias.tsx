@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Moon, Search, Sun, Utensils, X } from 'lucide-react';
 import { api } from '../services/api';
 import type { Familia } from '../types/database';
@@ -15,11 +15,12 @@ function toggleTheme() {
 
 export default function Familias() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const [familias, setFamilias] = useState<Familia[]>([]);
   const [loading, setLoading] = useState(true);
   const [night, setNight] = useState(() => document.documentElement.classList.contains('theme-night'));
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(() => searchParams.get('buscar') === '1');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -47,6 +48,9 @@ export default function Familias() {
   function closeSearch() {
     setSearchOpen(false);
     setSearchTerm('');
+    if (searchParams.get('buscar') === '1') {
+      setSearchParams({}, { replace: true });
+    }
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
