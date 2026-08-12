@@ -64,7 +64,7 @@ export default function ListadoPlatos() {
   const [familia, setFamilia] = useState<Familia | null>(null);
   const [night, setNight] = useState(() => document.documentElement.classList.contains('theme-night'));
   const [loading, setLoading] = useState(true);
-  const { isSelected, addSelection, removeSelection } = useSelectionStore();
+  const { selectedIds, isSelected, addSelection, removeSelection } = useSelectionStore();
 
   useEffect(() => {
     async function loadData() {
@@ -108,7 +108,20 @@ export default function ListadoPlatos() {
           <p className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>{isSearch ? 'Búsqueda' : 'Familia'}</p>
           <h1 className="text-[21px] font-extrabold leading-tight tracking-tight">{heading}</h1>
         </div>
-        <button type="button" onClick={toggleTheme} aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'} title={night ? 'Modo día' : 'Modo noche'} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>{night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}</button>
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            type="button"
+            onClick={() => navigate('/seleccion')}
+            aria-label={`Abrir mi selección${selectedIds.length ? ` (${selectedIds.length})` : ''}`}
+            title="Mi selección"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95"
+            style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}
+          >
+            <Heart size={20} strokeWidth={2.2} />
+            {selectedIds.length > 0 && <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white" style={{ background: '#e11d48' }}>{selectedIds.length}</span>}
+          </button>
+          <button type="button" onClick={toggleTheme} aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'} title={night ? 'Modo día' : 'Modo noche'} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>{night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}</button>
+        </div>
       </header>
 
       <section aria-label={isSearch ? `Resultados de búsqueda para ${searchQuery}` : `Productos de ${familyName}`} className="px-3 pb-5 pt-3">
@@ -146,8 +159,8 @@ export default function ListadoPlatos() {
                   aria-label={selected ? `Quitar ${producto.nombre} de mi selección` : `Añadir ${producto.nombre} a mi selección`}
                   aria-pressed={selected}
                   onClick={() => toggleSelection(producto.id)}
-                  className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full transition-transform active:scale-90"
-                  style={{ color: 'var(--app-text)', background: 'var(--app-surface)' }}
+                  className="absolute right-3 top-[46%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full transition-transform active:scale-90"
+                  style={{ color: selected ? '#e11d48' : 'var(--app-text)', background: 'var(--app-surface)' }}
                 >
                   <Heart className="h-5 w-5" strokeWidth={2.2} fill={selected ? 'currentColor' : 'none'} />
                 </button>
