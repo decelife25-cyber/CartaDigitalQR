@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, BookOpen, Phone, CalendarDays } from 'lucide-react';
+import { X, BookOpen, Phone, CalendarDays, LoaderCircle } from 'lucide-react';
 import { api } from '../services/api';
 import type { Configuracion, Producto } from '../types/database';
 
@@ -12,6 +12,7 @@ export default function Portada() {
   const [config, setConfig] = useState<Configuracion | null>(null);
   const [sugerencias, setSugerencias] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reservandoMesa, setReservandoMesa] = useState(false);
   const [pizarraAmpliada, setPizarraAmpliada] = useState(false);
   const textoPizarraRef = useRef<HTMLDivElement | null>(null);
 
@@ -64,11 +65,12 @@ export default function Portada() {
   };
 
   const reservarMesa = () => {
-    if (!urlReservasMesa) return;
+    if (!urlReservasMesa || reservandoMesa) return;
     try {
       const url = new URL(urlReservasMesa, window.location.origin);
       if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
-      window.location.assign(url.href);
+      setReservandoMesa(true);
+      window.setTimeout(() => window.location.assign(url.href), 80);
     } catch {
       // URL no valida: no abrir destinos no configurados correctamente.
     }
@@ -127,19 +129,19 @@ export default function Portada() {
         <X size={20} strokeWidth={2.5} />
       </button>
 
-      {/* Pie: botones un poco más abajo y datos de contacto en una sola línea. */}
       <div className="absolute inset-x-0 bottom-0 z-30 px-4 pb-2">
         <div className="mx-auto w-full max-w-lg">
           <div className="grid w-full grid-cols-4 gap-2">
             <button
               type="button"
               onClick={reservarMesa}
-              disabled={!urlReservasMesa}
+              disabled={!urlReservasMesa || reservandoMesa}
               aria-label={urlReservasMesa ? 'Reservar mesa' : 'Reservar mesa no configurado'}
-              className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-45"
+              aria-busy={reservandoMesa}
+              className="col-span-1 flex h-12 min-w-0 items-center justify-center gap-1 rounded-xl border border-white/30 bg-black/55 px-1.5 text-[11px] font-bold leading-tight text-white shadow-lg backdrop-blur transition-transform active:scale-[.96] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <CalendarDays size={17} className="shrink-0" />
-              <span>Reservar mesa</span>
+              {reservandoMesa ? <LoaderCircle size={17} className="shrink-0 animate-spin" /> : <CalendarDays size={17} className="shrink-0" />}
+              <span>{reservandoMesa ? 'Cargando...' : 'Reservar mesa'}</span>
             </button>
 
             <button
@@ -170,6 +172,19 @@ export default function Portada() {
           )}
         </div>
       </div>
+
+      {reservandoMesa && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-6 backdrop-blur-[2px]"
+        >
+          <div className="flex min-w-[220px] flex-col items-center justify-center rounded-2xl border border-white/20 bg-black/75 px-7 py-6 text-center text-white shadow-2xl backdrop-blur-md">
+            <LoaderCircle size={34} strokeWidth={2.5} className="mb-3 animate-spin" />
+            <span className="text-base font-bold">Cargando reserva de mesa...</span>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
