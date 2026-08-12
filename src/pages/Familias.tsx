@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Moon, Search, Sun, Utensils, X } from 'lucide-react';
 import { api } from '../services/api';
@@ -48,7 +49,7 @@ export default function Familias() {
     setSearchTerm('');
   }
 
-  function submitSearch(event: React.FormEvent<HTMLFormElement>) {
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const term = searchTerm.trim();
     if (!term) {
