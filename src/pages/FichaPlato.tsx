@@ -41,10 +41,7 @@ function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string 
   const background = getAlergenoBackground(nombre);
 
   return (
-    <span
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-      style={{ background }}
-    >
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background }}>
       {icono && !failed ? (
         <img
           src={icono}
@@ -101,6 +98,7 @@ export default function FichaPlato() {
   const selected = isSelected(producto.id);
 
   const toggleSelection = () => {
+    if (producto.agotado) return;
     if (selected) removeSelection(producto.id);
     else addSelection(producto.id);
   };
@@ -108,7 +106,7 @@ export default function FichaPlato() {
   return (
     <main className="min-h-full pb-28" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
       <section className="relative w-full overflow-hidden" style={{ background: 'var(--app-surface)' }}>
-        <div className="aspect-[4/3] w-full">
+        <div className="relative aspect-[4/3] w-full">
           {producto.foto_url ? (
             <img
               src={producto.foto_url}
@@ -132,6 +130,11 @@ export default function FichaPlato() {
               <span className="text-sm">Sin imagen</span>
             </div>
           </div>
+          {producto.agotado && (
+            <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] whitespace-nowrap text-[28px] font-black uppercase tracking-[0.14em] text-transparent [-webkit-text-stroke:3px_#dc2626] sm:text-[34px]">
+              AGOTADO
+            </span>
+          )}
         </div>
 
         <button
@@ -148,6 +151,7 @@ export default function FichaPlato() {
       <section className="relative mx-0 -mt-5 rounded-3xl px-4 pb-7 pt-5 shadow-sm sm:px-6" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
         <div className="min-w-0">
           <h1 className="w-full text-[28px] leading-[1.08] font-extrabold tracking-tight break-words sm:text-[30px]">{producto.nombre}</h1>
+          {producto.agotado && <div className="mt-2 inline-flex rounded-full border-2 border-red-600 px-3 py-1 text-sm font-black uppercase tracking-[0.08em] text-red-600">AGOTADO</div>}
         </div>
 
         <div className="mt-4 flex w-full justify-end">
@@ -188,16 +192,19 @@ export default function FichaPlato() {
           <button
             type="button"
             onClick={toggleSelection}
+            disabled={producto.agotado}
+            aria-disabled={producto.agotado}
             className={clsx(
               'flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[17px] font-extrabold shadow-xl transition-transform active:scale-[.99]',
-              selected ? 'border-2' : 'border-0'
+              selected && !producto.agotado ? 'border-2' : 'border-0',
+              producto.agotado && 'cursor-not-allowed opacity-45'
             )}
-            style={selected
+            style={selected && !producto.agotado
               ? { background: 'var(--app-surface)', color: 'var(--app-text)', borderColor: 'var(--app-text)' }
               : { background: '#18181b', color: '#fff' }}
           >
-            {selected ? <Check className="h-5 w-5" /> : <Heart className="h-5 w-5" />}
-            {selected ? 'En mi selección' : 'Añadir a mi selección'}
+            {producto.agotado ? <Heart className="h-5 w-5" /> : selected ? <Check className="h-5 w-5" /> : <Heart className="h-5 w-5" />}
+            {producto.agotado ? 'Producto agotado' : selected ? 'En mi selección' : 'Añadir a mi selección'}
           </button>
         </div>
       </div>
