@@ -12,12 +12,12 @@ function errorMessage(error: unknown): string {
   return String(error);
 }
 
-type StatusFilter = 'todos' | 'activos' | 'ocultos' | 'disponibles' | 'agotados' | 'destacados';
+type StatusFilter = 'todos' | 'visibles' | 'ocultos' | 'disponibles' | 'agotados' | 'destacados';
 type SortMode = 'orden' | 'nombre' | 'precio-asc' | 'precio-desc';
 type FilterModal = 'familia' | 'estado' | 'orden' | null;
 
 const statusOptions: Array<{ value: StatusFilter; label: string }> = [
-  { value: 'todos', label: 'Estado: Todos' }, { value: 'activos', label: 'Activos' }, { value: 'ocultos', label: 'Ocultos' },
+  { value: 'todos', label: 'Estado: Todos' }, { value: 'visibles', label: 'Visibles' }, { value: 'ocultos', label: 'Ocultos' },
   { value: 'disponibles', label: 'Disponibles' }, { value: 'agotados', label: 'Agotados' }, { value: 'destacados', label: 'Destacados' },
 ];
 const sortOptions: Array<{ value: SortMode; label: string }> = [
@@ -69,7 +69,7 @@ export default function AdminProductos() {
       const familia = familiaMap.get(producto.familia_id) ?? '';
       const matchesSearch = !query || `${producto.nombre} ${familia}`.toLocaleLowerCase().includes(query);
       const matchesFamily = familiaId === 'todas' || producto.familia_id === familiaId;
-      const matchesStatus = status === 'todos' || (status === 'activos' && producto.activo) || (status === 'ocultos' && !producto.activo) || (status === 'disponibles' && !producto.agotado) || (status === 'agotados' && producto.agotado) || (status === 'destacados' && producto.destacado);
+      const matchesStatus = status === 'todos' || (status === 'visibles' && producto.activo) || (status === 'ocultos' && !producto.activo) || (status === 'disponibles' && !producto.agotado) || (status === 'agotados' && producto.agotado) || (status === 'destacados' && producto.destacado);
       return matchesSearch && matchesFamily && matchesStatus;
     });
     return [...result].sort((a, b) => {
@@ -142,7 +142,7 @@ export default function AdminProductos() {
               <Link to={`/admin/productos/${producto.id}/editar`} className="grid min-w-0 grid-cols-[42px_minmax(0,1fr)_76px] items-center gap-2 py-1.5 pl-2 pr-1" aria-label={`Editar ${producto.nombre}`}>
                 {producto.foto_url ? <img src={producto.foto_url} alt="" className="h-10 w-10 rounded-lg object-contain bg-stone-100" /> : <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: 'rgba(148,163,184,.12)', color: 'var(--app-muted)' }} aria-hidden="true"><ImageOff size={17} /></div>}
                 <div className="min-w-0 self-center"><div className="break-words text-[15px] font-extrabold leading-[1.15]">{producto.nombre}</div><div className="mt-0.5 truncate text-[12px] font-medium" style={{ color: 'var(--app-muted)' }}>{familiaMap.get(producto.familia_id) ?? 'Sin familia'}</div></div>
-                <div className="min-w-0 self-center text-right"><div className="whitespace-nowrap text-[14px] font-extrabold">{producto.precio.toFixed(2)} €</div><span className="mt-0.5 inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={producto.activo ? { background: 'rgba(16,185,129,.12)', color: '#10b981' } : { background: 'rgba(148,163,184,.14)', color: 'var(--app-muted)' }}>{producto.activo ? 'Activo' : 'Oculto'}</span></div>
+                <div className="min-w-0 self-center text-right"><div className="whitespace-nowrap text-[14px] font-extrabold">{producto.precio.toFixed(2)} €</div><span className="mt-0.5 inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={producto.activo ? { background: 'rgba(16,185,129,.12)', color: '#10b981' } : { background: 'rgba(148,163,184,.14)', color: 'var(--app-muted)' }}>{producto.activo ? 'Visible' : 'Oculto'}</span></div>
               </Link>
               <button type="button" disabled={!canReorder} onPointerDown={(event) => startDrag(event, producto.id)} onPointerMove={moveDrag} onPointerUp={(event) => void finishDrag(event)} onPointerCancel={(event) => void finishDrag(event)} className="flex min-h-[58px] w-[34px] touch-none items-center justify-center disabled:cursor-default disabled:opacity-70" style={{ color: 'var(--app-muted)' }} aria-label={`Arrastrar ${producto.nombre} para cambiar su orden`} title={canReorder ? 'Arrastra para cambiar el orden' : 'Restablece los filtros para cambiar el orden'}><GripVertical size={18} /></button>
             </article>
