@@ -99,7 +99,6 @@ export const api = {
       `)
       .eq('familia_id', familiaId)
       .eq('activo', true)
-      .eq('agotado', false)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -121,7 +120,6 @@ export const api = {
       `)
       .eq('id', id)
       .eq('activo', true)
-      .eq('agotado', false)
       .single();
 
     if (error) {
@@ -137,7 +135,6 @@ export const api = {
       .from('productos')
       .select('*')
       .eq('activo', true)
-      .eq('agotado', false)
       .eq('sugerido', true)
       .order('orden', { ascending: true });
 
@@ -162,7 +159,6 @@ export const api = {
         )
       `)
       .eq('activo', true)
-      .eq('agotado', false)
       .order('orden', { ascending: true });
 
     if (error) {
@@ -191,8 +187,7 @@ export const api = {
         )
       `)
       .in('id', ids)
-      .eq('activo', true)
-      .eq('agotado', false);
+      .eq('activo', true);
 
     if (error) {
       console.error('Error fetching productos by ids:', error);
