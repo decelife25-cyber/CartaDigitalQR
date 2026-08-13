@@ -125,7 +125,9 @@ export default function ListadoPlatos() {
             return (
               <div key={producto.id} className={`relative w-full ${manyAllergens ? 'h-[160px]' : 'h-[124px]'}`}>
                 <button type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-full w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
-                  <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
+                  <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} />
+                    {producto.agotado && <span className="pointer-events-none absolute left-[-34px] top-5 w-[150px] rotate-[-28deg] bg-red-600 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.12em] text-white shadow-md">AGOTADO</span>}
+                  </div>
 
                   <div className="relative h-full min-w-0 flex-1 px-3.5 py-3">
                     <h2 className="pr-[66px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">
@@ -139,7 +141,6 @@ export default function ListadoPlatos() {
                     <div className="mt-3 pr-12">
                       <AlergenoItem producto={producto} />
                     </div>
-                    {producto.agotado && <span className="absolute bottom-3 left-3 rounded-full px-2 py-1 text-[10px] font-extrabold uppercase" style={{ background: 'rgba(239,68,68,.10)', color: '#dc2626' }}>Agotado</span>}
                   </div>
 
                   <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface)' }}><ChevronRight className="h-5 w-5" /></span>
