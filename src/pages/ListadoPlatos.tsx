@@ -50,6 +50,7 @@ function AlergenoItem({ producto }: { producto: Producto }) {
 
 function ProductoImagen({ producto }: { producto: Producto }) {
   const [error, setError] = useState(false);
+  if (producto.agotado) return <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: '#dc2626' }}><span className="rotate-[-28deg] whitespace-nowrap text-[22px] font-black uppercase tracking-[0.14em] text-transparent [-webkit-text-stroke:2px_#dc2626]">AGOTADO</span></div>;
   if (!producto.foto_url || error) return <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}><Utensils className="h-8 w-8" strokeWidth={1.2} /></div>;
   return <div className="flex h-full w-full items-center justify-center overflow-hidden" style={{ background: 'var(--app-surface-soft)' }}><img src={producto.foto_url} alt={producto.nombre} loading="lazy" className="h-full w-full object-contain" onError={() => setError(true)} /></div>;
 }
@@ -115,7 +116,7 @@ export default function ListadoPlatos() {
             return (
               <div key={producto.id} className={`relative w-full ${manyAllergens ? 'h-[160px]' : 'h-[124px]'}`}>
                 <button type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-full w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
-                  <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} />{producto.agotado && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] whitespace-nowrap text-[18px] font-black uppercase tracking-[0.14em] text-transparent [-webkit-text-stroke:2px_#dc2626]">AGOTADO</span>}</div>
+                  <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
                   <div className="relative h-full min-w-0 flex-1 px-3.5 py-3">
                     <h2 className="pr-[66px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">{producto.nombre}</h2>
                     <span className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none" style={{ color: 'var(--app-text)' }} aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>{producto.precio.toFixed(2)}€</span>
