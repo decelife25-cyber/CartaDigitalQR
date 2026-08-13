@@ -74,15 +74,12 @@ export default function ListadoPlatos() {
           setFamilia(null);
           return;
         }
-
         if (!id) return;
         const [productosData, familiasData] = await Promise.all([api.getProductosByFamilia(id), api.getFamilias()]);
         setProductos(productosData);
         const currentFamilia = familiasData.find((f) => f.id === id);
         if (currentFamilia) setFamilia(currentFamilia);
-      } finally {
-        setLoading(false);
-      }
+      } finally { setLoading(false); }
     }
     void loadData();
     const syncTheme = () => setNight(document.documentElement.classList.contains('theme-night'));
@@ -104,19 +101,12 @@ export default function ListadoPlatos() {
     <main className="min-h-[100dvh] w-full" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
       <header className="sticky top-0 z-20 flex min-h-16 items-center border-b px-3" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
         <button type="button" onClick={() => navigate('/familias')} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" aria-label="Volver a familias"><ArrowLeft className="h-6 w-6" /></button>
-        <div className="min-w-0 flex-1 px-2">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>{isSearch ? 'Búsqueda' : 'Familia'}</p>
-          <h1 className="text-[21px] font-extrabold leading-tight tracking-tight">{heading}</h1>
-        </div>
+        <div className="min-w-0 flex-1 px-2"><p className="text-[9px] font-extrabold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>{isSearch ? 'Búsqueda' : 'Familia'}</p><h1 className="text-[21px] font-extrabold leading-tight tracking-tight">{heading}</h1></div>
         <div className="flex shrink-0 items-center gap-1">
-          <button type="button" onClick={() => navigate('/seleccion')} aria-label={`Abrir mi selección${selectedIds.length ? ` (${selectedIds.length})` : ''}`} title="Mi selección" className="relative flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>
-            <Heart size={20} strokeWidth={2.2} />
-            {selectedIds.length > 0 && <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white" style={{ background: '#e11d48' }}>{selectedIds.length}</span>}
-          </button>
+          <button type="button" onClick={() => navigate('/seleccion')} aria-label={`Abrir mi selección${selectedIds.length ? ` (${selectedIds.length})` : ''}`} title="Mi selección" className="relative flex h-10 w-10 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}><Heart size={20} strokeWidth={2.2} />{selectedIds.length > 0 && <span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white" style={{ background: '#e11d48' }}>{selectedIds.length}</span>}</button>
           <button type="button" onClick={toggleTheme} aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'} title={night ? 'Modo día' : 'Modo noche'} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-transform active:scale-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', color: 'var(--app-text)' }}>{night ? <Sun size={20} strokeWidth={2.2} /> : <Moon size={20} strokeWidth={2.2} />}</button>
         </div>
       </header>
-
       <section aria-label={isSearch ? `Resultados de búsqueda para ${searchQuery}` : `Productos de ${familyName}`} className="px-3 pb-5 pt-3">
         <div className="space-y-2.5">
           {productos.map((producto) => {
@@ -125,30 +115,15 @@ export default function ListadoPlatos() {
             return (
               <div key={producto.id} className={`relative w-full ${manyAllergens ? 'h-[160px]' : 'h-[124px]'}`}>
                 <button type="button" onClick={() => navigate(`/plato/${producto.id}`)} className="relative flex h-full w-full overflow-hidden rounded-2xl border text-left shadow-sm transition-transform active:scale-[0.985]" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
-                  <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} />
-                    {producto.agotado && <span className="pointer-events-none absolute left-[-34px] top-5 w-[150px] rotate-[-28deg] bg-red-600 py-1.5 text-center text-[11px] font-black uppercase tracking-[0.12em] text-white shadow-md">AGOTADO</span>}
-                  </div>
-
+                  <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} />{producto.agotado && <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-28deg] whitespace-nowrap text-[18px] font-black uppercase tracking-[0.14em] text-transparent [-webkit-text-stroke:2px_#dc2626]">AGOTADO</span>}</div>
                   <div className="relative h-full min-w-0 flex-1 px-3.5 py-3">
-                    <h2 className="pr-[66px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">
-                      {producto.nombre}
-                    </h2>
-
-                    <span className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none" style={{ color: 'var(--app-text)' }} aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>
-                      {producto.precio.toFixed(2)}€
-                    </span>
-
-                    <div className="mt-3 pr-12">
-                      <AlergenoItem producto={producto} />
-                    </div>
+                    <h2 className="pr-[66px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">{producto.nombre}</h2>
+                    <span className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none" style={{ color: 'var(--app-text)' }} aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>{producto.precio.toFixed(2)}€</span>
+                    <div className="mt-3 pr-12"><AlergenoItem producto={producto} /></div>
                   </div>
-
                   <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface)' }}><ChevronRight className="h-5 w-5" /></span>
                 </button>
-
-                <button type="button" aria-label={selected ? `Quitar ${producto.nombre} de mi selección` : `Añadir ${producto.nombre} a mi selección`} aria-pressed={selected} onClick={() => toggleSelection(producto.id)} className="absolute right-3 top-[46%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full transition-transform active:scale-90" style={{ color: selected ? '#e11d48' : 'var(--app-text)', background: 'var(--app-surface)' }}>
-                  <Heart className="h-5 w-5" strokeWidth={2.2} fill={selected ? 'currentColor' : 'none'} />
-                </button>
+                <button type="button" disabled={producto.agotado} aria-label={producto.agotado ? `${producto.nombre} agotado` : selected ? `Quitar ${producto.nombre} de mi selección` : `Añadir ${producto.nombre} a mi selección`} aria-pressed={producto.agotado ? false : selected} onClick={() => toggleSelection(producto.id)} className="absolute right-3 top-[46%] z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full transition-transform active:scale-90 disabled:cursor-not-allowed disabled:opacity-35" style={{ color: selected ? '#e11d48' : 'var(--app-text)', background: 'var(--app-surface)' }}><Heart className="h-5 w-5" strokeWidth={2.2} fill={selected ? 'currentColor' : 'none'} /></button>
               </div>
             );
           })}
