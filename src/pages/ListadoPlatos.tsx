@@ -128,7 +128,7 @@ export default function ListadoPlatos() {
                   <div className="relative h-full w-[30%] shrink-0 overflow-hidden bg-stone-100"><ProductoImagen producto={producto} /></div>
 
                   <div className="relative h-full min-w-0 flex-1 px-3.5 py-3">
-                    <h2 className="pr-[76px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">
+                    <h2 className="pr-[66px] text-[16px] font-extrabold leading-[1.08] break-words line-clamp-2">
                       {producto.nombre}
                     </h2>
 
