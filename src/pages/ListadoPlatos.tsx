@@ -139,6 +139,7 @@ export default function ListadoPlatos() {
                     <div className="mt-3 pr-12">
                       <AlergenoItem producto={producto} />
                     </div>
+                    {producto.agotado && <span className="absolute bottom-3 left-3 rounded-full px-2 py-1 text-[10px] font-extrabold uppercase" style={{ background: 'rgba(239,68,68,.10)', color: '#dc2626' }}>Agotado</span>}
                   </div>
 
                   <span className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border" style={{ borderColor: 'var(--app-border)', color: 'var(--app-muted)', background: 'var(--app-surface)' }}><ChevronRight className="h-5 w-5" /></span>
