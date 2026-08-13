@@ -133,7 +133,12 @@ export const api = {
   async getSugerencias(): Promise<Producto[]> {
     const { data, error } = await supabase
       .from('productos')
-      .select('*')
+      .select(`
+        *,
+        producto_alergeno (
+          alergenos (*)
+        )
+      `)
       .eq('activo', true)
       .eq('sugerido', true)
       .order('orden', { ascending: true });
