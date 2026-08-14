@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, LogOut, Moon, Package, QrCode, Sun } from 'lucide-react';
+import { Home, LogOut, Moon, QrCode, Sun } from 'lucide-react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -20,7 +20,6 @@ export default function AdminLayout() {
   const [showQr, setShowQr] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === '/admin' || location.pathname === '/admin/';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -58,90 +57,33 @@ export default function AdminLayout() {
     navigate('/admin/login');
   };
 
-  if (isHome) {
-    return (
-      <div className="min-h-screen" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
-        <header
-          className="sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 sm:px-6"
-          style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}
-        >
-          <Link to="/admin" className="text-xl font-extrabold tracking-tight sm:text-2xl">
-            Panel Privado
-          </Link>
+  const isHome = location.pathname === '/admin' || location.pathname === '/admin/';
 
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-              aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
-              title={night ? 'Modo día' : 'Modo noche'}
-            >
-              {night ? <Sun size={22} /> : <Moon size={22} />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowQr(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-              aria-label="Mostrar código QR de la carta"
-              title="Código QR de la carta"
-            >
-              <QrCode size={22} />
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 transition-colors hover:bg-red-50"
-              aria-label="Cerrar sesión"
-              title="Cerrar sesión"
-            >
-              <LogOut size={22} />
-            </button>
-          </div>
-        </header>
-        <main className="w-full p-3 sm:p-5 md:p-7">
-          <Outlet />
-        </main>
-        {showQr && <QrCartaModal onClose={() => setShowQr(false)} />}
-      </div>
-    );
-  }
+  const HeaderActions = () => (
+    <div className="flex items-center gap-1 sm:gap-2">
+      <button type="button" onClick={() => setShowQr(true)} className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5" aria-label="Mostrar código QR de la carta" title="Código QR de la carta">
+        <QrCode size={22} />
+      </button>
+      <button type="button" onClick={toggleTheme} className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5" aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'} title={night ? 'Modo día' : 'Modo noche'}>
+        {night ? <Sun size={22} /> : <Moon size={22} />}
+      </button>
+      <button type="button" onClick={handleLogout} className="flex h-10 w-10 items-center justify-center rounded-xl text-red-500 transition-colors hover:bg-red-50" aria-label="Cerrar sesión" title="Cerrar sesión">
+        <LogOut size={22} />
+      </button>
+    </div>
+  );
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
-      <nav className="w-full flex-shrink-0 border-b md:min-h-screen md:w-64 md:border-r" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
-        <div className="flex items-center justify-between p-4 md:flex-col md:items-start md:gap-6 md:p-6">
-          <div className="flex items-center gap-2">
-            <Link to="/admin" aria-label="Inicio privado" title="Inicio privado"><Home size={20} /></Link>
-            <h1 className="text-xl font-bold">Panel Privado</h1>
-          </div>
-
-          <div className="flex items-center gap-2 md:w-full md:flex-col md:items-stretch md:gap-4">
-            <Link to="/admin/productos" className="flex items-center gap-2 p-2 font-medium transition-opacity hover:opacity-70 md:p-0">
-              <Package size={20} />
-              <span className="hidden md:inline">Productos</span>
-            </Link>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="flex items-center gap-2 p-2 font-medium transition-opacity hover:opacity-70 md:p-0"
-              aria-label={night ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
-              title={night ? 'Modo día' : 'Modo noche'}
-            >
-              {night ? <Sun size={20} /> : <Moon size={20} />}
-              <span className="hidden md:inline">{night ? 'Modo día' : 'Modo noche'}</span>
-            </button>
-            <button onClick={handleLogout} className="flex items-center gap-2 p-2 font-medium text-red-600 transition-opacity hover:opacity-70 md:mt-auto md:p-0">
-              <LogOut size={20} />
-              <span className="hidden md:inline">Cerrar Sesión</span>
-            </button>
-          </div>
+    <div className="min-h-screen" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b px-4 sm:px-6" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
+        <div className="flex min-w-0 items-center gap-2">
+          {!isHome && <Link to="/admin" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5" aria-label="Volver al panel privado" title="Panel privado"><Home size={22} /></Link>}
+          <Link to="/admin" className="text-xl font-extrabold tracking-tight sm:text-2xl">Panel Privado</Link>
         </div>
-      </nav>
-
-      <main className="flex-1 overflow-auto p-4 md:p-8">
-        <Outlet />
-      </main>
+        <HeaderActions />
+      </header>
+      <main className="w-full p-3 sm:p-5 md:p-7"><Outlet /></main>
+      {showQr && <QrCartaModal onClose={() => setShowQr(false)} />}
     </div>
   );
 }
