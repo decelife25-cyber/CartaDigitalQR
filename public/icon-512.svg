@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 192 192"><rect width="192" height="192" rx="42" fill="#111111"/><circle cx="96" cy="78" r="48" fill="#d2b16b"/><path d="M62 76h68M68 76v43c0 9 8 15 17 15h22c9 0 17-6 17-15V76" fill="none" stroke="#111111" stroke-width="9" stroke-linecap="round"/><path d="M74 65c5-14 13-21 22-21s17 7 22 21" fill="none" stroke="#111111" stroke-width="9" stroke-linecap="round"/><text x="96" y="161" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" fill="#ffffff">CARTA</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 192 192" role="img" aria-label="Carta Digital">
+  <rect width="192" height="192" rx="42" fill="#111111"/>
+  <rect x="29" y="18" width="134" height="134" rx="32" fill="#d2b16b"/>
+  <path d="M53 79c-7 8-10 18-10 29s3 21 10 29" fill="none" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M139 79c7 8 10 18 10 29s-3 21-10 29" fill="none" stroke="#111111" stroke-width="6" stroke-linecap="round"/>
+  <path d="M66 63 116 50v17" fill="none" stroke="#111111" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M66 63v60c0 4 3 7 7 7h43c4 0 7-3 7-7V70c0-4-3-7-7-7H66Z" fill="#d2b16b" stroke="#111111" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M72 63h44c4 0 7 3 7 7" fill="none" stroke="#111111" stroke-width="7" stroke-linecap="round"/>
+  <text x="95" y="82" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" font-weight="700" fill="#111111">MENÚ</text>
+  <path d="M82 101h26" fill="none" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
+  <path d="M82 114h20" fill="none" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
+  <path d="M82 126h26" fill="none" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
+  <path d="M84 103c0-9 5-15 11-15s11 6 11 15" fill="none" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
+  <path d="M79 104h32" fill="none" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
+  <text x="96" y="176" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="700" letter-spacing="2" fill="#ffffff">CARTA</text>
+</svg>
