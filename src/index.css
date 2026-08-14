@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand+SC&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand+SC&family=Roboto+Condensed:wght@800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -72,6 +72,7 @@ body {
   background-repeat: no-repeat !important;
 }
 
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label:has(> span:has(> img[src$="cereal.svg"])) { background-color: #f4d7d7 !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="cereal.svg"]) { background-color: #f4d7d7 !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="crustaceans.svg"]) { background-color: #dcecff !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="eggs.svg"]) { background-color: #fff0c7 !important; }
