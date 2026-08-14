@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Copy, ExternalLink, QrCode, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -15,11 +15,13 @@ export default function QrCartaModal({ onClose }: { onClose: () => void }) {
   const [configuredQrUrl, setConfiguredQrUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
+    let active = true;
     void supabase.from('configuracion_restaurante').select('qr_url').eq('activo', true).limit(1).maybeSingle().then(({ data }) => {
-      if (data?.qr_url) setConfiguredQrUrl(data.qr_url);
+      if (active && data?.qr_url) setConfiguredQrUrl(data.qr_url);
     });
-  });
+    return () => { active = false; };
+  }, []);
 
   const qrImageUrl = getQrImageUrl(publicUrl, configuredQrUrl);
 
