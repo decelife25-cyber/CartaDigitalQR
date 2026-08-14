@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, LogOut, Moon, QrCode, Sun } from 'lucide-react';
+import { Home, LogOut, Moon, Package, QrCode, Sun } from 'lucide-react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -118,6 +118,7 @@ export default function AdminLayout() {
 
           <div className="flex items-center gap-2 md:w-full md:flex-col md:items-stretch md:gap-4">
             <Link to="/admin/productos" className="flex items-center gap-2 p-2 font-medium transition-opacity hover:opacity-70 md:p-0">
+              <Package size={20} />
               <span className="hidden md:inline">Productos</span>
             </Link>
             <button
