@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, Heart, Utensils } from 'lucide-react';
+import { ArrowLeft, Check, Heart, Lightbulb, Star, Utensils } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Producto } from '../types/database';
@@ -15,66 +15,27 @@ const ALERGENO_COLORS: Record<string, string> = {
 function normalizeAlergenoNombre(nombre: string) {
   return nombre.trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
-
-function getAlergenoBackground(nombre: string) {
-  return ALERGENO_COLORS[normalizeAlergenoNombre(nombre)] ?? 'var(--app-surface-soft)';
-}
-
-function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string }) {
-  const [failed, setFailed] = useState(false);
-  const background = getAlergenoBackground(nombre);
-  return <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background }}>{icono && !failed ? <img src={icono} alt="" title={nombre} className="h-6 w-6 object-contain" onError={() => setFailed(true)} /> : <span className="text-sm font-bold" style={{ color: 'var(--app-muted)' }}>•</span>}</span>;
-}
+function getAlergenoBackground(nombre: string) { return ALERGENO_COLORS[normalizeAlergenoNombre(nombre)] ?? 'var(--app-surface-soft)'; }
+function AlergenoIcon({ icono, nombre }: { icono: string | null; nombre: string }) { const [failed, setFailed] = useState(false); const background = getAlergenoBackground(nombre); return <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background }}>{icono && !failed ? <img src={icono} alt="" title={nombre} className="h-6 w-6 object-contain" onError={() => setFailed(true)} /> : <span className="text-sm font-bold" style={{ color: 'var(--app-muted)' }}>•</span>}</span>; }
+function IndicadoresProducto({ producto }: { producto: Producto }) { if (!producto.destacado && !producto.sugerido) return null; return <div className="mt-3 flex flex-wrap gap-2" aria-label="Indicadores del producto">{producto.destacado && <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide" style={{ borderColor: '#f59e0b', color: '#d97706', background: 'rgba(245,158,11,.08)' }}><Star className="h-3.5 w-3.5 fill-current" />DESTACADO</span>}{producto.sugerido && <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide" style={{ borderColor: '#10b981', color: '#059669', background: 'rgba(16,185,129,.08)' }}><Lightbulb className="h-3.5 w-3.5" />SUGERENCIA</span>}</div>; }
 
 export default function FichaPlato() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [producto, setProducto] = useState<Producto | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { isSelected, addSelection, removeSelection } = useSelectionStore();
-
-  useEffect(() => {
-    async function loadData() {
-      if (!id) return;
-      try { setProducto(await api.getProductoById(id)); } finally { setLoading(false); }
-    }
-    void loadData();
-  }, [id]);
-
+  const { id } = useParams<{ id: string }>(); const navigate = useNavigate(); const [producto, setProducto] = useState<Producto | null>(null); const [loading, setLoading] = useState(true); const { isSelected, addSelection, removeSelection } = useSelectionStore();
+  useEffect(() => { async function loadData() { if (!id) return; try { setProducto(await api.getProductoById(id)); } finally { setLoading(false); } } void loadData(); }, [id]);
   if (loading) return <div className="min-h-full flex items-center justify-center" style={{ background: 'var(--app-bg)' }}><div className="h-8 w-8 rounded-full border-2 border-current border-t-transparent animate-spin opacity-50" /></div>;
-
   if (!producto) return <main className="min-h-full flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}><p className="text-lg font-semibold">Producto no encontrado.</p><button onClick={() => navigate(-1)} className="mt-5 rounded-xl px-5 py-3 font-semibold" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>Volver</button></main>;
-
-  const selected = isSelected(producto.id);
-  const toggleSelection = () => {
-    if (producto.agotado) return;
-    if (selected) removeSelection(producto.id); else addSelection(producto.id);
-  };
-
-  return (
-    <main className="min-h-full pb-28" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
-      <section className="relative w-full overflow-hidden" style={{ background: 'var(--app-surface)' }}>
-        <div className="relative aspect-[4/3] w-full">
-          {producto.agotado ? (
-            <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: '#dc2626' }}>
-              <span className="rotate-[-28deg] whitespace-nowrap text-[34px] font-black uppercase tracking-[0.14em] text-transparent [-webkit-text-stroke:3px_#dc2626] sm:text-[42px]">AGOTADO</span>
-            </div>
-          ) : producto.foto_url ? (
-            <img src={producto.foto_url} alt={producto.nombre} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none'; const placeholder = event.currentTarget.parentElement?.querySelector('[data-image-placeholder]'); placeholder?.removeAttribute('hidden'); }} />
-          ) : null}
-          {!producto.agotado && <div data-image-placeholder hidden={Boolean(producto.foto_url)} className="h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}><div className="flex h-full w-full flex-col items-center justify-center gap-2"><Utensils className="h-10 w-10" strokeWidth={1.2} /><span className="text-sm">Sin imagen</span></div></div>}
-        </div>
-        <button type="button" aria-label="Volver" onClick={() => navigate(-1)} className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full shadow-lg backdrop-blur-md" style={{ background: 'rgba(0,0,0,.58)', color: '#fff' }}><ArrowLeft className="h-5 w-5" /></button>
-      </section>
-
-      <section className="relative mx-0 -mt-5 rounded-3xl px-4 pb-7 pt-5 shadow-sm sm:px-6" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
-        <div className="min-w-0"><h1 className="w-full text-[28px] leading-[1.08] font-extrabold tracking-tight break-words sm:text-[30px]">{producto.nombre}</h1>{producto.agotado && <div className="mt-2 inline-flex rounded-full border-2 border-red-600 px-3 py-1 text-sm font-black uppercase tracking-[0.08em] text-red-600">AGOTADO</div>}</div>
-        <div className="mt-4 flex w-full justify-end"><div className="rounded-2xl px-4 py-2 text-xl font-extrabold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>{producto.precio.toFixed(2)}€</div></div>
-        {producto.descripcion && <p className="mt-5 text-[16px] leading-7" style={{ color: 'var(--app-muted)' }}>{producto.descripcion}</p>}
-        {producto.alergenos && producto.alergenos.length > 0 && <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--app-border)' }}><div className="mb-4 flex items-center justify-between"><h2 className="text-base font-extrabold uppercase tracking-wider">Alérgenos</h2><span className="rounded-full px-3 py-1.5 text-sm font-bold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>{producto.alergenos.length}</span></div><div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">{producto.alergenos.map((alergeno) => <div key={alergeno.id} className="flex min-h-[92px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} /><span className="min-w-0 max-w-full text-[14px] font-bold leading-tight break-words">{alergeno.nombre}</span></div>)}</div></div>}
-      </section>
-
-      <div className="fixed inset-x-0 bottom-0 z-30 p-3" style={{ background: 'linear-gradient(to top, var(--app-bg) 72%, transparent)' }}><div className="mx-auto w-full"><button type="button" onClick={toggleSelection} disabled={producto.agotado} aria-disabled={producto.agotado} className={clsx('flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[17px] font-extrabold shadow-xl transition-transform active:scale-[.99]', selected && !producto.agotado ? 'border-2' : 'border-0', producto.agotado && 'cursor-not-allowed opacity-45')} style={selected && !producto.agotado ? { background: 'var(--app-surface)', color: 'var(--app-text)', borderColor: 'var(--app-text)' } : { background: '#18181b', color: '#fff' }}>{producto.agotado ? <Heart className="h-5 w-5" /> : selected ? <Check className="h-5 w-5" /> : <Heart className="h-5 w-5" />}{producto.agotado ? 'Producto agotado' : selected ? 'En mi selección' : 'Añadir a mi selección'}</button></div></div>
-    </main>
-  );
+  const selected = isSelected(producto.id); const toggleSelection = () => { if (producto.agotado) return; if (selected) removeSelection(producto.id); else addSelection(producto.id); };
+  return <main className="min-h-full pb-28" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
+    <section className="relative w-full overflow-hidden" style={{ background: 'var(--app-surface)' }}>
+      <div className="relative aspect-[4/3] w-full">{producto.agotado ? <div className="flex h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: '#dc2626' }}><span className="rotate-[-28deg] whitespace-nowrap text-[34px] font-black uppercase tracking-[0.14em] text-transparent [-webkit-text-stroke:3px_#dc2626] sm:text-[42px]">AGOTADO</span></div> : producto.foto_url ? <img src={producto.foto_url} alt={producto.nombre} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = 'none'; const placeholder = event.currentTarget.parentElement?.querySelector('[data-image-placeholder]'); placeholder?.removeAttribute('hidden'); }} /> : null}{!producto.agotado && <div data-image-placeholder hidden={Boolean(producto.foto_url)} className="h-full w-full items-center justify-center" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}><div className="flex h-full w-full flex-col items-center justify-center gap-2"><Utensils className="h-10 w-10" strokeWidth={1.2} /><span className="text-sm">Sin imagen</span></div></div>}</div>
+      <button type="button" aria-label="Volver" onClick={() => navigate(-1)} className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full shadow-lg backdrop-blur-md" style={{ background: 'rgba(0,0,0,.58)', color: '#fff' }}><ArrowLeft className="h-5 w-5" /></button>
+    </section>
+    <section className="relative mx-0 -mt-5 rounded-3xl px-4 pb-7 pt-5 shadow-sm sm:px-6" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>
+      <div className="min-w-0"><h1 className="w-full text-[28px] leading-[1.08] font-extrabold tracking-tight break-words sm:text-[30px]">{producto.nombre}</h1>{producto.agotado && <div className="mt-2 inline-flex rounded-full border-2 border-red-600 px-3 py-1 text-sm font-black uppercase tracking-[0.08em] text-red-600">AGOTADO</div>}<IndicadoresProducto producto={producto} /></div>
+      <div className="mt-4 flex w-full justify-end"><div className="rounded-2xl px-4 py-2 text-xl font-extrabold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>{producto.precio.toFixed(2)}€</div></div>
+      {producto.descripcion && <p className="mt-5 text-[16px] leading-7" style={{ color: 'var(--app-muted)' }}>{producto.descripcion}</p>}
+      {producto.alergenos && producto.alergenos.length > 0 && <div className="mt-6 pt-5" style={{ borderTop: '1px solid var(--app-border)' }}><div className="mb-4 flex items-center justify-between"><h2 className="text-base font-extrabold uppercase tracking-wider">Alérgenos</h2><span className="rounded-full px-3 py-1.5 text-sm font-bold" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-muted)' }}>{producto.alergenos.length}</span></div><div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">{producto.alergenos.map((alergeno) => <div key={alergeno.id} className="flex min-h-[92px] min-w-0 flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center" style={{ background: 'var(--app-surface-soft)', border: '1px solid var(--app-border)' }}><AlergenoIcon icono={alergeno.icono} nombre={alergeno.nombre} /><span className="min-w-0 max-w-full text-[14px] font-bold leading-tight break-words">{alergeno.nombre}</span></div>)}</div></div>}
+    </section>
+    <div className="fixed inset-x-0 bottom-0 z-30 p-3" style={{ background: 'linear-gradient(to top, var(--app-bg) 72%, transparent)' }}><div className="mx-auto w-full"><button type="button" onClick={toggleSelection} disabled={producto.agotado} aria-disabled={producto.agotado} className={clsx('flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl px-5 text-[17px] font-extrabold shadow-xl transition-transform active:scale-[.99]', selected && !producto.agotado ? 'border-2' : 'border-0', producto.agotado && 'cursor-not-allowed opacity-45')} style={selected && !producto.agotado ? { background: 'var(--app-surface)', color: 'var(--app-text)', borderColor: 'var(--app-text)' } : { background: '#18181b', color: '#fff' }}>{producto.agotado ? <Heart className="h-5 w-5" /> : selected ? <Check className="h-5 w-5" /> : <Heart className="h-5 w-5" />}{producto.agotado ? 'Producto agotado' : selected ? 'En mi selección' : 'Añadir a mi selección'}</button></div></div>
+  </main>;
 }
