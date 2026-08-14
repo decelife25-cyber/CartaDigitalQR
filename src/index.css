@@ -117,7 +117,7 @@ body {
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="mustard.svg"]) { background-color: #f7e39a !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="sesame.svg"]) { background-color: #eadfc9 !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="so2.svg"]) { background-color: #ead3df !important; }
-#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label:has(> span:nth-of-type(2) > img[src$="lupin.svg"]) { background-color: #e4d8f2 !important; }
+#producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="lupin.svg"]) { background-color: #e4d8f2 !important; }
 #producto-form section:nth-of-type(2) .grid.grid-cols-2.gap-1 > label > span:has(> img[src$="molluscs.svg"]) { background-color: #d6e2f2 !important; }
 
 /* Altramuces: usa el alias local visible en lugar del SVG original que estaba quedando vacío. */
