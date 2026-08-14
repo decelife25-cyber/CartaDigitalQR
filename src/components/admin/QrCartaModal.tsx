@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Copy, ExternalLink, QrCode, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-export function getPublicCartaUrl(): string {
+export function getPublicCartaUrl(configuredDomain?: string | null): string {
+  const rawDomain = configuredDomain?.trim();
+  if (rawDomain) {
+    const normalized = /^https?:\/\//i.test(rawDomain) ? rawDomain : `https://${rawDomain}`;
+    return normalized.replace(/\/+$/, '');
+  }
   return new URL(import.meta.env.BASE_URL || '/', window.location.origin).href;
 }
 
@@ -11,18 +16,22 @@ export function getQrImageUrl(publicUrl: string, configuredQrUrl?: string | null
 }
 
 export default function QrCartaModal({ onClose }: { onClose: () => void }) {
-  const publicUrl = useMemo(() => getPublicCartaUrl(), []);
+  const [configuredDomain, setConfiguredDomain] = useState<string | null>(null);
   const [configuredQrUrl, setConfiguredQrUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let active = true;
-    void supabase.from('configuracion_restaurante').select('qr_url').eq('activo', true).limit(1).maybeSingle().then(({ data }) => {
-      if (active && data?.qr_url) setConfiguredQrUrl(data.qr_url);
+    void supabase.from('configuracion_restaurante').select('dominio, qr_url').eq('activo', true).limit(1).maybeSingle().then(({ data }) => {
+      if (active && data) {
+        setConfiguredDomain(data.dominio ?? null);
+        setConfiguredQrUrl(data.qr_url ?? null);
+      }
     });
     return () => { active = false; };
   }, []);
 
+  const publicUrl = useMemo(() => getPublicCartaUrl(configuredDomain), [configuredDomain]);
   const qrImageUrl = getQrImageUrl(publicUrl, configuredQrUrl);
 
   const copyUrl = async () => {
