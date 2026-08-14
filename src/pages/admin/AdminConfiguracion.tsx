@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { getPublicCartaUrl, getQrImageUrl } from '../../components/admin/QrCartaModal';
 
 type ConfiguracionRestaurante = {
   id: string;
@@ -47,6 +48,8 @@ export default function AdminConfiguracion() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const publicUrl = useMemo(() => getPublicCartaUrl(), []);
+  const qrImageUrl = getQrImageUrl(publicUrl, config.qr_url);
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -71,6 +74,7 @@ export default function AdminConfiguracion() {
         color_principal: config.color_principal?.trim() || null,
         descripcion: config.descripcion?.trim() || null, direccion: config.direccion?.trim() || null,
         telefono: config.telefono?.trim() || null, horario: config.horario?.trim() || null,
+        qr_url: config.qr_url?.trim() || null,
         url_reservas_mesa: config.url_reservas_mesa?.trim() || null,
         redes_sociales: config.redes_sociales ?? {}, updated_at: new Date().toISOString(),
       }).eq('id', config.id);
@@ -99,6 +103,18 @@ export default function AdminConfiguracion() {
         <div className="min-w-0 sm:col-span-2"><Field label="Dirección" value={config.direccion ?? ''} onChange={(v) => set('direccion', v)} /></div>
         <div className="min-w-0 sm:col-span-2"><label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Descripción</span><textarea value={config.descripcion ?? ''} onChange={(e) => set('descripcion', e.target.value)} rows={2} className="w-full min-w-0 resize-none rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--app-text)] outline-none focus:border-orange-400/60" style={{ borderColor: 'var(--app-border)' }} /></label></div>
         <div className="min-w-0 sm:col-span-2"><label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Horario</span><textarea value={config.horario ?? ''} onChange={(e) => set('horario', e.target.value)} rows={2} className="w-full min-w-0 resize-none rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--app-text)] outline-none focus:border-orange-400/60" style={{ borderColor: 'var(--app-border)' }} /></label></div>
+      </div>
+    </section>
+
+    <section className="mt-2 w-full min-w-0 rounded-xl border bg-[var(--app-surface)] p-2.5" style={{ borderColor: 'var(--app-border)' }}>
+      <h2 className="text-sm font-extrabold">Código QR de la carta</h2>
+      <p className="mb-2 text-[9px] text-[var(--app-muted)]">Código para imprimir o enseñar al cliente. La dirección de abajo es la que abre el QR.</p>
+      <div className="grid min-w-0 gap-3 sm:grid-cols-[150px_minmax(0,1fr)] sm:items-center">
+        <div className="flex justify-center rounded-xl bg-white p-2"><img src={qrImageUrl} alt="Código QR de la carta" className="h-32 w-32 object-contain" /></div>
+        <div className="min-w-0 space-y-2">
+          <div><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Enlace de la carta</span><div className="break-all rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-2 text-xs font-semibold" style={{ borderColor: 'var(--app-border)' }}>{publicUrl}</div></div>
+          <Field label="URL de la imagen QR (opcional)" value={config.qr_url ?? ''} onChange={(v) => set('qr_url', v)} placeholder="https://…" />
+        </div>
       </div>
     </section>
 
