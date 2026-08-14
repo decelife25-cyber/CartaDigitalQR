@@ -29,14 +29,11 @@ export default function HomePrivado() {
   return (
     <div className="min-h-[calc(100dvh-2rem)] w-full" style={{ color: 'var(--app-text)' }}>
       <div className="mx-auto w-full max-w-5xl px-2 py-2 sm:px-4 sm:py-4">
-        <header className="mb-3 flex items-center justify-between rounded-3xl border px-5 py-3 shadow-sm sm:px-7 sm:py-4" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
+        <header className="mb-3 flex items-center rounded-3xl border px-5 py-3 shadow-sm sm:px-7 sm:py-4" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)', boxShadow: 'var(--app-shadow)' }}>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: 'var(--app-muted)' }}>Carta Digital</p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:text-3xl">Panel Privado</h1>
           </div>
-          <Link to="/admin/configuracion" className="flex h-11 w-11 items-center justify-center rounded-2xl" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }} aria-label="Configuración">
-            <Settings size={23} strokeWidth={1.8} />
-          </Link>
         </header>
 
         <section className="mb-3 px-1">

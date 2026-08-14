@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Home, LogOut, Moon, Package, QrCode, Sun } from 'lucide-react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
-import { Home, LogOut, Moon, Package, Sun } from 'lucide-react';
+import QrCartaModal from '../admin/QrCartaModal';
 
 function toggleTheme() {
   const root = document.documentElement;
@@ -16,6 +17,7 @@ export default function AdminLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [night, setNight] = useState(() => document.documentElement.classList.contains('theme-night'));
+  const [showQr, setShowQr] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const isHome = location.pathname === '/admin' || location.pathname === '/admin/';
@@ -77,14 +79,15 @@ export default function AdminLayout() {
             >
               {night ? <Sun size={22} /> : <Moon size={22} />}
             </button>
-            <Link
-              to="/admin/productos"
+            <button
+              type="button"
+              onClick={() => setShowQr(true)}
               className="flex h-10 w-10 items-center justify-center rounded-xl transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-              aria-label="Productos"
-              title="Productos"
+              aria-label="Mostrar código QR de la carta"
+              title="Código QR de la carta"
             >
-              <Package size={22} />
-            </Link>
+              <QrCode size={22} />
+            </button>
             <button
               type="button"
               onClick={handleLogout}
@@ -99,6 +102,7 @@ export default function AdminLayout() {
         <main className="w-full p-3 sm:p-5 md:p-7">
           <Outlet />
         </main>
+        {showQr && <QrCartaModal onClose={() => setShowQr(false)} />}
       </div>
     );
   }
