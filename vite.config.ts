@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-// https://vite.dev/config/
+// GitHub Pages serves the app below /CartaDigitalQR/; Cloudflare Pages serves it at /
 export default defineConfig({
-  base: '/CartaDigitalQR/',
+  base: process.env.GITHUB_ACTIONS ? '/CartaDigitalQR/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
