@@ -4,7 +4,7 @@ import path from 'path'
 
 // GitHub Pages serves the app below /CartaDigitalQR/; Cloudflare Pages serves it at /
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? '/CartaDigitalQR/' : '/',
+  base: process.env.CF_PAGES === 'true' ? '/' : (process.env.GITHUB_ACTIONS ? '/CartaDigitalQR/' : '/'),
   plugins: [react()],
   resolve: {
     alias: {
