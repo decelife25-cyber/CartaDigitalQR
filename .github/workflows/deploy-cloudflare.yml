@@ -47,12 +47,16 @@ jobs:
             echo "Cloudflare Pages project cartadigitalqr already exists."
           else
             echo "Creating Cloudflare Pages project cartadigitalqr..."
-            curl -fsS -X POST \
+            response=$(curl -sS -X POST \
               -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
               -H "Content-Type: application/json" \
               "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
-              --data '{"name":"cartadigitalqr","production_branch":"main"}' \
-              | jq -e '.success == true' >/dev/null
+              --data '{"name":"cartadigitalqr","production_branch":"main"}')
+
+            echo "Cloudflare API response:"
+            echo "$response" | jq .
+
+            echo "$response" | jq -e '.success == true' >/dev/null
             echo "Cloudflare Pages project created."
           fi
 
