@@ -32,31 +32,57 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Ensure Cloudflare Pages project exists
+      - name: Diagnose and ensure Cloudflare Pages project exists
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          projects=$(curl -fsS \
+          endpoint="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects"
+
+          echo "Checking Cloudflare Pages projects..."
+          response=$(curl -sS \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects")
+            -w '\nHTTP_STATUS:%{http_code}' \
+            "$endpoint")
 
-          if echo "$projects" | jq -e '.result[] | select(.name == "cartadigitalqr")' >/dev/null; then
+          body="${response%$'\nHTTP_STATUS:'*}"
+          status="${response##*$'\nHTTP_STATUS:'}"
+
+          echo "Cloudflare GET HTTP status: ${status}"
+          echo "Cloudflare GET response:"
+          echo "$body" | jq .
+
+          if [ "$status" != "200" ]; then
+            echo "Cloudflare rejected the Pages projects request."
+            exit 1
+          fi
+
+          if echo "$body" | jq -e '.result[] | select(.name == "cartadigitalqr")' >/dev/null; then
             echo "Cloudflare Pages project cartadigitalqr already exists."
           else
             echo "Creating Cloudflare Pages project cartadigitalqr..."
-            response=$(curl -sS -X POST \
+            create_response=$(curl -sS -X POST \
               -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
               -H "Content-Type: application/json" \
-              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
+              -w '\nHTTP_STATUS:%{http_code}' \
+              "$endpoint" \
               --data '{"name":"cartadigitalqr","production_branch":"main"}')
 
-            echo "Cloudflare API response:"
-            echo "$response" | jq .
+            create_body="${create_response%$'\nHTTP_STATUS:'*}"
+            create_status="${create_response##*$'\nHTTP_STATUS:'}"
 
-            echo "$response" | jq -e '.success == true' >/dev/null
+            echo "Cloudflare POST HTTP status: ${create_status}"
+            echo "Cloudflare POST response:"
+            echo "$create_body" | jq .
+
+            if [ "$create_status" != "200" ]; then
+              echo "Cloudflare rejected project creation."
+              exit 1
+            fi
+
+            echo "$create_body" | jq -e '.success == true' >/dev/null
             echo "Cloudflare Pages project created."
           fi
 
