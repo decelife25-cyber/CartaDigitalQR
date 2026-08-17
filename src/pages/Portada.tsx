@@ -4,8 +4,8 @@ import { X, BookOpen, Phone, CalendarDays, Clock3, LoaderCircle } from 'lucide-r
 import { api } from '../services/api';
 import type { Configuracion, Producto } from '../types/database';
 
-const PORTADA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/PUBLICO/portada.png?v=1';
-const PIZARRA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/ICONOS/pizarra.png?v=1';
+const PORTADA_IMAGE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/portada.png`;
+const PIZARRA_IMAGE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/pizarra.png`;
 
 export default function Portada() {
   const navigate = useNavigate();
