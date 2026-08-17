@@ -14,8 +14,16 @@ import AdminProductoForm from './pages/admin/AdminProductoForm';
 import AdminConfiguracion from './pages/admin/AdminConfiguracion';
 
 function App() {
+  // On Cloudflare Pages the public app lives under /carta-camborio/,
+  // while Vite assets are served from the site root.
+  // Keep the existing base path for GitHub Pages and local development.
+  const pathname = window.location.pathname;
+  const basename = pathname === '/carta-camborio' || pathname.startsWith('/carta-camborio/')
+    ? '/carta-camborio'
+    : import.meta.env.BASE_URL;
+
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/" element={<Portada />} />
         <Route path="/familias" element={<Familias />} />
