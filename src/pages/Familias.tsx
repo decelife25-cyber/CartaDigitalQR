@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import type { Familia } from '../types/database';
 import { useSelectionStore } from '../store/selectionStore';
 
-const PIZARRA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/ICONOS/pizarra.png?v=1';
+const PIZARRA_IMAGE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/pizarra.png`;
 
 function toggleTheme() {
   const root = document.documentElement;
