@@ -1,0 +1,8 @@
+name = "cartadigitalqr-router"
+main = "cloudflare/cartadigitalqr-router.js"
+compatibility_date = "2026-08-18"
+workers_dev = false
+
+routes = [
+  { pattern = "www.decelife.com/carta-camborio*", zone_name = "decelife.com" }
+]
