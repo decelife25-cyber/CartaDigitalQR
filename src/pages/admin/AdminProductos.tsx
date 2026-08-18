@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { ArrowLeft, Filter, GripVertical, ImageOff, Lightbulb, Plus, Search, Star, X } from 'lucide-react';
+import { ArrowLeft, Filter, GripVertical, ImageOff, Lightbulb, Plus, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AppSelectionModal from '../../components/ui/AppSelectionModal';
 import { adminApi } from '../../services/adminApi';
