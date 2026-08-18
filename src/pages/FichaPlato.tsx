@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, Heart, Lightbulb, Moon, Sun, Utensils } from 'lucide-react';
+import { ArrowLeft, Check, Heart, Lightbulb, Utensils } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Producto } from '../types/database';
