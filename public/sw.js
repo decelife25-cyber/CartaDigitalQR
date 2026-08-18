@@ -1,8 +1,9 @@
-const CACHE_NAME = 'carta-digital-static-v2';
+const CACHE_NAME = 'carta-digital-static-v3';
+const BASE_PATH = '/carta-camborio';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
+  `${BASE_PATH}/`,
+  `${BASE_PATH}/index.html`,
+  `${BASE_PATH}/manifest.json`,
 ];
 
 self.addEventListener('install', (event) => {
@@ -29,22 +30,24 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Los datos de Supabase NO se almacenan en Cache Storage.
-  // Esto evita servir precios, disponibilidad, familias o configuración obsoletos.
-  // Si la red falla, la aplicación recibe el error normal de Supabase y puede
-  // mostrar su estado de error/carga correspondiente.
+  // The service worker only belongs to the CartaDigitalQR subpath.
+  if (url.origin !== self.location.origin || !url.pathname.startsWith(`${BASE_PATH}/`)) {
+    return;
+  }
+
+  // Supabase data must never be stored in Cache Storage.
   if (url.hostname.endsWith('.supabase.co')) return;
 
-  // Para navegación, intenta siempre obtener la versión actual. Si no hay red,
-  // utiliza el index.html precargado para permitir que la SPA pueda arrancar.
+  // Navigation always prefers the current network response. If offline,
+  // fall back to the cached SPA entry point for this subpath.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      fetch(request).catch(() => caches.match(`${BASE_PATH}/index.html`))
     );
     return;
   }
 
-  // Recursos estáticos: cache-first con actualización en segundo plano.
+  // Static resources use cache-first with a background network refresh.
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       const networkRequest = fetch(request).then((response) => {
