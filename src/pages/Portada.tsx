@@ -99,12 +99,12 @@ export default function Portada() {
             'absolute z-20 m-0 border-0 bg-transparent p-0 text-left transition-all duration-300 ease-out',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80',
             pizarraAmpliada
-              ? 'bottom-[205px] right-[4%] w-[min(78vw,360px)]'
-              : 'bottom-[100px] right-[4%] w-[min(40vw,180px)]',
+              ? 'bottom-[205px] right-[4%] h-[min(60dvh,520px)] w-auto'
+              : 'bottom-[100px] right-[4%] h-[clamp(210px,26dvh,260px)] w-auto',
           ].join(' ')}
         >
-          <div className="relative w-full drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
-            <img src={PIZARRA_IMAGE} alt="Pizarra de sugerencias del día" className="block h-auto w-full" />
+          <div className="relative h-full w-auto drop-shadow-[0_8px_18px_rgba(0,0,0,.45)]">
+            <img src={PIZARRA_IMAGE} alt="Pizarra de sugerencias del día" className="block h-full w-auto max-w-none" />
             <div
               ref={textoPizarraRef}
               className="absolute left-[18%] right-[18%] top-[25%] bottom-[8%] flex flex-col gap-[clamp(4px,1.2vw,9px)] overflow-hidden text-white"
