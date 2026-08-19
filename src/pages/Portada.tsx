@@ -4,7 +4,7 @@ import { X, BookOpen, Phone, CalendarDays, Clock3, LoaderCircle } from 'lucide-r
 import { api } from '../services/api';
 import type { Configuracion, Producto } from '../types/database';
 
-const PORTADA_IMAGE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/portada.png`;
+const DEFAULT_PORTADA_IMAGE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/portada.png`;
 const PIZARRA_IMAGE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/pizarra.png?v=20260818-2`;
 
 export default function Portada() {
@@ -66,6 +66,7 @@ export default function Portada() {
   const direccion = config?.direccion?.trim();
   const horario = config?.horario?.trim();
   const urlReservasMesa = config?.url_reservas_mesa?.trim();
+  const portadaImage = config?.portada_url?.trim() || DEFAULT_PORTADA_IMAGE;
 
   const salirDePortada = () => {
     if (window.history.length > 1) navigate(-1);
@@ -86,7 +87,7 @@ export default function Portada() {
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-black">
-      <img src={PORTADA_IMAGE} alt="Taberna Camborio" className="absolute inset-0 h-full w-full object-cover" />
+      <img src={portadaImage} alt="Taberna Camborio" className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/5 to-black/60" />
 
       {sugerencias.length > 0 && (
