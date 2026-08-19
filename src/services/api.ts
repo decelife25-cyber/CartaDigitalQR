@@ -63,6 +63,7 @@ export const api = {
       id: data.id,
       nombre_restaurante: data.nombre ?? '',
       logotipo_url: data.logo_url ?? null,
+      portada_url: data.portada_url ?? null,
       color_principal: data.color_principal ?? null,
       color_secundario: null,
       telefono: data.telefono ?? null,
