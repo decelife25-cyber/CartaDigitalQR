@@ -15,36 +15,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.decelife.cartadigitalqr.navigation.AppNavigation
+import com.decelife.cartadigitalqr.ui.theme.CartaDigitalQRTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            CartaDigitalQRTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting()
+                    AppNavigation()
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "CartaDigitalQR\nAplicación privada Android\nFase 1 — Prueba APK",
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.headlineMedium
-        )
     }
 }
