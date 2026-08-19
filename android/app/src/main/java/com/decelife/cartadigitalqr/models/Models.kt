@@ -39,34 +39,31 @@ data class Configuracion(
 // Mock Data
 object MockData {
     val familias = listOf(
-        Familia("1", "Entrantes", 0, true, null),
-        Familia("2", "Carnes", 1, true, null),
-        Familia("3", "Pescados", 2, true, null),
-        Familia("4", "Postres", 3, true, null),
-        Familia("5", "Bebidas", 4, false, null)
+        Familia("1", "Familia de ejemplo 1", 0, true, null),
+        Familia("2", "Familia de ejemplo 2", 1, true, null),
+        Familia("3", "Familia de ejemplo 3", 2, true, null),
+        Familia("4", "Familia oculta de prueba", 3, false, null)
     )
 
     val productos = listOf(
-        Producto("1", "1", "Croquetas de Jamón", "Deliciosas croquetas caseras.", 8.5, 0, true, false, true, false, null),
-        Producto("2", "1", "Ensalada Mixta", "Lechuga, tomate, cebolla, atún.", 7.0, 1, true, false, false, false, null),
-        Producto("3", "2", "Chuletón de Vaca", "1kg de chuletón a la brasa.", 45.0, 0, true, false, true, true, null),
-        Producto("4", "2", "Secreto Ibérico", "Con patatas fritas.", 14.5, 1, true, true, false, false, null),
-        Producto("5", "3", "Lubina a la Espalda", "Lubina fresca al horno.", 18.0, 0, true, false, false, true, null),
-        Producto("6", "4", "Tarta de Queso", "Tarta casera al horno.", 6.5, 0, true, false, true, false, null),
-        Producto("7", "5", "Vino Tinto Rioja", "Crianza.", 16.0, 0, false, false, false, false, null)
+        Producto("1", "1", "Producto de ejemplo destacado", "Descripción breve de prueba.", 12.5, 0, true, false, true, false, null),
+        Producto("2", "1", "Producto normal de prueba", "Otra descripción de ejemplo.", 8.0, 1, true, false, false, false, null),
+        Producto("3", "2", "Producto agotado", "Descripción de producto sin stock.", 15.0, 0, true, true, false, false, null),
+        Producto("4", "2", "Producto sugerido", "Este producto está sugerido.", 22.5, 1, true, false, false, true, null),
+        Producto("5", "3", "Producto oculto", "Este producto no es visible.", 10.0, 0, false, false, false, false, null)
     )
 
     val configuracion = Configuracion(
         id = "1",
-        nombre = "Restaurante Camborio",
-        telefono = "+34 912 345 678",
-        direccion = "Calle Principal, 123, Madrid",
-        descripcion = "La mejor comida tradicional con un toque moderno.",
-        horario = "L-D: 13:00 - 16:00 / 20:00 - 23:30",
+        nombre = "Restaurante de Ejemplo",
+        telefono = "+34 000 000 000",
+        direccion = "Calle de Prueba, 1, Ciudad",
+        descripcion = "Descripción genérica del restaurante para pruebas del panel.",
+        horario = "L-D: 10:00 - 23:00",
         logo_url = null,
-        color_principal = "#c8a96e",
+        color_principal = "#f97316",
         qr_url = null,
-        dominio = "https://camborio.com/carta",
-        url_reservas_mesa = "https://reservas.camborio.com"
+        dominio = "https://ejemplo.com/carta",
+        url_reservas_mesa = "https://reservas.ejemplo.com"
     )
 }

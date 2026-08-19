@@ -90,6 +90,26 @@ fun ConfiguracionScreen(
             SectionCard {
                 Column {
                     Text(
+                        text = "Reserva de mesa",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Aplicación externa que se abrirá al pulsar 'Reservar mesa'.",
+                        fontSize = 12.sp,
+                        color = AppMuted
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MockField("Programa de reservas de mesa", config.url_reservas_mesa ?: "")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SectionCard {
+                Column {
+                    Text(
                         text = "Código QR de la carta",
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
@@ -126,8 +146,36 @@ fun ConfiguracionScreen(
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
+                    Text(
+                        text = "Logo y color principal de la carta.",
+                        fontSize = 12.sp,
+                        color = AppMuted
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
+                    MockField("URL del logotipo", config.logo_url ?: "")
                     MockField("Color principal", config.color_principal ?: "")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SectionCard {
+                Column {
+                    Text(
+                        text = "Redes sociales",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "Enlaces opcionales que puede mostrar la carta.",
+                        fontSize = 12.sp,
+                        color = AppMuted
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    MockField("instagram", "")
+                    MockField("facebook", "")
+                    MockField("web", "")
                 }
             }
 
@@ -157,16 +205,16 @@ fun MockField(label: String, value: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 4.dp)
-                .height(40.dp)
+                .height(36.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .background(com.decelife.cartadigitalqr.ui.theme.AppSurfaceSoft)
                 .border(1.dp, AppBorder, RoundedCornerShape(8.dp))
                 .padding(horizontal = 12.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = value,
-                color = MaterialTheme.colorScheme.onBackground,
+                text = value.ifEmpty { "..." },
+                color = if (value.isEmpty()) AppMuted else MaterialTheme.colorScheme.onBackground,
                 fontSize = 14.sp
             )
         }

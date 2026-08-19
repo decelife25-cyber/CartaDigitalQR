@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -122,9 +123,20 @@ fun FamiliaItem(familia: Familia) {
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        StatusBadge(
-            text = if (familia.activo) "Visible" else "Oculta",
-            isActive = familia.activo
+        Column(horizontalAlignment = Alignment.End) {
+            StatusBadge(
+                text = if (familia.activo) "Visible" else "Oculta",
+                isActive = familia.activo
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Icon(
+            imageVector = Icons.Default.Menu,
+            contentDescription = "Reordenar",
+            tint = AppMuted,
+            modifier = Modifier.size(24.dp)
         )
     }
 }
