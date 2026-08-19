@@ -2,6 +2,7 @@ export interface Configuracion {
   id: string;
   nombre_restaurante: string;
   logotipo_url: string | null;
+  portada_url: string | null;
   color_principal: string | null;
   color_secundario: string | null;
   telefono: string | null;
