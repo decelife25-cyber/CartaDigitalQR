@@ -2,8 +2,10 @@ package com.decelife.cartadigitalqr.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,13 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,195 +31,99 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.decelife.cartadigitalqr.components.PrimaryButton
-import com.decelife.cartadigitalqr.components.SectionCard
-import com.decelife.cartadigitalqr.components.TopBar
-import com.decelife.cartadigitalqr.models.MockData
+import com.decelife.cartadigitalqr.ui.components.AdminHeader
+import com.decelife.cartadigitalqr.ui.components.ScreenHeader
 import com.decelife.cartadigitalqr.ui.theme.AppBorder
 import com.decelife.cartadigitalqr.ui.theme.AppMuted
+import com.decelife.cartadigitalqr.ui.theme.AppSurfaceSoft
+
+private val Orange = Color(0xFFFF7A00)
 
 @Composable
-fun ConfiguracionScreen(
-    onBackClick: () -> Unit
-) {
-    val config = MockData.configuracion
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        TopBar(
-            title = "Configuración",
-            onBackClick = onBackClick,
-            actions = {
-                PrimaryButton(
-                    text = "Guardar",
-                    onClick = { /* TODO Phase 3 */ }
-                )
-            }
-        )
+fun ConfiguracionScreen(onBackClick: () -> Unit) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        AdminHeader(showHome = true, onHome = onBackClick)
+        ScreenHeader(title = "Configuración", actionText = "Guardar", onBack = onBackClick)
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(8.dp)
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             SectionCard {
-                Column {
-                    Text(
-                        text = "Restaurante",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Información que verá el cliente en la carta.",
-                        fontSize = 12.sp,
-                        color = AppMuted
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    MockField("Nombre", config.nombre)
-                    MockField("Teléfono", config.telefono ?: "")
-                    MockField("Dirección", config.direccion ?: "")
-                    MockField("Descripción", config.descripcion ?: "")
-                }
+                Text("Restaurante", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Información que verá el cliente en la carta.", color = AppMuted, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+                Field("NOMBRE", "Taberna Camborio")
+                Field("TELÉFONO", "+34 956254532")
+                Field("DIRECCIÓN", "Calle Real, 184 - San Fernando (Cádiz)")
+                Field("DESCRIPCIÓN", "")
+                Field("HORARIO", "Lunes a Jueves: 9:00-00:00 | Viernes y Sábado: 9:00-02:00 | Domingo: 9:00-00:00")
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             SectionCard {
-                Column {
-                    Text(
-                        text = "Reserva de mesa",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Aplicación externa que se abrirá al pulsar 'Reservar mesa'.",
-                        fontSize = 12.sp,
-                        color = AppMuted
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    MockField("Programa de reservas de mesa", config.url_reservas_mesa ?: "")
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            SectionCard {
-                Column {
-                    Text(
-                        text = "Código QR de la carta",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White)
-                                .border(1.dp, AppBorder, RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "QR Mock", color = AppMuted, fontWeight = FontWeight.Bold)
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text("Enlace que abre el QR:", fontSize = 12.sp, color = AppMuted, fontWeight = FontWeight.Bold)
-                            Text(config.dominio ?: "", fontSize = 14.sp, color = MaterialTheme.colorScheme.onBackground)
-                        }
+                Text("Portada de la carta", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Cambia la imagen cuando quieras. La nueva portada queda activa inmediatamente.", color = AppMuted, fontSize = 16.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp))
+                Box(
+                    Modifier.fillMaxWidth().padding(top = 14.dp).height(190.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF2E382F)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFFE8D8B8), modifier = Modifier.size(48.dp))
+                        Text("Portada actual", color = Color(0xFFE8D8B8), fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.padding(top = 8.dp))
                     }
                 }
+                Button(
+                    onClick = {},
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(48.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Orange, contentColor = Color(0xFF111111)),
+                    shape = RoundedCornerShape(10.dp)
+                ) { Text("Sustituir portada", fontWeight = FontWeight.ExtraBold) }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            SectionCard {
+                Text("Reserva de mesa", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Aplicación externa que se abrirá al pulsar 'Reservar mesa'.", color = AppMuted, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
+                Field("PROGRAMA DE RESERVAS DE MESA", "")
+            }
 
             SectionCard {
-                Column {
-                    Text(
-                        text = "Identidad visual",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Logo y color principal de la carta.",
-                        fontSize = 12.sp,
-                        color = AppMuted
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    MockField("URL del logotipo", config.logo_url ?: "")
-                    MockField("Color principal", config.color_principal ?: "")
+                Text("Código QR de la carta", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text("El QR se genera automáticamente con el enlace de la carta.", color = AppMuted, fontSize = 16.sp, lineHeight = 21.sp, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(132.dp).clip(RoundedCornerShape(14.dp)).background(Color.White).border(1.dp, AppBorder, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                        Text("QR", fontSize = 38.sp, fontWeight = FontWeight.Black, color = Color.Black)
+                    }
+                    Text("https://decelife.com/carta", modifier = Modifier.padding(start = 18.dp), color = AppMuted, fontSize = 14.sp)
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             SectionCard {
-                Column {
-                    Text(
-                        text = "Redes sociales",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Text(
-                        text = "Enlaces opcionales que puede mostrar la carta.",
-                        fontSize = 12.sp,
-                        color = AppMuted
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    MockField("instagram", "")
-                    MockField("facebook", "")
-                    MockField("web", "")
-                }
+                Text("Identidad visual", fontSize = 25.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Logo y color principal de la carta.", color = AppMuted, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp, bottom = 18.dp))
+                Field("URL DEL LOGOTIPO", "")
+                Field("COLOR PRINCIPAL", "#c8a96e")
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            PrimaryButton(
-                text = "Guardar configuración",
-                onClick = { /* TODO Phase 3 */ },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-fun MockField(label: String, value: String) {
-    Column(modifier = Modifier.padding(bottom = 8.dp)) {
-        Text(
-            text = label.uppercase(),
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
-            color = AppMuted
-        )
+private fun SectionCard(content: @Composable () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).border(1.dp, AppBorder, RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surface).padding(18.dp),
+        content = content
+    )
+}
+
+@Composable
+private fun Field(label: String, value: String) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+        Text(label, color = AppMuted, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 7.dp))
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp)
-                .height(36.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(com.decelife.cartadigitalqr.ui.theme.AppSurfaceSoft)
-                .border(1.dp, AppBorder, RoundedCornerShape(8.dp))
-                .padding(horizontal = 12.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).background(AppSurfaceSoft).padding(horizontal = 16.dp, vertical = 14.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            Text(
-                text = value.ifEmpty { "..." },
-                color = if (value.isEmpty()) AppMuted else MaterialTheme.colorScheme.onBackground,
-                fontSize = 14.sp
-            )
+            Text(value, fontSize = 17.sp, color = MaterialTheme.colorScheme.onBackground, lineHeight = 23.sp)
         }
     }
 }
