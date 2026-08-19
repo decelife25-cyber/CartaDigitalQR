@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, Save } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Check, ImagePlus, Save } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { getPublicCartaUrl, getQrImageUrl } from '../../components/admin/QrCartaModal';
@@ -8,6 +8,7 @@ type ConfiguracionRestaurante = {
   id: string;
   nombre: string;
   logo_url: string | null;
+  portada_url: string | null;
   color_principal: string | null;
   descripcion: string | null;
   direccion: string | null;
@@ -20,8 +21,9 @@ type ConfiguracionRestaurante = {
   activo: boolean | null;
 };
 
+const DEFAULT_PORTADA_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/productos/publico/portada.png`;
 const EMPTY: ConfiguracionRestaurante = {
-  id: '', nombre: '', logo_url: null, color_principal: '#c8a96e', descripcion: null,
+  id: '', nombre: '', logo_url: null, portada_url: null, color_principal: '#c8a96e', descripcion: null,
   direccion: null, telefono: null, redes_sociales: {}, horario: null, qr_url: null,
   dominio: null, url_reservas_mesa: null, activo: true,
 };
@@ -42,14 +44,25 @@ function Field({ label, value, onChange, placeholder, type = 'text' }: { label: 
   return <label className="block min-w-0"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">{label}</span><input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="h-9 w-full min-w-0 rounded-md border border-[var(--app-border)] bg-[var(--app-surface-soft)] px-2.5 text-xs text-[var(--app-text)] outline-none placeholder:text-[var(--app-muted)] focus:border-orange-400/60" /></label>;
 }
 
+function storagePathFromPublicUrl(url: string | null): string | null {
+  if (!url) return null;
+  const marker = '/storage/v1/object/public/productos/';
+  const index = url.indexOf(marker);
+  if (index < 0) return null;
+  return decodeURIComponent(url.slice(index + marker.length).split('?')[0]);
+}
+
 export default function AdminConfiguracion() {
   const [config, setConfig] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingPortada, setUploadingPortada] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const portadaInputRef = useRef<HTMLInputElement | null>(null);
   const publicUrl = useMemo(() => getPublicCartaUrl(config.dominio), [config.dominio]);
   const qrImageUrl = getQrImageUrl(publicUrl, config.qr_url);
+  const portadaUrl = config.portada_url?.trim() || DEFAULT_PORTADA_URL;
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -65,12 +78,60 @@ export default function AdminConfiguracion() {
 
   const set = (key: keyof ConfiguracionRestaurante, value: string) => setConfig((current) => ({ ...current, [key]: value }));
 
+  const uploadPortada = async (file: File) => {
+    setUploadingPortada(true); setError(null); setSaved(false);
+    try {
+      const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+      if (!allowedTypes.has(file.type)) throw new Error('La portada debe ser JPG, PNG o WebP.');
+      if (file.size > 10 * 1024 * 1024) throw new Error('La portada no puede superar los 10 MB.');
+      if (!config.id) throw new Error('No se ha podido cargar la configuración del restaurante.');
+
+      const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/webp' ? 'webp' : 'png';
+      const path = `publico/portada-${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from('productos').upload(path, file, {
+        cacheControl: '0',
+        contentType: file.type,
+        upsert: false,
+      });
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage.from('productos').getPublicUrl(path);
+      const newUrl = publicData.publicUrl;
+      const previousUrl = config.portada_url;
+
+      const { error: updateError } = await supabase.from('configuracion_restaurante').update({
+        portada_url: newUrl,
+        updated_at: new Date().toISOString(),
+      }).eq('id', config.id);
+      if (updateError) {
+        await supabase.storage.from('productos').remove([path]);
+        throw updateError;
+      }
+
+      setConfig((current) => ({ ...current, portada_url: newUrl }));
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
+
+      const previousPath = storagePathFromPublicUrl(previousUrl);
+      if (previousPath && previousPath !== path) {
+        const { error: removeError } = await supabase.storage.from('productos').remove([previousPath]);
+        if (removeError) console.warn('No se pudo eliminar la portada anterior:', removeError);
+      }
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setUploadingPortada(false);
+      if (portadaInputRef.current) portadaInputRef.current.value = '';
+    }
+  };
+
   const save = async () => {
     if (!config.id) return;
     setSaving(true); setSaved(false); setError(null);
     try {
       const { error: updateError } = await supabase.from('configuracion_restaurante').update({
         nombre: config.nombre.trim(), logo_url: config.logo_url?.trim() || null,
+        portada_url: config.portada_url?.trim() || null,
         color_principal: config.color_principal?.trim() || null,
         descripcion: config.descripcion?.trim() || null, direccion: config.direccion?.trim() || null,
         telefono: config.telefono?.trim() || null, horario: config.horario?.trim() || null,
@@ -105,6 +166,14 @@ export default function AdminConfiguracion() {
         <div className="min-w-0 sm:col-span-2"><label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Descripción</span><textarea value={config.descripcion ?? ''} onChange={(e) => set('descripcion', e.target.value)} rows={2} className="w-full min-w-0 resize-none rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--app-text)] outline-none focus:border-orange-400/60" style={{ borderColor: 'var(--app-border)' }} /></label></div>
         <div className="min-w-0 sm:col-span-2"><label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-[var(--app-muted)]">Horario</span><textarea value={config.horario ?? ''} onChange={(e) => set('horario', e.target.value)} rows={2} className="w-full min-w-0 resize-none rounded-md border bg-[var(--app-surface-soft)] px-2.5 py-1.5 text-xs text-[var(--app-text)] outline-none focus:border-orange-400/60" style={{ borderColor: 'var(--app-border)' }} /></label></div>
       </div>
+    </section>
+
+    <section className="mt-2 w-full min-w-0 rounded-xl border bg-[var(--app-surface)] p-2.5" style={{ borderColor: 'var(--app-border)' }}>
+      <div className="flex items-start justify-between gap-3"><div><h2 className="text-sm font-extrabold">Portada de la carta</h2><p className="mt-0.5 text-[9px] text-[var(--app-muted)]">Cambia la imagen cuando quieras. La nueva portada queda activa inmediatamente y no depende de una caché anual.</p></div><ImagePlus size={18} className="mt-0.5 shrink-0 text-orange-400" /></div>
+      <div className="mt-2 overflow-hidden rounded-xl border bg-black/10" style={{ borderColor: 'var(--app-border)' }}><img src={portadaUrl} alt="Portada actual de la carta" className="block aspect-[16/9] w-full object-cover" /></div>
+      <input ref={portadaInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadPortada(file); }} />
+      <button type="button" onClick={() => portadaInputRef.current?.click()} disabled={uploadingPortada} className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-md bg-orange-400 px-3 text-xs font-extrabold text-[#111] disabled:opacity-50"><ImagePlus size={16} />{uploadingPortada ? 'Subiendo portada…' : 'Sustituir portada'}</button>
+      <p className="mt-1 text-center text-[9px] text-[var(--app-muted)]">JPG, PNG o WebP · máximo 10 MB</p>
     </section>
 
     <section className="mt-2 w-full min-w-0 rounded-xl border bg-[var(--app-surface)] p-2.5" style={{ borderColor: 'var(--app-border)' }}>
