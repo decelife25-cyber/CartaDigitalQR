@@ -34,7 +34,7 @@ assert.ok(manifest.icons.some((icon) => icon.src.includes('icon-192')), 'Falta i
 assert.ok(manifest.icons.some((icon) => icon.src.includes('icon-512')), 'Falta icono 512');
 
 const serviceWorker = read('public/sw.js');
-assert.ok(serviceWorker.includes("const CACHE_NAME = 'carta-digital-static-v2'"), 'Service Worker desactualizado');
+assert.ok(serviceWorker.includes("const CACHE_NAME = 'carta-digital-static-v3'"), 'Service Worker desactualizado');
 assert.ok(serviceWorker.includes("url.hostname.endsWith('.supabase.co')"), 'El Service Worker debe excluir Supabase de la caché');
 assert.ok(!serviceWorker.includes("caches.open('api-cache')"), 'No debe existir caché persistente de la API');
 assert.ok(!serviceWorker.includes('cache.put(event.request, response.clone())'), 'No debe almacenarse la respuesta de Supabase en caché');
