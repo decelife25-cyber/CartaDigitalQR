@@ -15,9 +15,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.decelife.cartadigitalqr.components.SectionCard
 import com.decelife.cartadigitalqr.ui.theme.AccentOrange
 import com.decelife.cartadigitalqr.ui.theme.AccentPurple
 import com.decelife.cartadigitalqr.ui.theme.AccentSlate
@@ -45,20 +47,10 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-        ) {
-            // Mirrors the current web panel hierarchy and spacing.
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-            ) {
+        SectionCard {
+            Column(modifier = Modifier.padding(8.dp)) {
                 Text(
                     text = "CARTA DIGITAL",
                     style = MaterialTheme.typography.labelSmall,
@@ -68,57 +60,51 @@ fun HomeScreen(
                 )
                 Text(
                     text = "Panel Privado",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-                Text(
-                    text = "¿Qué quieres gestionar?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "Accede directamente a cada parte de la carta.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
-                    color = AppMuted,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+        Text(
+            text = "¿Qué quieres gestionar?",
+            style = MaterialTheme.typography.titleLarge,
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Accede directamente a cada parte de la carta.",
+            style = MaterialTheme.typography.bodyLarge,
+            fontSize = 14.sp,
+            color = AppMuted,
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeSectionItem(
-                    title = "Familias",
-                    description = "Organiza las categorías de la carta.",
-                    icon = Icons.Filled.FolderOpen,
-                    accentColor = AccentPurple,
-                    onClick = onNavigateToFamilias
-                )
-                HomeSectionItem(
-                    title = "Productos",
-                    description = "Crea, edita y ordena los platos.",
-                    icon = Icons.Filled.Inventory2,
-                    accentColor = AccentOrange,
-                    onClick = onNavigateToProductos
-                )
-                HomeSectionItem(
-                    title = "Configuración",
-                    description = "Ajustes generales de la carta.",
-                    icon = Icons.Filled.Settings,
-                    accentColor = AccentSlate,
-                    onClick = onNavigateToConfiguracion
-                )
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            HomeSectionItem(
+                title = "Familias",
+                description = "Organiza las categorías de la carta.",
+                icon = Icons.AutoMirrored.Filled.List,
+                accentColor = AccentPurple,
+                onClick = onNavigateToFamilias
+            )
+            HomeSectionItem(
+                title = "Productos",
+                description = "Crea, edita y ordena los platos.",
+                icon = Icons.Filled.ShoppingCart,
+                accentColor = AccentOrange,
+                onClick = onNavigateToProductos
+            )
+            HomeSectionItem(
+                title = "Configuración",
+                description = "Ajustes generales de la carta.",
+                icon = Icons.Filled.Settings,
+                accentColor = AccentSlate,
+                onClick = onNavigateToConfiguracion
+            )
         }
     }
 }
@@ -131,57 +117,51 @@ fun HomeSectionItem(
     accentColor: Color,
     onClick: () -> Unit
 ) {
-    Column(
+    SectionCard(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
-            .padding(12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accentColor.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(accentColor.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
                 Icon(
-                    imageVector = icon,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(22.dp)
+                    tint = AppMuted,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = AppMuted,
-                modifier = Modifier.size(19.dp)
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 14.sp,
+                color = AppMuted,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
-            lineHeight = 18.sp,
-            color = AppMuted,
-            modifier = Modifier.padding(top = 4.dp)
-        )
     }
 }
