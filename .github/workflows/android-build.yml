@@ -34,6 +34,18 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
 
+    - name: Verify required secrets
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      run: |
+        if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+          echo "Error: Android signing secrets are missing."
+          exit 1
+        fi
+
     - name: Verify Supabase configuration
       run: |
         if [ -z "${VITE_SUPABASE_URL}" ] || [ -z "${VITE_SUPABASE_ANON_KEY}" ]; then
@@ -41,15 +53,55 @@ jobs:
           exit 1
         fi
 
-    - name: Build APK
+    - name: Remove invalid empty launcher resources
+      run: |
+        find android/app/src/main/res -type f \( -name 'ic_launcher.png' -o -name 'ic_launcher_round.png' \) -size 0 -delete
+
+    - name: Prepare official CartaDigitalQR app icon
+      run: |
+        ICON_SOURCE="docs/REFERENCIAS/ICONO_APP/app-icon.png"
+        ICON_TARGET="android/app/src/main/res/drawable-nodpi/app_icon.png"
+        if [ ! -s "$ICON_SOURCE" ]; then
+          echo "Error: official app icon is missing or empty: $ICON_SOURCE"
+          exit 1
+        fi
+        mkdir -p "$(dirname "$ICON_TARGET")"
+        cp "$ICON_SOURCE" "$ICON_TARGET"
+
+    - name: Decode release keystore
+      env:
+        KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+      run: |
+        printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/release.jks
+        chmod 600 android/app/release.jks
+
+    - name: Build signed Release APK
+      env:
+        KEYSTORE_FILE: release.jks
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
         cd android
-        ./gradlew assembleDebug
+        ./gradlew assembleRelease
+
+    - name: Verify APK signature
+      run: |
+        APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
+        if [ -z "$APKSIGNER" ]; then
+          echo "Error: apksigner not found."
+          exit 1
+        fi
+        "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: CartaDigitalQR-Android-v${{ github.run_number }}
+        name: CartaDigitalQR-Release-v${{ github.run_number }}
         if-no-files-found: error
         retention-days: 30
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+        path: android/app/build/outputs/apk/release/app-release.apk
+
+    - name: Remove release keystore
+      if: always()
+      run: rm -f android/app/release.jks
