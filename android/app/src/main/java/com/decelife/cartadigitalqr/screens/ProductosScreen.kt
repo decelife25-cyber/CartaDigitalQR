@@ -2,8 +2,10 @@ package com.decelife.cartadigitalqr.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,15 +17,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,244 +40,143 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.decelife.cartadigitalqr.components.AgotadoBadge
-import com.decelife.cartadigitalqr.components.PrimaryButton
-import com.decelife.cartadigitalqr.components.StatusBadge
-import com.decelife.cartadigitalqr.components.TopBar
-import com.decelife.cartadigitalqr.models.MockData
-import com.decelife.cartadigitalqr.models.Producto
+import com.decelife.cartadigitalqr.ui.components.AdminHeader
+import com.decelife.cartadigitalqr.ui.components.ScreenHeader
 import com.decelife.cartadigitalqr.ui.theme.AppBorder
 import com.decelife.cartadigitalqr.ui.theme.AppMuted
+import com.decelife.cartadigitalqr.ui.theme.SuccessBg
+import com.decelife.cartadigitalqr.ui.theme.SuccessText
+
+private data class ProductVisual(
+    val name: String,
+    val family: String,
+    val price: String,
+    val visible: Boolean = true,
+    val soldOut: Boolean = false,
+    val special: Boolean = false,
+    val suggested: Boolean = false
+)
+
+private val products = listOf(
+    ProductVisual("Revuelto de bacalao dorado", "Con dos huevos", "11.40 €"),
+    ProductVisual("Ensalada de aguacate, gambones y salsa tártara", "Entrantes fríos", "14.00 €", special = true, suggested = true),
+    ProductVisual("Lagriñitas de pollo", "Tapas", "4.00 €"),
+    ProductVisual("Croquetas de rabo de toro", "Entrantes calientes", "10.00 €"),
+    ProductVisual("Hamburguesa de retinto", "Carnes y guisos", "11.40 €"),
+    ProductVisual("Ventresca de atún a la plancha", "Pescados", "24.00 €"),
+    ProductVisual("Boquerones fritos", "Pescados", "12.00 €")
+)
 
 @Composable
-fun ProductosScreen(
-    onBackClick: () -> Unit
-) {
-    var searchQuery by remember { mutableStateOf("") }
-    val familiasMap = MockData.familias.associateBy { it.id }
-    val productos = MockData.productos.filter {
-        searchQuery.isBlank() || it.nombre.contains(searchQuery, ignoreCase = true)
-    }
+fun ProductosScreen(onBackClick: () -> Unit) {
+    var search by remember { mutableStateOf("") }
+    val filtered = products.filter { it.name.contains(search, ignoreCase = true) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        TopBar(
-            title = "Productos",
-            onBackClick = onBackClick,
-            actions = {
-                PrimaryButton(
-                    text = "Nuevo producto",
-                    onClick = { /* TODO Phase 3 */ },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(17.dp)
-                        )
-                    }
-                )
-            }
-        )
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        AdminHeader(showHome = true, onHome = onBackClick)
+        ScreenHeader(title = "Productos", actionText = "+ Nuevo producto", onBack = onBackClick)
 
-        Column(modifier = Modifier.padding(8.dp)) {
-            // Local Search Bar
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .border(1.dp, AppBorder, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 12.dp),
+                Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, AppBorder, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = null,
-                    tint = AppMuted,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+                Icon(Icons.Default.Search, contentDescription = null, tint = AppMuted, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(10.dp))
                 BasicTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 14.sp
-                    ),
-                    singleLine = true,
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    value = search,
+                    onValueChange = { search = it },
                     modifier = Modifier.weight(1f),
-                    decorationBox = { innerTextField ->
-                        if (searchQuery.isEmpty()) {
-                            Text(
-                                text = "Buscar artículos...",
-                                color = AppMuted,
-                                fontSize = 14.sp
-                            )
-                        }
-                        innerTextField()
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp),
+                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                    decorationBox = { inner ->
+                        if (search.isEmpty()) Text("Buscar artículos...", color = AppMuted, fontSize = 16.sp)
+                        inner()
                     }
                 )
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(
-                        onClick = { searchQuery = "" },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Limpiar",
-                            tint = AppMuted,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+                if (search.isNotEmpty()) IconButton(onClick = { search = "" }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Clear, contentDescription = "Limpiar", tint = AppMuted)
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, AppBorder, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text("Familia: Todas", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, AppBorder, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Text("Estado: Todos", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                }
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(1.dp, AppBorder, RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(imageVector = Icons.Default.List, contentDescription = "Sort", tint = AppMuted, modifier = Modifier.size(17.dp))
-                }
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                FilterChip("Familia: Todas", Modifier.weight(1f))
+                FilterChip("Estado: Todos", Modifier.weight(1f))
+                IconButton(
+                    onClick = {},
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, AppBorder, RoundedCornerShape(14.dp))
+                ) { Icon(Icons.Default.FilterList, contentDescription = "Filtrar", tint = AppMuted) }
             }
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(productos) { producto ->
-                ProductoItem(
-                    producto = producto,
-                    familiaNombre = familiasMap[producto.familia_id]?.nombre ?: "Sin familia"
-                )
-            }
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            items(filtered) { product -> ProductRow(product) }
         }
     }
 }
 
 @Composable
-fun ProductoItem(producto: Producto, familiaNombre: String) {
+private fun FilterChip(text: String, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .border(width = 1.dp, color = AppBorder)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+        modifier = modifier.height(48.dp).clip(RoundedCornerShape(14.dp)).border(1.dp, AppBorder, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text("⌄", color = AppMuted, fontSize = 16.sp)
+    }
+}
+
+@Composable
+private fun ProductRow(product: ProductVisual) {
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            Modifier.size(76.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFFAF5EE)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Add, // Placeholder image icon
-                contentDescription = null,
-                tint = AppMuted,
-                modifier = Modifier.size(20.dp)
-            )
+            Icon(Icons.Default.Inventory2, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(36.dp))
         }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = producto.nombre,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 15.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
-                Text(
-                    text = familiaNombre,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = AppMuted
-                )
-                if (producto.destacado) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Destacado",
-                        tint = com.decelife.cartadigitalqr.ui.theme.OrangePrimary,
-                        modifier = Modifier.size(12.dp)
-                    )
-                }
-                if (producto.sugerido) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.ThumbUp,
-                        contentDescription = "Sugerido",
-                        tint = com.decelife.cartadigitalqr.ui.theme.AccentPurple,
-                        modifier = Modifier.size(12.dp)
-                    )
+        Column(Modifier.weight(1f).padding(horizontal = 18.dp)) {
+            Text(product.name, fontSize = 21.sp, lineHeight = 24.sp, fontWeight = FontWeight.ExtraBold)
+            Text(product.family, color = AppMuted, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 5.dp))
+            if (product.special || product.suggested) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 8.dp)) {
+                    if (product.special) Marker("👨‍🍳  ESPECIALIDAD", Color(0xFFF59E0B))
+                    if (product.suggested) Marker("💡  SUGERENCIA", Color(0xFF10B981))
                 }
             }
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
         Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "${producto.precio} €",
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row {
-                StatusBadge(
-                    text = if (producto.activo) "Visible" else "Oculto",
-                    isActive = producto.activo
-                )
-                if (producto.agotado) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    AgotadoBadge()
-                }
+            Text(product.price, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                StatusPill("Visible", SuccessBg, SuccessText)
+                if (product.soldOut) StatusPill("AGOTADO", Color(0x33EF4444), Color(0xFFDC2626))
             }
         }
+        Icon(Icons.Default.MoreVert, contentDescription = "Reordenar", tint = AppMuted, modifier = Modifier.padding(start = 8.dp).size(26.dp))
+    }
+}
+
+@Composable
+private fun Marker(text: String, color: Color) {
+    Box(Modifier.clip(RoundedCornerShape(18.dp)).border(1.dp, color, RoundedCornerShape(18.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
+        Text(text, color = color, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+    }
+}
+
+@Composable
+private fun StatusPill(text: String, background: Color, foreground: Color) {
+    Box(Modifier.clip(RoundedCornerShape(20.dp)).background(background).padding(horizontal = 12.dp, vertical = 7.dp)) {
+        Text(text, color = foreground, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
     }
 }

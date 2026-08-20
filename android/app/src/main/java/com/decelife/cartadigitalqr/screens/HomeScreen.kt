@@ -1,6 +1,7 @@
 package com.decelife.cartadigitalqr.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,9 +31,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.decelife.cartadigitalqr.ui.components.AdminHeader
 import com.decelife.cartadigitalqr.ui.theme.AccentOrange
 import com.decelife.cartadigitalqr.ui.theme.AccentPurple
 import com.decelife.cartadigitalqr.ui.theme.AccentSlate
+import com.decelife.cartadigitalqr.ui.theme.AppBorder
 import com.decelife.cartadigitalqr.ui.theme.AppMuted
 
 @Composable
@@ -46,142 +49,102 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        AdminHeader()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
-            // Mirrors the current web panel hierarchy and spacing.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(28.dp))
+                    .border(1.dp, AppBorder, RoundedCornerShape(28.dp))
                     .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 20.dp)
             ) {
                 Text(
                     text = "CARTA DIGITAL",
-                    style = MaterialTheme.typography.labelSmall,
                     color = AppMuted,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    letterSpacing = 2.4.sp,
+                    fontSize = 12.sp
                 )
                 Text(
                     text = "Panel Privado",
-                    style = MaterialTheme.typography.headlineSmall,
+                    fontSize = 34.sp,
+                    lineHeight = 38.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(28.dp))
 
             Column(modifier = Modifier.padding(horizontal = 4.dp)) {
                 Text(
                     text = "¿Qué quieres gestionar?",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+                    fontSize = 28.sp,
+                    lineHeight = 32.sp,
+                    fontWeight = FontWeight.ExtraBold
                 )
                 Text(
                     text = "Accede directamente a cada parte de la carta.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = 14.sp,
                     color = AppMuted,
-                    modifier = Modifier.padding(top = 4.dp)
+                    fontSize = 18.sp,
+                    lineHeight = 24.sp,
+                    modifier = Modifier.padding(top = 6.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(28.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeSectionItem(
-                    title = "Familias",
-                    description = "Organiza las categorías de la carta.",
-                    icon = Icons.Filled.FolderOpen,
-                    accentColor = AccentPurple,
-                    onClick = onNavigateToFamilias
-                )
-                HomeSectionItem(
-                    title = "Productos",
-                    description = "Crea, edita y ordena los platos.",
-                    icon = Icons.Filled.Inventory2,
-                    accentColor = AccentOrange,
-                    onClick = onNavigateToProductos
-                )
-                HomeSectionItem(
-                    title = "Configuración",
-                    description = "Ajustes generales de la carta.",
-                    icon = Icons.Filled.Settings,
-                    accentColor = AccentSlate,
-                    onClick = onNavigateToConfiguracion
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                HomeSectionItem("Familias", "Organiza las categorías de la carta.", Icons.Filled.FolderOpen, AccentPurple, onNavigateToFamilias)
+                HomeSectionItem("Productos", "Crea, edita y ordena los platos.", Icons.Filled.Inventory2, AccentOrange, onNavigateToProductos)
+                HomeSectionItem("Configuración", "Ajustes generales de la carta.", Icons.Filled.Settings, AccentSlate, onNavigateToConfiguracion)
             }
         }
     }
 }
 
 @Composable
-fun HomeSectionItem(
+private fun HomeSectionItem(
     title: String,
     description: String,
     icon: ImageVector,
     accentColor: Color,
     onClick: () -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(28.dp))
+            .border(1.dp, AppBorder, RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
-            .padding(12.dp)
+            .padding(24.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(accentColor.copy(alpha = 0.10f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(22.dp)
-                )
+                Icon(icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(30.dp))
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = AppMuted,
-                modifier = Modifier.size(19.dp)
-            )
+            Spacer(Modifier.height(24.dp))
+            Text(title, fontSize = 25.sp, lineHeight = 30.sp, fontWeight = FontWeight.ExtraBold)
+            Text(description, color = AppMuted, fontSize = 17.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 6.dp))
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodySmall,
-            fontSize = 14.sp,
-            lineHeight = 18.sp,
-            color = AppMuted,
-            modifier = Modifier.padding(top = 4.dp)
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = AppMuted,
+            modifier = Modifier.size(28.dp)
         )
     }
 }
