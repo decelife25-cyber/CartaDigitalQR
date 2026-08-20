@@ -4,9 +4,12 @@ import android.app.Activity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
@@ -41,7 +44,15 @@ fun CartaDigitalQRTheme(
 
     MaterialTheme(
         colorScheme = LightColorScheme,
-        typography = Typography,
-        content = content
-    )
+        typography = Typography
+    ) {
+        // Keep native Android text at the same visual scale as the PWA.
+        // Compose otherwise applies the device system fontScale to every sp value.
+        val density = LocalDensity.current
+        CompositionLocalProvider(
+            LocalDensity provides Density(density.density, fontScale = 1f)
+        ) {
+            content()
+        }
+    }
 }
