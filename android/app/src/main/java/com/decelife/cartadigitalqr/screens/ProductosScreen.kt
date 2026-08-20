@@ -20,10 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +70,11 @@ private val products = listOf(
     ProductVisual("Ventresca de atún a la plancha", "Pescados", "24.00 €"),
     ProductVisual("Boquerones fritos", "Pescados", "12.00 €")
 )
+
+private val SpecialColor = Color(0xFFF59E0B)
+private val SpecialBackground = Color(0xFFFFF8E8)
+private val SuggestedColor = Color(0xFF10B981)
+private val SuggestedBackground = Color(0xFFECFBF5)
 
 @Composable
 fun ProductosScreen(onBackClick: () -> Unit) {
@@ -141,15 +147,15 @@ private fun ProductRow(product: ProductVisual) {
         }
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(product.name, fontSize = 15.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
-                Text(product.family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                if (product.special) {
-                    Spacer(Modifier.width(4.dp))
-                    Icon(Icons.Default.Star, contentDescription = "Especialidad", tint = Color(0xFFF59E0B), modifier = Modifier.size(12.dp))
-                }
-                if (product.suggested) {
-                    Spacer(Modifier.width(4.dp))
-                    Icon(Icons.Default.Lightbulb, contentDescription = "Sugerencia", tint = Color(0xFF10B981), modifier = Modifier.size(12.dp))
+            Text(product.family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
+            if (product.special || product.suggested) {
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (product.special) FeatureBadge("ESPECIALIDAD", Icons.Default.Star, SpecialColor, SpecialBackground)
+                    if (product.suggested) FeatureBadge("SUGERENCIA", Icons.Default.Lightbulb, SuggestedColor, SuggestedBackground)
                 }
             }
         }
@@ -158,7 +164,33 @@ private fun ProductRow(product: ProductVisual) {
             Spacer(Modifier.height(4.dp))
             StatusPill("Visible", SuccessBg, SuccessText)
         }
-        Icon(Icons.Default.MoreVert, contentDescription = "Reordenar", tint = AppMuted, modifier = Modifier.padding(start = 8.dp).size(24.dp))
+        Icon(
+            Icons.Default.DragIndicator,
+            contentDescription = "Reordenar",
+            tint = AppMuted,
+            modifier = Modifier.padding(start = 8.dp).size(24.dp)
+        )
+    }
+}
+
+@Composable
+private fun FeatureBadge(
+    text: String,
+    icon: ImageVector,
+    color: Color,
+    background: Color
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(background)
+            .border(1.dp, color, RoundedCornerShape(14.dp))
+            .padding(horizontal = 7.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
+        Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
