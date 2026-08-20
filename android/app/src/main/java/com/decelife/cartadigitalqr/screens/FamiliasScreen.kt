@@ -10,15 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.DinnerDining
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Egg
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.WineBar
@@ -104,6 +103,11 @@ private fun FamiliaRow(familia: FamiliaVisual) {
         ) {
             Text("Visible", color = SuccessText, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
         }
-        Icon(Icons.Default.MoreVert, contentDescription = "Reordenar", tint = AppMuted, modifier = Modifier.size(24.dp).padding(start = 4.dp))
+        Icon(
+            Icons.Default.DragIndicator,
+            contentDescription = "Reordenar",
+            tint = AppMuted,
+            modifier = Modifier.padding(start = 6.dp).size(24.dp)
+        )
     }
 }
