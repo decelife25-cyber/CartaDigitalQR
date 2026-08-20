@@ -59,11 +59,11 @@ object SupabaseRepository {
     }
 
     suspend fun getAlergenos(): List<Alergeno> {
-        val json = JSONArray(get("alergenos?select=*&activo=eq.true&order=orden.asc"))
+        val json = JSONArray(get("alergenos?select=id,nombre,orden&order=orden.asc"))
         return buildList(json.length()) {
             for (i in 0 until json.length()) {
                 val item = json.getJSONObject(i)
-                add(Alergeno(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0), item.optBoolean("activo", true)))
+                add(Alergeno(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0)))
             }
         }
     }
