@@ -53,6 +53,10 @@ jobs:
           exit 1
         fi
 
+    - name: Remove invalid empty launcher resources
+      run: |
+        find android/app/src/main/res -type f \( -name 'ic_launcher.png' -o -name 'ic_launcher_round.png' \) -size 0 -delete
+
     - name: Prepare official CartaDigitalQR app icon
       run: |
         ICON_SOURCE="docs/REFERENCIAS/ICONO_APP/app-icon.png"
