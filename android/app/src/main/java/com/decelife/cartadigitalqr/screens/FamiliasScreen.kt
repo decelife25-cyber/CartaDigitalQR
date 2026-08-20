@@ -18,11 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.DinnerDining
 import androidx.compose.material.icons.filled.Egg
-import androidx.compose.material.icons.filled.LocalBar
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.WineBar
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,12 +57,9 @@ private val familias = listOf(
 
 @Composable
 fun FamiliasScreen(onBackClick: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-    ) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AdminHeader(showHome = true, onHome = onBackClick)
         ScreenHeader(title = "Familias", count = familias.size, actionText = "+ Añadir", onBack = onBackClick)
-
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(1.dp)
@@ -80,39 +76,34 @@ private fun FamiliaRow(familia: FamiliaVisual) {
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, AppBorder)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(64.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(40.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .background(Color(0xFFFAF5EE)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(familia.icon, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(34.dp))
+            Icon(familia.icon, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(22.dp))
         }
         Text(
             familia.nombre,
-            modifier = Modifier.weight(1f).padding(horizontal = 18.dp),
-            fontSize = 22.sp,
-            lineHeight = 26.sp,
+            modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+            fontSize = 15.sp,
+            lineHeight = 19.sp,
             fontWeight = FontWeight.ExtraBold
         )
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .background(SuccessBg)
-                .padding(horizontal = 14.dp, vertical = 9.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("Visible", color = SuccessText, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Visible", color = SuccessText, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
         }
-        Icon(
-            Icons.Default.MoreVert,
-            contentDescription = "Reordenar",
-            tint = AppMuted,
-            modifier = Modifier.size(30.dp).padding(start = 8.dp)
-        )
+        Icon(Icons.Default.MoreVert, contentDescription = "Reordenar", tint = AppMuted, modifier = Modifier.size(24.dp).padding(start = 4.dp))
     }
 }
