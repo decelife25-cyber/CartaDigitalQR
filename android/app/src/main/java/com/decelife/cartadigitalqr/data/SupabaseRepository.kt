@@ -1,6 +1,7 @@
 package com.decelife.cartadigitalqr.data
 
 import com.decelife.cartadigitalqr.BuildConfig
+import com.decelife.cartadigitalqr.models.Alergeno
 import com.decelife.cartadigitalqr.models.Configuracion
 import com.decelife.cartadigitalqr.models.Familia
 import com.decelife.cartadigitalqr.models.Producto
@@ -57,6 +58,16 @@ object SupabaseRepository {
         }
     }
 
+    suspend fun getAlergenos(): List<Alergeno> {
+        val json = JSONArray(get("alergenos?select=*&activo=eq.true&order=orden.asc"))
+        return buildList(json.length()) {
+            for (i in 0 until json.length()) {
+                val item = json.getJSONObject(i)
+                add(Alergeno(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0), item.optBoolean("activo", true)))
+            }
+        }
+    }
+
     suspend fun getProductos(): List<Producto> {
         val json = JSONArray(get("productos?select=*&activo=eq.true&order=orden.asc"))
         return buildList(json.length()) {
@@ -67,7 +78,21 @@ object SupabaseRepository {
         }
     }
 
-    suspend fun saveProducto(id: String?, nombre: String, descripcion: String?, precio: Double, familiaId: String, fotoUrl: String?, activo: Boolean, agotado: Boolean, destacado: Boolean, sugerido: Boolean) {
+    suspend fun getProductoAlergenos(productId: String): List<String> {
+        val json = JSONArray(get("producto_alergeno?select=alergeno_id&producto_id=eq.$productId"))
+        return buildList(json.length()) {
+            for (i in 0 until json.length()) add(json.getJSONObject(i).optString("alergeno_id"))
+        }
+    }
+
+    suspend fun replaceProductoAlergenos(productId: String, alergenoIds: List<String>) {
+        request("DELETE", "producto_alergeno?producto_id=eq.$productId")
+        if (alergenoIds.isEmpty()) return
+        val body = JSONArray(alergenoIds.map { JSONObject().apply { put("producto_id", productId); put("alergeno_id", it) } }).toString()
+        request("POST", "producto_alergeno", body)
+    }
+
+    suspend fun saveProducto(id: String?, nombre: String, descripcion: String?, precio: Double, familiaId: String, fotoUrl: String?, activo: Boolean, agotado: Boolean, destacado: Boolean, sugerido: Boolean, alergenoIds: List<String>) {
         val payload = JSONObject().apply {
             put("nombre", nombre)
             put("descripcion", descripcion ?: JSONObject.NULL)
@@ -79,8 +104,14 @@ object SupabaseRepository {
             put("destacado", destacado)
             put("sugerido", sugerido)
         }
-        if (id == null) request("POST", "productos", payload.toString())
-        else request("PATCH", "productos?id=eq.$id", payload.toString())
+        if (id == null) {
+            val response = request("POST", "productos", payload.toString())
+            val created = JSONArray(response).optJSONObject(0) ?: throw IllegalStateException("No se pudo crear el producto.")
+            replaceProductoAlergenos(created.getString("id"), alergenoIds)
+        } else {
+            request("PATCH", "productos?id=eq.$id", payload.toString())
+            replaceProductoAlergenos(id, alergenoIds)
+        }
     }
 
     suspend fun getConfiguracion(): Configuracion? {
