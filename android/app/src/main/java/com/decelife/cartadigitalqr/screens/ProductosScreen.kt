@@ -22,15 +22,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,32 +46,17 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.decelife.cartadigitalqr.data.SupabaseRepository
+import com.decelife.cartadigitalqr.models.Familia
+import com.decelife.cartadigitalqr.models.Producto
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
 import com.decelife.cartadigitalqr.ui.components.ScreenHeader
 import com.decelife.cartadigitalqr.ui.theme.AppBorder
 import com.decelife.cartadigitalqr.ui.theme.AppMuted
 import com.decelife.cartadigitalqr.ui.theme.SuccessBg
 import com.decelife.cartadigitalqr.ui.theme.SuccessText
-
-private data class ProductVisual(
-    val name: String,
-    val family: String,
-    val price: String,
-    val visible: Boolean = true,
-    val soldOut: Boolean = false,
-    val special: Boolean = false,
-    val suggested: Boolean = false
-)
-
-private val products = listOf(
-    ProductVisual("Revuelto de bacalao dorado", "Con dos huevos", "11.40 €"),
-    ProductVisual("Ensalada de aguacate, gambones y salsa tártara", "Entrantes fríos", "14.00 €", special = true, suggested = true),
-    ProductVisual("Lagriñitas de pollo", "Tapas", "4.00 €"),
-    ProductVisual("Croquetas de rabo de toro", "Entrantes calientes", "10.00 €"),
-    ProductVisual("Hamburguesa de retinto", "Carnes y guisos", "11.40 €"),
-    ProductVisual("Ventresca de atún a la plancha", "Pescados", "24.00 €"),
-    ProductVisual("Boquerones fritos", "Pescados", "12.00 €")
-)
+import java.util.Locale
 
 private val SpecialColor = Color(0xFFF59E0B)
 private val SpecialBackground = Color(0xFFFFF8E8)
@@ -79,7 +66,22 @@ private val SuggestedBackground = Color(0xFFECFBF5)
 @Composable
 fun ProductosScreen(onBackClick: () -> Unit) {
     var search by remember { mutableStateOf("") }
-    val filtered = products.filter { it.name.contains(search, ignoreCase = true) }
+    var familias by remember { mutableStateOf<List<Familia>?>(null) }
+    var products by remember { mutableStateOf<List<Producto>?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val (loadedFamilies, loadedProducts) = SupabaseRepository.getCatalogo()
+            familias = loadedFamilies
+            products = loadedProducts
+        } catch (e: Exception) {
+            error = e.message ?: "No se han podido cargar los productos."
+        }
+    }
+
+    val familyById = remember(familias) { familias.orEmpty().associateBy { it.id } }
+    val filtered = products.orEmpty().filter { it.nombre.contains(search, ignoreCase = true) }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AdminHeader(showHome = true, onHome = onBackClick)
@@ -118,8 +120,20 @@ fun ProductosScreen(onBackClick: () -> Unit) {
             }
         }
 
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            items(filtered) { product -> ProductRow(product) }
+        when {
+            products == null && error == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            error != null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                Text(error!!, color = MaterialTheme.colorScheme.error)
+            }
+            else -> LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                items(filtered, key = { it.id }) { product ->
+                    ProductRow(product, familyById[product.familia_id]?.nombre ?: "")
+                }
+            }
         }
     }
 }
@@ -137,32 +151,46 @@ private fun FilterChip(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ProductRow(product: ProductVisual) {
+private fun ProductRow(product: Producto, family: String) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
-            Icon(Icons.Default.Inventory2, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(20.dp))
+        Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
+            if (!product.foto_url.isNullOrBlank()) {
+                AsyncImage(
+                    model = product.foto_url,
+                    contentDescription = product.nombre,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
+                )
+            } else {
+                Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(26.dp))
+            }
         }
         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(product.name, fontSize = 15.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
-            Text(product.family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
-            if (product.special || product.suggested) {
+            Text(product.nombre, fontSize = 15.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
+            if (family.isNotBlank()) {
+                Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
+            }
+            if (product.destacado || product.sugerido) {
                 Row(
-                    modifier = Modifier.padding(top = 4.dp),
+                    modifier = Modifier.padding(top = 5.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (product.special) FeatureBadge("ESPECIALIDAD", Icons.Default.Star, SpecialColor, SpecialBackground)
-                    if (product.suggested) FeatureBadge("SUGERENCIA", Icons.Default.Lightbulb, SuggestedColor, SuggestedBackground)
+                    if (product.destacado) FeatureBadge("ESPECIALIDAD", Icons.Default.Star, SpecialColor, SpecialBackground)
+                    if (product.sugerido) FeatureBadge("SUGERENCIA", Icons.Default.Lightbulb, SuggestedColor, SuggestedBackground)
                 }
             }
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text(product.price, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(Modifier.height(4.dp))
-            StatusPill("Visible", SuccessBg, SuccessText)
+            StatusPill(
+                if (product.agotado) "Agotado" else "Visible",
+                if (product.agotado) Color(0xFFFFE8E8) else SuccessBg,
+                if (product.agotado) Color(0xFFDC2626) else SuccessText
+            )
         }
         Icon(
             Icons.Default.DragIndicator,
@@ -174,12 +202,7 @@ private fun ProductRow(product: ProductVisual) {
 }
 
 @Composable
-private fun FeatureBadge(
-    text: String,
-    icon: ImageVector,
-    color: Color,
-    background: Color
-) {
+private fun FeatureBadge(text: String, icon: ImageVector, color: Color, background: Color) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
@@ -190,7 +213,7 @@ private fun FeatureBadge(
         horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
-        Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+        Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
     }
 }
 

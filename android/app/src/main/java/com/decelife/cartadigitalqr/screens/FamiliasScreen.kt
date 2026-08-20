@@ -11,28 +11,38 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.DinnerDining
 import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.Egg
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material.icons.filled.WineBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.decelife.cartadigitalqr.data.SupabaseRepository
+import com.decelife.cartadigitalqr.models.Familia
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
 import com.decelife.cartadigitalqr.ui.components.ScreenHeader
 import com.decelife.cartadigitalqr.ui.theme.AppBorder
@@ -40,36 +50,50 @@ import com.decelife.cartadigitalqr.ui.theme.AppMuted
 import com.decelife.cartadigitalqr.ui.theme.SuccessBg
 import com.decelife.cartadigitalqr.ui.theme.SuccessText
 
-private data class FamiliaVisual(val nombre: String, val icon: ImageVector)
-
-private val familias = listOf(
-    FamiliaVisual("Tapas", Icons.Default.RestaurantMenu),
-    FamiliaVisual("Entrantes fríos", Icons.Default.Restaurant),
-    FamiliaVisual("Entrantes calientes", Icons.Default.DinnerDining),
-    FamiliaVisual("Pescados", Icons.Default.Restaurant),
-    FamiliaVisual("Arroces", Icons.Default.RestaurantMenu),
-    FamiliaVisual("Con dos huevos", Icons.Default.Egg),
-    FamiliaVisual("Carnes y guisos", Icons.Default.DinnerDining),
-    FamiliaVisual("Vinos", Icons.Default.WineBar),
-    FamiliaVisual("Postres", Icons.Default.Cake)
+private val fallbackIcons = mapOf(
+    "Tapas" to Icons.Default.RestaurantMenu,
+    "Entrantes fríos" to Icons.Default.Restaurant,
+    "Entrantes calientes" to Icons.Default.DinnerDining,
+    "Pescados" to Icons.Default.Restaurant,
+    "Arroces" to Icons.Default.RestaurantMenu,
+    "Con dos huevos" to Icons.Default.Egg,
+    "Carnes y guisos" to Icons.Default.DinnerDining,
+    "Vinos" to Icons.Default.WineBar,
+    "Postres" to Icons.Default.Cake
 )
 
 @Composable
 fun FamiliasScreen(onBackClick: () -> Unit) {
+    var familias by remember { mutableStateOf<List<Familia>?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        try {
+            familias = SupabaseRepository.getFamilias()
+        } catch (e: Exception) {
+            error = e.message ?: "No se han podido cargar las familias."
+        }
+    }
+
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AdminHeader(showHome = true, onHome = onBackClick)
-        ScreenHeader(title = "Familias", count = familias.size, actionText = "+ Añadir", onBack = onBackClick)
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(1.dp)
-        ) {
-            itemsIndexed(familias) { _, familia -> FamiliaRow(familia) }
+        ScreenHeader(title = "Familias", count = familias?.size ?: 0, actionText = "+ Añadir", onBack = onBackClick)
+
+        when {
+            familias == null && error == null -> LoadingState()
+            error != null -> ErrorState(error!!)
+            else -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(1.dp)
+            ) {
+                items(familias.orEmpty(), key = { it.id }) { familia -> FamiliaRow(familia) }
+            }
         }
     }
 }
 
 @Composable
-private fun FamiliaRow(familia: FamiliaVisual) {
+private fun FamiliaRow(familia: Familia) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -80,12 +104,25 @@ private fun FamiliaRow(familia: FamiliaVisual) {
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .size(56.dp)
+                .clip(RoundedCornerShape(10.dp))
                 .background(Color(0xFFFAF5EE)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(familia.icon, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(22.dp))
+            if (!familia.foto_url.isNullOrBlank()) {
+                AsyncImage(
+                    model = familia.foto_url,
+                    contentDescription = familia.nombre,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
+                )
+            } else {
+                Icon(
+                    fallbackIcons[familia.nombre] ?: Icons.Default.Image,
+                    contentDescription = null,
+                    tint = Color(0xFF8C6A48),
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         }
         Text(
             familia.nombre,
@@ -109,5 +146,19 @@ private fun FamiliaRow(familia: FamiliaVisual) {
             tint = AppMuted,
             modifier = Modifier.padding(start = 6.dp).size(24.dp)
         )
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+private fun ErrorState(message: String) {
+    Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+        Text(message, color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
     }
 }
