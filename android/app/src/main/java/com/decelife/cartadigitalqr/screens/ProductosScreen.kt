@@ -153,10 +153,10 @@ private fun FilterChip(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun ProductRow(product: Producto, family: String) {
     Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 16.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
             if (!product.foto_url.isNullOrBlank()) {
                 AsyncImage(
                     model = product.foto_url,
@@ -164,19 +164,24 @@ private fun ProductRow(product: Producto, family: String) {
                     modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
                 )
             } else {
-                Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(26.dp))
+                Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp))
             }
         }
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(product.nombre, fontSize = 15.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
+        Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+            Text(
+                product.nombre,
+                fontSize = 15.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 3
+            )
             if (family.isNotBlank()) {
-                Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
+                Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
             }
             if (product.destacado || product.sugerido) {
-                Row(
+                Column(
                     modifier = Modifier.padding(top = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (product.destacado) FeatureBadge("ESPECIALIDAD", Icons.Default.Star, SpecialColor, SpecialBackground)
                     if (product.sugerido) FeatureBadge("SUGERENCIA", Icons.Default.Lightbulb, SuggestedColor, SuggestedBackground)
@@ -196,7 +201,7 @@ private fun ProductRow(product: Producto, family: String) {
             Icons.Default.DragIndicator,
             contentDescription = "Reordenar",
             tint = AppMuted,
-            modifier = Modifier.padding(start = 8.dp).size(24.dp)
+            modifier = Modifier.padding(start = 6.dp).size(22.dp)
         )
     }
 }
