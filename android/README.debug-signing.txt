@@ -1,0 +1,1 @@
+The debug APK uses a stable repository-local debug keystore so development APKs can update an already-installed development build. This keystore is for DEBUG/DEVELOPMENT builds only; production releases must use a separate private signing key stored outside the repository.
