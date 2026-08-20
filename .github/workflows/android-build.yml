@@ -13,6 +13,10 @@ on:
       - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
+env:
+  VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,6 +33,13 @@ jobs:
 
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
+
+    - name: Verify Supabase configuration
+      run: |
+        if [ -z "${VITE_SUPABASE_URL}" ] || [ -z "${VITE_SUPABASE_ANON_KEY}" ]; then
+          echo "Error: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing."
+          exit 1
+        fi
 
     - name: Build APK
       run: |
