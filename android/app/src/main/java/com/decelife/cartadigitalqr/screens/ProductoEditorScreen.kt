@@ -193,7 +193,15 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 4.dp)) {
                     alergenos.chunked(2).forEach { pair ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            pair.forEach { alergeno -> AlergenoChip(alergeno, selectedAlergenos.contains(alergeno.id)) { selectedAlergenos = if (selectedAlergenos.contains(alergeno.id)) selectedAlergenos - alergeno.id else selectedAlergenos + alergeno.id } }
+                            pair.forEach { alergeno ->
+                                AlergenoChip(
+                                    alergeno,
+                                    selectedAlergenos.contains(alergeno.id),
+                                    Modifier.weight(1f)
+                                ) {
+                                    selectedAlergenos = if (selectedAlergenos.contains(alergeno.id)) selectedAlergenos - alergeno.id else selectedAlergenos + alergeno.id
+                                }
+                            }
                             if (pair.size == 1) Spacer(Modifier.weight(1f))
                         }
                         Spacer(Modifier.height(6.dp))
@@ -237,7 +245,7 @@ private fun SectionCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun AlergenoChip(alergeno: Alergeno, selected: Boolean, onClick: () -> Unit) {
+private fun AlergenoChip(alergeno: Alergeno, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val emoji = when {
         alergeno.nombre.contains("Gluten", true) -> "🌾"
         alergeno.nombre.contains("Crust", true) -> "🦀"
@@ -255,7 +263,7 @@ private fun AlergenoChip(alergeno: Alergeno, selected: Boolean, onClick: () -> U
         alergeno.nombre.contains("Molusc", true) -> "🐚"
         else -> "•"
     }
-    Row(Modifier.weight(1f).height(58.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (selected) Orange else Border, RoundedCornerShape(12.dp)).background(if (selected) Color(0xFFFFF7ED) else Color(0xFFFCFCFC)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.height(58.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (selected) Orange else Border, RoundedCornerShape(12.dp)).background(if (selected) Color(0xFFFFF7ED) else Color(0xFFFCFCFC)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(34.dp).clip(RoundedCornerShape(17.dp)).background(if (selected) Color(0xFFFFE8CC) else Soft), contentAlignment = Alignment.Center) { Text(emoji, fontSize = 20.sp) }
         Spacer(Modifier.width(7.dp))
         Text(alergeno.nombre, Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 2)
