@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,6 +92,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var sugerencia by remember(product) { mutableStateOf(product?.sugerido ?: false) }
     var saving by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Row(Modifier.fillMaxWidth().height(52.dp).border(1.dp, Border), verticalAlignment = Alignment.CenterVertically) {
@@ -140,10 +142,9 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                     if (cleanPrice == null || cleanPrice < 0) { message = "Introduce un precio válido."; return@Button }
                     saving = true
                     message = null
-                    kotlinx.coroutines.MainScope().launch {
+                    scope.launch {
                         try {
                             SupabaseRepository.saveProducto(productId, cleanName, descripcion.trim().ifBlank { null }, cleanPrice, familiaId, fotoUrl.trim().ifBlank { null }, visible, agotado, especialidad, sugerencia)
-                            message = "Guardado correctamente"
                             onBack()
                         } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
                     }
