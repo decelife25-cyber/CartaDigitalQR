@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -153,10 +151,10 @@ private fun FilterChip(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun ProductRow(product: Producto, family: String) {
     Row(
-        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 16.dp, vertical = 10.dp),
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
             if (!product.foto_url.isNullOrBlank()) {
                 AsyncImage(
                     model = product.foto_url,
@@ -164,22 +162,27 @@ private fun ProductRow(product: Producto, family: String) {
                     modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
                 )
             } else {
-                Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(26.dp))
+                Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp))
             }
         }
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(product.nombre, fontSize = 15.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold)
+        Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+            Text(
+                product.nombre,
+                fontSize = 15.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                maxLines = 3
+            )
             if (family.isNotBlank()) {
-                Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp))
+                Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
             }
             if (product.destacado || product.sugerido) {
-                Row(
-                    modifier = Modifier.padding(top = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.padding(top = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    if (product.destacado) FeatureBadge("ESPECIALIDAD", Icons.Default.Star, SpecialColor, SpecialBackground)
-                    if (product.sugerido) FeatureBadge("SUGERENCIA", Icons.Default.Lightbulb, SuggestedColor, SuggestedBackground)
+                    if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, chefIcon = true)
+                    if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground)
                 }
             }
         }
@@ -196,23 +199,33 @@ private fun ProductRow(product: Producto, family: String) {
             Icons.Default.DragIndicator,
             contentDescription = "Reordenar",
             tint = AppMuted,
-            modifier = Modifier.padding(start = 8.dp).size(24.dp)
+            modifier = Modifier.padding(start = 6.dp).size(22.dp)
         )
     }
 }
 
 @Composable
-private fun FeatureBadge(text: String, icon: ImageVector, color: Color, background: Color) {
+private fun FeatureBadge(
+    text: String,
+    color: Color,
+    background: Color,
+    chefIcon: Boolean = false
+) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
+            .height(22.dp)
+            .clip(RoundedCornerShape(11.dp))
             .background(background)
-            .border(1.dp, color, RoundedCornerShape(14.dp))
-            .padding(horizontal = 7.dp, vertical = 3.dp),
+            .border(1.dp, color, RoundedCornerShape(11.dp))
+            .padding(horizontal = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
+        if (chefIcon) {
+            Text("👨‍🍳", fontSize = 9.sp, lineHeight = 10.sp, maxLines = 1)
+        } else {
+            Icon(Icons.Default.Lightbulb, contentDescription = null, tint = color, modifier = Modifier.size(11.dp))
+        }
         Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
     }
 }

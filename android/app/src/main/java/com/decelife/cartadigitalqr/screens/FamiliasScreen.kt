@@ -99,12 +99,12 @@ private fun FamiliaRow(familia: Familia) {
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, AppBorder)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(50.dp)
                 .clip(RoundedCornerShape(10.dp))
                 .background(Color(0xFFFAF5EE)),
             contentAlignment = Alignment.Center
@@ -120,7 +120,7 @@ private fun FamiliaRow(familia: Familia) {
                     fallbackIcons[familia.nombre] ?: Icons.Default.Image,
                     contentDescription = null,
                     tint = Color(0xFF8C6A48),
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -128,8 +128,9 @@ private fun FamiliaRow(familia: Familia) {
             familia.nombre,
             modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
             fontSize = 15.sp,
-            lineHeight = 19.sp,
-            fontWeight = FontWeight.ExtraBold
+            lineHeight = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1
         )
         Box(
             modifier = Modifier
@@ -144,7 +145,7 @@ private fun FamiliaRow(familia: Familia) {
             Icons.Default.DragIndicator,
             contentDescription = "Reordenar",
             tint = AppMuted,
-            modifier = Modifier.padding(start = 6.dp).size(24.dp)
+            modifier = Modifier.padding(start = 6.dp).size(22.dp)
         )
     }
 }
