@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -153,18 +154,8 @@ private fun ProductRow(product: ProductVisual) {
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (product.special) FeatureBadge(
-                        text = "ESPECIALIDAD",
-                        icon = Icons.Default.Star,
-                        color = SpecialColor,
-                        background = SpecialBackground
-                    )
-                    if (product.suggested) FeatureBadge(
-                        text = "SUGERENCIA",
-                        icon = Icons.Default.Lightbulb,
-                        color = SuggestedColor,
-                        background = SuggestedBackground
-                    )
+                    if (product.special) FeatureBadge("ESPECIALIDAD", Icons.Default.Star, SpecialColor, SpecialBackground)
+                    if (product.suggested) FeatureBadge("SUGERENCIA", Icons.Default.Lightbulb, SuggestedColor, SuggestedBackground)
                 }
             }
         }
@@ -185,7 +176,7 @@ private fun ProductRow(product: ProductVisual) {
 @Composable
 private fun FeatureBadge(
     text: String,
-    icon: androidx.compose.material.icons.Icons.Filled.getClass(),
+    icon: ImageVector,
     color: Color,
     background: Color
 ) {
