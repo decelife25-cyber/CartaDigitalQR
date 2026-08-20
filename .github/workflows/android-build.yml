@@ -53,6 +53,17 @@ jobs:
           exit 1
         fi
 
+    - name: Prepare official CartaDigitalQR app icon
+      run: |
+        ICON_SOURCE="docs/REFERENCIAS/ICONO_APP/app-icon.png"
+        ICON_TARGET="android/app/src/main/res/drawable-nodpi/app_icon.png"
+        if [ ! -s "$ICON_SOURCE" ]; then
+          echo "Error: official app icon is missing or empty: $ICON_SOURCE"
+          exit 1
+        fi
+        mkdir -p "$(dirname "$ICON_TARGET")"
+        cp "$ICON_SOURCE" "$ICON_TARGET"
+
     - name: Decode release keystore
       env:
         KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
