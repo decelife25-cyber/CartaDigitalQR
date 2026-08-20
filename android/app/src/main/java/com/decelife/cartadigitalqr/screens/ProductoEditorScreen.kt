@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -54,10 +54,7 @@ private val Muted = Color(0xFF737373)
 private val Success = Color(0xFF10B981)
 
 @Composable
-fun ProductoEditorScreen(
-    productId: String?,
-    onBack: () -> Unit
-) {
+fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var product by remember { mutableStateOf<Producto?>(null) }
     var familias by remember { mutableStateOf<List<Familia>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -72,20 +69,13 @@ fun ProductoEditorScreen(
             product = productId?.let { id -> loadedProducts.firstOrNull { it.id == id } }
         } catch (e: Exception) {
             error = e.message ?: "No se ha podido cargar el producto."
-        } finally {
-            loading = false
-        }
+        } finally { loading = false }
     }
 
-    if (loading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-        return
-    }
+    if (loading) { Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }; return }
     if (error != null) {
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
-            Text(error!!, color = MaterialTheme.colorScheme.error)
-            Spacer(Modifier.height(12.dp))
-            Button(onClick = onBack) { Text("Volver") }
+            Text(error!!, color = MaterialTheme.colorScheme.error); Spacer(Modifier.height(12.dp)); Button(onClick = onBack) { Text("Volver") }
         }
         return
     }
@@ -103,43 +93,20 @@ fun ProductoEditorScreen(
     var message by remember { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Row(
-            Modifier.fillMaxWidth().height(52.dp).border(1.dp, Border),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(Modifier.fillMaxWidth().height(52.dp).border(1.dp, Border), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") }
-            Text(
-                if (productId == null) "Nuevo artículo" else "Editar artículo",
-                Modifier.weight(1f),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold
-            )
-            if (productId != null) IconButton(onClick = {}) { Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error) }
+            Text(if (productId == null) "Nuevo artículo" else "Editar artículo", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             CompactSwitch("Visible", visible) { visible = it }
         }
-
-        Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             SectionCard {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Column(Modifier.weight(0.34f)) {
-                        Box(
-                            Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)).border(1.dp, Border, RoundedCornerShape(10.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (fotoUrl.isNotBlank()) AsyncImage(fotoUrl, product?.nombre, Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
-                            else Icon(Icons.Default.Image, null, tint = Muted, modifier = Modifier.size(34.dp))
+                        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)).border(1.dp, Border, RoundedCornerShape(10.dp)), Alignment.Center) {
+                            if (fotoUrl.isNotBlank()) AsyncImage(model = fotoUrl, contentDescription = product?.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Muted, modifier = Modifier.size(34.dp))
                         }
                         Spacer(Modifier.height(6.dp))
-                        Button(
-                            onClick = {},
-                            Modifier.fillMaxWidth().height(32.dp),
-                            shape = RoundedCornerShape(9.dp),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Orange)
-                        ) { Text(if (fotoUrl.isBlank()) "Añadir foto" else "Cambiar foto", fontSize = 10.sp, fontWeight = FontWeight.Bold) }
+                        Button(onClick = {}, Modifier.fillMaxWidth().height(32.dp), shape = RoundedCornerShape(9.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp), colors = ButtonDefaults.buttonColors(containerColor = Orange)) { Text(if (fotoUrl.isBlank()) "Añadir foto" else "Cambiar foto", fontSize = 10.sp, fontWeight = FontWeight.Bold) }
                     }
                     Column(Modifier.weight(0.66f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         OutlinedTextField(nombre, { nombre = it }, Modifier.fillMaxWidth(), label = { Text("Nombre") }, singleLine = true)
@@ -148,82 +115,52 @@ fun ProductoEditorScreen(
                     }
                 }
             }
-
             SectionCard {
-                Text("Familia", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Muted)
-                Spacer(Modifier.height(5.dp))
+                Text("Familia", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Muted); Spacer(Modifier.height(5.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     familias.forEach { familia ->
                         val selected = familia.id == familiaId
-                        Button(
-                            onClick = { familiaId = familia.id },
-                            Modifier.fillMaxWidth().height(38.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selected) Color(0xFFFFF1E6) else Color.Transparent,
-                                contentColor = if (selected) Color(0xFFEA580C) else MaterialTheme.colorScheme.onSurface
-                            )
-                        ) { Text(familia.nombre, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                        Button(onClick = { familiaId = familia.id }, Modifier.fillMaxWidth().height(38.dp), shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = if (selected) Color(0xFFFFF1E6) else Color.Transparent, contentColor = if (selected) Color(0xFFEA580C) else MaterialTheme.colorScheme.onSurface)) { Text(familia.nombre, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                     }
                 }
             }
-
             SectionCard {
-                Text("Estado", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Muted)
-                Spacer(Modifier.height(4.dp))
+                Text("Estado", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold, color = Muted); Spacer(Modifier.height(4.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    CompactSwitch("Visible", visible) { visible = it }
-                    CompactSwitch("Agotado", agotado) { agotado = it }
-                    CompactSwitch("Especialidad", especialidad) { especialidad = it }
-                    CompactSwitch("Sugerencia", sugerencia) { sugerencia = it }
+                    CompactSwitch("Visible", visible) { visible = it }; CompactSwitch("Agotado", agotado) { agotado = it }; CompactSwitch("Especialidad", especialidad) { especialidad = it }; CompactSwitch("Sugerencia", sugerencia) { sugerencia = it }
                 }
             }
-
             if (message != null) Text(message!!, color = Success, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-
             Button(
                 onClick = {
+                    val cleanName = nombre.trim()
+                    val cleanPrice = precio.replace(',', '.').toDoubleOrNull()
+                    if (cleanName.isBlank()) { message = "El producto necesita un nombre."; return@Button }
+                    if (familiaId.isBlank()) { message = "Selecciona una familia."; return@Button }
+                    if (cleanPrice == null || cleanPrice < 0) { message = "Introduce un precio válido."; return@Button }
                     saving = true
-                    message = "Listo para guardar en Supabase"
-                    saving = false
+                    message = null
+                    kotlinx.coroutines.MainScope().launch {
+                        try {
+                            SupabaseRepository.saveProducto(productId, cleanName, descripcion.trim().ifBlank { null }, cleanPrice, familiaId, fotoUrl.trim().ifBlank { null }, visible, agotado, especialidad, sugerencia)
+                            message = "Guardado correctamente"
+                            onBack()
+                        } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
+                    }
                 },
                 enabled = !saving,
-                Modifier.fillMaxWidth().height(46.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Orange)
-            ) {
-                Icon(Icons.Default.Save, null, Modifier.size(18.dp))
-                Spacer(Modifier.width(7.dp))
-                Text("GUARDAR", fontWeight = FontWeight.ExtraBold)
-            }
-            Button(
-                onClick = onBack,
-                Modifier.fillMaxWidth().height(42.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface)
-            ) { Text("Cancelar", fontWeight = FontWeight.Bold) }
+                Modifier.fillMaxWidth().height(46.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Orange)
+            ) { Icon(Icons.Default.Save, null, Modifier.size(18.dp)); Spacer(Modifier.width(7.dp)); Text(if (saving) "GUARDANDO..." else "GUARDAR", fontWeight = FontWeight.ExtraBold) }
+            Button(onClick = onBack, Modifier.fillMaxWidth().height(42.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = MaterialTheme.colorScheme.onSurface)) { Text("Cancelar", fontWeight = FontWeight.Bold) }
         }
     }
 }
 
-@Composable
-private fun SectionCard(content: @Composable () -> Unit) {
-    Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, Border, RoundedCornerShape(12.dp)).padding(10.dp),
-        content = content
-    )
-}
+@Composable private fun SectionCard(content: @Composable () -> Unit) { Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surface).border(1.dp, Border, RoundedCornerShape(12.dp)).padding(10.dp), content = content) }
 
-@Composable
-private fun CompactSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+@Composable private fun CompactSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(label, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = if (checked) Success else Muted)
-        Button(
-            onClick = { onChange(!checked) },
-            Modifier.height(24.dp),
-            shape = RoundedCornerShape(12.dp),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 9.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = if (checked) Color(0xFFE8FAF3) else Color(0xFFEDEDED), contentColor = if (checked) Success else Muted)
-        ) { Text(if (checked) "ON" else "OFF", fontSize = 8.sp, fontWeight = FontWeight.ExtraBold) }
+        Button(onClick = { onChange(!checked) }, Modifier.height(24.dp), shape = RoundedCornerShape(12.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 9.dp), colors = ButtonDefaults.buttonColors(containerColor = if (checked) Color(0xFFE8FAF3) else Color(0xFFEDEDED), contentColor = if (checked) Success else Muted)) { Text(if (checked) "ON" else "OFF", fontSize = 8.sp, fontWeight = FontWeight.ExtraBold) }
     }
 }
