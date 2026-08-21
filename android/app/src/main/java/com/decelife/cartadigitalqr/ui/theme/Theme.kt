@@ -2,6 +2,7 @@ package com.decelife.cartadigitalqr.ui.theme
 
 import android.app.Activity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -29,8 +30,26 @@ private val LightColorScheme = lightColorScheme(
     onError = AppSurface
 )
 
+private val DarkColorScheme = darkColorScheme(
+    primary = OrangePrimaryDark,
+    secondary = OrangePrimaryDark,
+    tertiary = AccentPurple,
+    background = AppBgDark,
+    surface = AppSurfaceDark,
+    surfaceVariant = AppSurfaceSoftDark,
+    onPrimary = AppTextDark,
+    onSecondary = AppTextDark,
+    onTertiary = AppTextDark,
+    onBackground = AppTextDark,
+    onSurface = AppTextDark,
+    onSurfaceVariant = AppMutedDark,
+    error = ErrorText,
+    onError = AppSurfaceDark
+)
+
 @Composable
 fun CartaDigitalQRTheme(
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
@@ -43,11 +62,10 @@ fun CartaDigitalQRTheme(
     }
 
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = Typography
     ) {
         // Keep native Android text at the same visual scale as the PWA.
-        // Compose otherwise applies the device system fontScale to every sp value.
         val density = LocalDensity.current
         CompositionLocalProvider(
             LocalDensity provides Density(density.density, fontScale = 1f)
