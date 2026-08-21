@@ -16,13 +16,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
@@ -34,7 +39,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 private val IconBg = mapOf(
-    "cereal.svg" to Color(0xFFF4D7D7), "crustaceans.svg" to Color(0xFFDCECFf),
+    "cereal.svg" to Color(0xFFF4D7D7), "crustaceans.svg" to Color(0xFFDCECFF),
     "eggs.svg" to Color(0xFFFFF0C7), "fish.svg" to Color(0xFFCFE9F4),
     "peanuts.svg" to Color(0xFFEAD7C2), "soya.svg" to Color(0xFFD8E9C8),
     "milk.svg" to Color(0xFFE4E8EE), "nuts.svg" to Color(0xFFE8D4C4),
@@ -117,16 +122,31 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
+    val density = LocalDensity.current
     val loader = remember(context) { ImageLoader.Builder(context).components { add(SvgDecoder.Factory()) }.build() }
     val familiaNombre = familias.firstOrNull { it.id == familiaId }?.nombre ?: "Selecciona una familia"
 
     Column(Modifier.fillMaxSize().background(AppBg)) {
         AdminHeader(showHome = true, onHome = onBack)
-        Row(Modifier.fillMaxWidth().height(44.dp).border(1.dp, AppBorder), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .drawBehind { drawLine(AppBorder, Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), 1.dp.toPx()) },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
                 Icon(Icons.Default.ArrowBack, "Volver", modifier = Modifier.size(20.dp))
             }
-            Text(if (productId == null) "Nuevo artículo" else "Editar artículo", modifier = Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = AppText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                if (productId == null) "Nuevo artículo" else "Editar artículo",
+                modifier = Modifier.weight(1f),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = AppText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             if (productId != null) {
                 IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
@@ -139,7 +159,13 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
         }
 
         Box(Modifier.fillMaxSize()) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 56.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 20.dp, bottom = 56.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 SectionCard {
                     Column(Modifier.padding(10.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.Top) {
@@ -154,7 +180,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                                 }
                                 if (fotoUrl.isNotBlank()) {
                                     Spacer(Modifier.height(1.dp))
-                                    Button(onClick = { fotoUrl = "" }, modifier = Modifier.fillMaxWidth().height(28.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(0.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ErrorText)) {
+                                    Button(onClick = { fotoUrl = "" }, modifier = Modifier.fillMaxWidth().height(28.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(0.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ErrorText), border = BorderStroke(1.dp, AppBorder)) {
                                         Text("Eliminar foto", fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
@@ -164,22 +190,28 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                                 Label("NOMBRE DEL ARTÍCULO *")
                                 BasicTextField(value = nombre, onValueChange = { nombre = it }, modifier = Modifier.fillMaxWidth().height(36.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), singleLine = false, maxLines = 2, textStyle = TextStyle(color = AppText, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold), cursorBrush = SolidColor(OrangePrimary))
                                 Label("DESCRIPCIÓN")
-                                BasicTextField(value = descripcion, onValueChange = { descripcion = it }, modifier = Modifier.fillMaxWidth().height(if (descripcion.isBlank()) 36.dp else 64.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), maxLines = 4, textStyle = TextStyle(color = AppText, fontSize = 10.sp, lineHeight = 13.sp), cursorBrush = SolidColor(OrangePrimary))
+                                BasicTextField(value = descripcion, onValueChange = { descripcion = it }, modifier = Modifier.fillMaxWidth().height(76.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), maxLines = 4, textStyle = TextStyle(color = AppText, fontSize = 11.sp, lineHeight = 16.sp), cursorBrush = SolidColor(OrangePrimary))
                             }
                         }
 
-                        Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                             Column(Modifier.weight(1.25f)) {
                                 Label("CATEGORÍA (FAMILIA) *")
-                                Box {
+                                BoxWithConstraints {
                                     Row(modifier = Modifier.fillMaxWidth().height(36.dp).clip(RoundedCornerShape(9.dp)).border(1.dp, if (familyOpen) SuccessText else AppBorder, RoundedCornerShape(9.dp)).clickable { familyOpen = !familyOpen }.padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                                         Text(familiaNombre, fontSize = 11.sp, color = AppText, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Icon(Icons.Default.KeyboardArrowDown, null, modifier = Modifier.size(16.dp), tint = if (familyOpen) SuccessText else AppText)
                                     }
                                     if (familyOpen) {
-                                        Column(Modifier.fillMaxWidth().heightIn(max = 256.dp).verticalScroll(rememberScrollState()).clip(RoundedCornerShape(9.dp)).background(AppSurface).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(4.dp)) {
-                                            FamilyOption("Selecciona una familia", familiaId.isBlank(), 40.dp) { familiaId = ""; familyOpen = false }
-                                            familias.forEach { f -> FamilyOption(f.nombre, f.id == familiaId, 40.dp) { familiaId = f.id; familyOpen = false } }
+                                        Popup(
+                                            alignment = Alignment.TopStart,
+                                            offset = IntOffset(0, with(density) { 50.dp.roundToPx() }),
+                                            onDismissRequest = { familyOpen = false }
+                                        ) {
+                                            Column(Modifier.width(maxWidth).heightIn(max = 256.dp).verticalScroll(rememberScrollState()).clip(RoundedCornerShape(9.dp)).background(AppSurface).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(4.dp)) {
+                                                FamilyOption("Selecciona una familia", familiaId.isBlank(), 36.dp) { familiaId = ""; familyOpen = false }
+                                                familias.forEach { f -> FamilyOption(f.nombre, f.id == familiaId, 36.dp) { familiaId = f.id; familyOpen = false } }
+                                            }
                                         }
                                     }
                                 }
@@ -190,7 +222,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                             }
                         }
 
-                        Row(Modifier.fillMaxWidth().padding(top = 3.dp).height(45.dp).border(1.dp, AppBorder), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.fillMaxWidth().padding(top = 3.dp).height(45.dp).drawBehind { drawLine(AppBorder, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx()) }, horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                             Status("Disponible", !agotado, null) { agotado = !it }
                             Status("Especialidad", especialidad, "👨‍🍳") { especialidad = it }
                             Status("Sugerencia", sugerencia, null) { sugerencia = it }
@@ -205,10 +237,10 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                                 Text("Alérgenos", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
                                 Text("Selecciona los alérgenos que contiene este artículo.", fontSize = 9.sp, color = AppMuted)
                             }
-                            Box(Modifier.size(28.dp).clip(RoundedCornerShape(14.dp)).background(AppSurfaceSoft), contentAlignment = Alignment.Center) { Text(selected.size.toString(), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = OrangePrimary) }
+                            Box(Modifier.clip(RoundedCornerShape(999.dp)).background(AppSurfaceSoft).padding(horizontal = 8.dp, vertical = 2.dp), contentAlignment = Alignment.Center) { Text(selected.size.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = OrangePrimary) }
                         }
                         Spacer(Modifier.height(4.dp))
-                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             alergenos.chunked(2).forEach { pair ->
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     pair.forEach { a ->
@@ -223,8 +255,8 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 message?.let { Text(it, Modifier.padding(horizontal = 10.dp), color = AppMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold) }
             }
 
-            Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(AppBg).padding(horizontal = 8.dp, vertical = 5.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                Button(onClick = onBack, modifier = Modifier.weight(1f).height(40.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = AppSurface, contentColor = AppMuted), border = BorderStroke(1.dp, AppBorder)) { Text("Cancelar", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+            Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(AppBg).padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = onBack, modifier = Modifier.weight(1f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = AppSurface, contentColor = AppMuted), border = BorderStroke(1.dp, AppBorder)) { Text("Cancelar", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                 Button(onClick = {
                     val n = nombre.trim(); val p = precio.replace(',', '.').toDoubleOrNull()
                     if (n.isBlank()) { message = "El producto necesita un nombre."; return@Button }
@@ -237,8 +269,8 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                             onBack()
                         } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
                     }
-                }, enabled = !saving, modifier = Modifier.weight(1.7f).height(40.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
-                    Icon(Icons.Default.Save, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                }, enabled = !saving, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
+                    Icon(Icons.Default.Save, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -267,7 +299,7 @@ private fun Status(label: String, checked: Boolean, icon: String?, onChange: (Bo
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             if (icon != null) Text(icon, fontSize = 10.sp)
             if (label == "Sugerencia") Icon(Icons.Default.Lightbulb, null, tint = SuccessText, modifier = Modifier.size(11.dp))
-            Text(label.uppercase(Locale.ROOT), fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, color = if (checked) SuccessText else AppMuted)
+            Text(label.uppercase(Locale.ROOT), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = if (checked) SuccessText else AppMuted)
         }
         Toggle(checked, onChange)
     }
@@ -283,7 +315,7 @@ private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
 @Composable
 private fun AlergenoChip(a: Alergeno, selected: Boolean, loader: ImageLoader, modifier: Modifier, onClick: () -> Unit) {
     val assetAndBg = erudus(a.nombre)
-    Row(modifier = modifier.height(32.dp).clip(RoundedCornerShape(9.dp)).border(1.dp, if (selected) Color(0xFFF97316) else AppBorder, RoundedCornerShape(9.dp)).background(if (selected) Color(0x1AF97316) else AppSurfaceSoft).clickable(onClick = onClick).padding(horizontal = 5.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(9.dp)).border(1.dp, if (selected) Color(0xFFF97316) else AppBorder, RoundedCornerShape(9.dp)).background(if (selected) Color(0x1AF97316) else AppSurfaceSoft).clickable(onClick = onClick).padding(horizontal = 6.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(16.dp).clip(RoundedCornerShape(2.dp)).border(1.dp, if (selected) Color(0xFFF97316) else AppMuted, RoundedCornerShape(2.dp)).background(if (selected) Color(0xFFF97316) else Color.Transparent), contentAlignment = Alignment.Center) {
             if (selected) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(11.dp))
         }
