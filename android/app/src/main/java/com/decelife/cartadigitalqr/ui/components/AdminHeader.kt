@@ -34,12 +34,18 @@ import androidx.compose.ui.unit.sp
 private val Orange = Color(0xFFFF7A00)
 
 @Composable
-fun AdminHeader(showHome: Boolean = false, onHome: (() -> Unit)? = null, onQr: () -> Unit = {}, onTheme: () -> Unit = {}, onLogout: () -> Unit = {}) {
+fun AdminHeader(
+    showHome: Boolean = false,
+    onHome: (() -> Unit)? = null,
+    onQr: (() -> Unit)? = null,
+    onTheme: (() -> Unit)? = null,
+    onLogout: (() -> Unit)? = null,
+) {
     val shared = LocalAdminActions.current
     val homeAction = { shared.goHome() }
-    val qrAction = if (onQr === {}) shared.showQr else onQr
-    val themeAction = if (onTheme === {}) shared.toggleTheme else onTheme
-    val logoutAction = if (onLogout === {}) shared.logout else onLogout
+    val qrAction = onQr ?: shared.showQr
+    val themeAction = onTheme ?: shared.toggleTheme
+    val logoutAction = onLogout ?: shared.logout
 
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
