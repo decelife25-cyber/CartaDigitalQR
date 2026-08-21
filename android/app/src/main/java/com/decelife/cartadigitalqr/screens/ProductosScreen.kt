@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -41,6 +41,7 @@ import com.decelife.cartadigitalqr.ui.theme.SuccessBg
 import com.decelife.cartadigitalqr.ui.theme.SuccessText
 import kotlinx.coroutines.launch
 import java.util.Locale
+import androidx.compose.runtime.withFrameNanos
 
 private val SpecialColor = Color(0xFFF59E0B)
 private val SpecialBackground = Color(0xFFFFF8E8)
@@ -66,8 +67,9 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     var sort by rememberSaveable { mutableStateOf(prefs.getString(PREF_ORDEN, SortMode.ORDEN.name) ?: SortMode.ORDEN.name) }
     var dialog by remember { mutableStateOf<String?>(null) }
     var draggedId by remember { mutableStateOf<String?>(null) }
-    var dragAccumulated by remember { mutableStateOf(0f) }
-    var dragVisualOffset by remember { mutableStateOf(0f) }
+    var dragVisualX by remember { mutableFloatStateOf(0f) }
+    var dragVisualY by remember { mutableFloatStateOf(0f) }
+    var autoScrollSpeed by remember { mutableFloatStateOf(0f) }
     var savingOrder by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val listState = remember { LazyListState() }
@@ -76,39 +78,65 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     suspend fun reload() { error = null; try { val (loadedFamilies, loadedProducts) = SupabaseRepository.getCatalogo(); familias = loadedFamilies; products = loadedProducts } catch (e: Exception) { error = e.message ?: "No se han podido cargar los productos." } }
     LaunchedEffect(Unit) { reload() }
 
-    val statusFilter = StatusFilter.valueOf(status)
-    val sortMode = SortMode.valueOf(sort)
+    val statusFilter = runCatching { StatusFilter.valueOf(status) }.getOrDefault(StatusFilter.TODOS)
+    val sortMode = runCatching { SortMode.valueOf(sort) }.getOrDefault(SortMode.ORDEN)
     val familyById = remember(familias) { familias.orEmpty().associateBy { it.id } }
+
     fun matchesReorderScope(product: Producto): Boolean {
         val familyMatches = familiaId == "todas" || product.familia_id == familiaId
-        val statusMatches = when (statusFilter) { StatusFilter.TODOS -> true; StatusFilter.VISIBLES -> product.activo; StatusFilter.OCULTOS -> !product.activo; StatusFilter.DISPONIBLES -> !product.agotado; StatusFilter.AGOTADOS -> product.agotado; StatusFilter.DESTACADOS -> product.destacado; StatusFilter.SUGERENCIAS -> product.sugerido }
+        val statusMatches = when (statusFilter) {
+            StatusFilter.TODOS -> true
+            StatusFilter.VISIBLES -> product.activo
+            StatusFilter.OCULTOS -> !product.activo
+            StatusFilter.DISPONIBLES -> !product.agotado
+            StatusFilter.AGOTADOS -> product.agotado
+            StatusFilter.DESTACADOS -> product.destacado
+            StatusFilter.SUGERENCIAS -> product.sugerido
+        }
         return familyMatches && statusMatches
     }
+
     val filtered = products.orEmpty().filter { product ->
         val family = familyById[product.familia_id]?.nombre.orEmpty()
         val query = search.trim()
         (query.isBlank() || "${product.nombre} $family".contains(query, ignoreCase = true)) && matchesReorderScope(product)
-    }.let { list -> when (sortMode) { SortMode.ORDEN -> list.sortedBy { it.orden }; SortMode.NOMBRE -> list.sortedBy { it.nombre.lowercase(Locale.ROOT) }; SortMode.PRECIO_ASC -> list.sortedBy { it.precio }; SortMode.PRECIO_DESC -> list.sortedByDescending { it.precio } } }
+    }.let { list ->
+        when (sortMode) {
+            SortMode.ORDEN -> list.sortedBy { it.orden }
+            SortMode.NOMBRE -> list.sortedBy { it.nombre.lowercase(Locale.ROOT) }
+            SortMode.PRECIO_ASC -> list.sortedBy { it.precio }
+            SortMode.PRECIO_DESC -> list.sortedByDescending { it.precio }
+        }
+    }
     val canReorder = search.isBlank() && sortMode == SortMode.ORDEN && !savingOrder
 
-    fun moveLocal(id: String, direction: Int) {
-        products = products?.let { current ->
-            val candidates = current.filter(::matchesReorderScope).sortedBy { it.orden }
-            val index = candidates.indexOfFirst { it.id == id }
-            val target = index + direction
-            if (index < 0 || target !in candidates.indices) return@let current
-            val source = candidates[index]
-            val targetItem = candidates[target]
-            current.map { product -> when (product.id) { source.id -> product.copy(orden = targetItem.orden); targetItem.id -> product.copy(orden = source.orden); else -> product } }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val speed = autoScrollSpeed
+            if (draggedId != null && speed != 0f) listState.scrollBy(speed)
+            withFrameNanos { }
         }
+    }
+
+    fun updateAutoScroll(pointerY: Float) {
+        val start = listState.layoutInfo.viewportStartOffset.toFloat()
+        val end = listState.layoutInfo.viewportEndOffset.toFloat()
+        val edge = 110f
+        autoScrollSpeed = when {
+            pointerY < start + edge -> -((start + edge - pointerY).coerceAtMost(edge) / edge) * 22f
+            pointerY > end - edge -> ((pointerY - (end - edge)).coerceAtMost(edge) / edge) * 22f
+            else -> 0f
+        }
+    }
+
+    fun pointerYFor(id: String, localY: Float): Float {
+        val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }
+        return if (info != null) info.offset + info.size / 2f + localY else localY
     }
 
     fun persistOrder() {
         val ordered = products.orEmpty().sortedBy { it.orden }
-        if (ordered.isEmpty() || savingOrder) return
-        draggedId = null
-        dragVisualOffset = 0f
-        dragAccumulated = 0f
+        if (ordered.isEmpty()) return
         savingOrder = true
         scope.launch {
             try { ordered.forEach { product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to product.orden)) } }
@@ -117,22 +145,25 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         }
     }
 
-    fun handleDrag(amount: Float, threshold: Float, pointerY: Float, id: String) {
-        if (!canReorder || draggedId != id) return
-        dragAccumulated += amount
-        dragVisualOffset += amount
-        while (dragAccumulated >= threshold) { moveLocal(id, 1); dragAccumulated -= threshold; dragVisualOffset -= threshold }
-        while (dragAccumulated <= -threshold) { moveLocal(id, -1); dragAccumulated += threshold; dragVisualOffset += threshold }
-        val viewportEnd = listState.layoutInfo.viewportEndOffset.toFloat()
-        val edge = 120f
-        if (pointerY < edge) {
-            val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()
-            if (first != null && first.index > 0) scope.launch { listState.animateScrollToItem(first.index - 1) }
-        } else if (viewportEnd > 0f && pointerY > viewportEnd - edge) {
-            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-            if (last != null && last.index < listState.layoutInfo.totalItemsCount - 1) scope.launch { listState.animateScrollToItem(last.index + 1) }
+    fun finishDrag(id: String, pointerY: Float) {
+        autoScrollSpeed = 0f
+        val visible = listState.layoutInfo.visibleItemsInfo
+        val targetInfo = visible.firstOrNull { info -> pointerY >= info.offset && pointerY < info.offset + info.size }
+            ?: visible.minByOrNull { info -> kotlin.math.abs(pointerY - (info.offset + info.size / 2f)) }
+        val targetId = targetInfo?.key as? String
+        val current = products.orEmpty()
+        val source = current.firstOrNull { it.id == id }
+        val target = current.firstOrNull { it.id == targetId }
+        if (source != null && target != null && source.id != target.id) {
+            products = current.map { product -> when (product.id) { source.id -> product.copy(orden = target.orden); target.id -> product.copy(orden = source.orden); else -> product } }
+            persistOrder()
         }
+        draggedId = null
+        dragVisualX = 0f
+        dragVisualY = 0f
     }
+
+    fun clearFilters() { search = ""; familiaId = "todas"; status = StatusFilter.TODOS.name; sort = SortMode.ORDEN.name }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AdminHeader(showHome = true, onHome = onBackClick)
@@ -149,7 +180,6 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
                 AdminFilterChip(statusFilter.label, Modifier.weight(1f)) { dialog = "estado" }
                 Box(Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (sortMode != SortMode.ORDEN) Color(0xFFF97316) else AppBorder, RoundedCornerShape(12.dp)).clickable { dialog = "orden" }, contentAlignment = Alignment.Center) { Icon(Icons.Default.FilterList, "Filtrar y ordenar", tint = if (sortMode != SortMode.ORDEN) Color(0xFFF97316) else AppMuted, modifier = Modifier.size(18.dp)) }
             }
-            if (canReorder && (familiaId != "todas" || statusFilter != StatusFilter.TODOS)) Text("Mantén pulsado el asa para ordenar esta selección", color = AppMuted, fontSize = 10.sp, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
         }
         when {
             products == null && error == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -157,11 +187,24 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
             else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 items(filtered, key = { it.id }) { product ->
                     val isDragging = draggedId == product.id
-                    ProductRow(product, familyById[product.familia_id]?.nombre ?: "", isDragging, if (isDragging) dragVisualOffset else 0f,
-                        { if (draggedId == null && !savingOrder) onProductClick(product.id) }, canReorder,
-                        { if (canReorder) { draggedId = product.id; dragAccumulated = 0f; dragVisualOffset = 0f } },
-                        { amount, threshold, pointerY -> handleDrag(amount, threshold, pointerY, product.id) },
-                        { if (draggedId == product.id && !savingOrder) persistOrder() })
+                    ProductRow(
+                        product = product,
+                        family = familyById[product.familia_id]?.nombre ?: "",
+                        isDragging = isDragging,
+                        dragVisualX = if (isDragging) dragVisualX else 0f,
+                        dragVisualY = if (isDragging) dragVisualY else 0f,
+                        onClick = { if (draggedId == null) onProductClick(product.id) },
+                        canReorder = canReorder,
+                        onDragStart = { if (canReorder) { draggedId = product.id; dragVisualX = 0f; dragVisualY = 0f } },
+                        onDrag = { amountX, amountY, localY ->
+                            if (draggedId == product.id) {
+                                dragVisualX += amountX
+                                dragVisualY += amountY
+                                updateAutoScroll(pointerYFor(product.id, localY))
+                            }
+                        },
+                        onDragEnd = { if (draggedId == product.id) finishDrag(product.id, pointerYFor(product.id, 0f) + dragVisualY) }
+                    )
                 }
             }
         }
@@ -194,16 +237,33 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     }
 }
 
-@Composable private fun AdminFilterChip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) { Row(modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1); Text("⌄", color = AppMuted, fontSize = 14.sp) } }
-@Composable private fun ProductRow(product: Producto, family: String, isDragging: Boolean, dragVisualOffset: Float, onClick: () -> Unit, canReorder: Boolean, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
-    Row(Modifier.fillMaxWidth().graphicsLayer { translationY = dragVisualOffset; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+@Composable private fun AdminFilterChip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1); Text("⌄", color = AppMuted, fontSize = 14.sp) }
+}
+
+@Composable private fun ProductRow(product: Producto, family: String, isDragging: Boolean, dragVisualX: Float, dragVisualY: Float, onClick: () -> Unit, canReorder: Boolean, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
+    Row(Modifier.fillMaxWidth().graphicsLayer { translationX = dragVisualX; translationY = dragVisualY; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) { Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3); if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1); if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) } }
+            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+                Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3)
+                if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
+                if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) }
+            }
             Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.agotado) "Agotado" else "Visible", if (product.agotado) Color(0xFFFFE8E8) else SuccessBg, if (product.agotado) Color(0xFFDC2626) else SuccessText) }
         }
-        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(canReorder, product.id) { detectDragGesturesAfterLongPress(onDragStart = { if (canReorder) onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> onDrag(dragAmount.y, 76.dp.toPx(), change.position.y) } })
+        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) {
+            detectDragGestures(
+                onDragStart = { onDragStart() },
+                onDragCancel = onDragEnd,
+                onDragEnd = onDragEnd
+            ) { change, dragAmount ->
+                change.consume()
+                onDrag(dragAmount.x, dragAmount.y, change.position.y)
+            }
+        })
     }
 }
+
 @Composable private fun FeatureBadge(text: String, color: Color, background: Color, chefIcon: Boolean = false) { Row(Modifier.height(22.dp).clip(RoundedCornerShape(11.dp)).background(background).border(1.dp, color, RoundedCornerShape(11.dp)).padding(horizontal = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) { if (chefIcon) Text("👨‍🍳", fontSize = 9.sp, lineHeight = 10.sp, maxLines = 1) else Icon(Icons.Default.Lightbulb, null, tint = color, modifier = Modifier.size(11.dp)); Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false) } }
 @Composable private fun StatusPill(text: String, background: Color, foreground: Color) { Box(Modifier.clip(RoundedCornerShape(16.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp)) { Text(text, color = foreground, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold) } }
