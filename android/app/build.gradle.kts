@@ -13,8 +13,8 @@ val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releas
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 // Versionado del proyecto. No depende del contador de GitHub Actions.
-// Formato: MAJOR.MINOR.PATCH, por ejemplo 1.0.098 -> 1.0.099 -> 1.1.0.
-val appVersionName = "1.0.099"
+// Formato: MAJOR.MINOR.PATCH, por ejemplo 1.0.099 -> 1.0.100 -> 1.1.0.
+val appVersionName = "1.0.100"
 val appVersionParts = appVersionName.split(".").map { it.toInt() }
 require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
 val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
