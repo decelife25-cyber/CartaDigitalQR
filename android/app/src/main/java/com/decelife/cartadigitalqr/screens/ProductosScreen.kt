@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -41,9 +42,10 @@ import com.decelife.cartadigitalqr.ui.theme.AppBorder
 import com.decelife.cartadigitalqr.ui.theme.AppMuted
 import com.decelife.cartadigitalqr.ui.theme.SuccessBg
 import com.decelife.cartadigitalqr.ui.theme.SuccessText
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
-import androidx.compose.runtime.withFrameNanos
 
 private val SpecialColor = Color(0xFFF59E0B)
 private val SpecialBackground = Color(0xFFFFF8E8)
@@ -73,18 +75,19 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     var dragVisualY by remember { mutableFloatStateOf(0f) }
     var autoScrollSpeed by remember { mutableFloatStateOf(0f) }
     var savingOrder by remember { mutableStateOf(false) }
+    var saveJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val listState = remember { LazyListState() }
 
     LaunchedEffect(familiaId, status, sort) { prefs.edit().putString(PREF_FAMILIA, familiaId).putString(PREF_ESTADO, status).putString(PREF_ORDEN, sort).apply() }
     suspend fun reload() { error = null; try { val (loadedFamilies, loadedProducts) = SupabaseRepository.getCatalogo(); familias = loadedFamilies; products = loadedProducts } catch (e: Exception) { error = e.message ?: "No se han podido cargar los productos." } }
     LaunchedEffect(Unit) { reload() }
+    DisposableEffect(Unit) { onDispose { saveJob?.cancel() } }
 
     val statusFilter = runCatching { StatusFilter.valueOf(status) }.getOrDefault(StatusFilter.TODOS)
     val sortMode = runCatching { SortMode.valueOf(sort) }.getOrDefault(SortMode.ORDEN)
     val familyById = remember(familias) { familias.orEmpty().associateBy { it.id } }
-
-    fun matchesReorderScope(product: Producto): Boolean {
+    fun matchesScope(product: Producto): Boolean {
         val familyMatches = familiaId == "todas" || product.familia_id == familiaId
         val statusMatches = when (statusFilter) {
             StatusFilter.TODOS -> true
@@ -97,48 +100,76 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         }
         return familyMatches && statusMatches
     }
-
     val filtered = products.orEmpty().filter { product ->
         val family = familyById[product.familia_id]?.nombre.orEmpty()
-        val query = search.trim()
-        (query.isBlank() || "${product.nombre} $family".contains(query, ignoreCase = true)) && matchesReorderScope(product)
-    }.let { list ->
-        when (sortMode) {
-            SortMode.ORDEN -> list.sortedBy { it.orden }
-            SortMode.NOMBRE -> list.sortedBy { it.nombre.lowercase(Locale.ROOT) }
-            SortMode.PRECIO_ASC -> list.sortedBy { it.precio }
-            SortMode.PRECIO_DESC -> list.sortedByDescending { it.precio }
+        val q = search.trim()
+        (q.isBlank() || "${product.nombre} $family".contains(q, ignoreCase = true)) && matchesScope(product)
+    }.let { list -> when (sortMode) {
+        SortMode.ORDEN -> list.sortedBy { it.orden }
+        SortMode.NOMBRE -> list.sortedBy { it.nombre.lowercase(Locale.ROOT) }
+        SortMode.PRECIO_ASC -> list.sortedBy { it.precio }
+        SortMode.PRECIO_DESC -> list.sortedByDescending { it.precio }
+    } }
+
+    // El guardado ya no bloquea el siguiente arrastre. Se cancela un guardado pendiente
+    // cuando el usuario vuelve a ordenar para persistir siempre el último estado.
+    val canReorder = search.isBlank() && sortMode == SortMode.ORDEN
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            val speed = autoScrollSpeed
+            if (draggedId != null && speed != 0f) listState.scrollBy(speed)
+            withFrameNanos { }
         }
     }
-    val canReorder = search.isBlank() && sortMode == SortMode.ORDEN && !savingOrder
-
-    LaunchedEffect(Unit) { while (true) { val speed = autoScrollSpeed; if (draggedId != null && speed != 0f) listState.scrollBy(speed); withFrameNanos { } } }
-
-    fun updateAutoScroll(pointerY: Float) { val start = listState.layoutInfo.viewportStartOffset.toFloat(); val end = listState.layoutInfo.viewportEndOffset.toFloat(); val edge = 110f; autoScrollSpeed = when { pointerY < start + edge -> -((start + edge - pointerY).coerceAtMost(edge) / edge) * 22f; pointerY > end - edge -> ((pointerY - (end - edge)).coerceAtMost(edge) / edge) * 22f; else -> 0f } }
-    fun pointerYFor(id: String, localY: Float): Float { val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }; return if (info != null) info.offset + info.size / 2f + localY else localY }
-
-    fun persistOrder() {
-        val ordered = products.orEmpty().sortedBy { it.orden }
-        if (ordered.isEmpty()) return
-        savingOrder = true
-        scope.launch { try { ordered.forEach { product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to product.orden)) } } catch (e: Exception) { error = e.message ?: "No se pudo guardar el orden de los productos."; reload() } finally { savingOrder = false } }
+    fun updateAutoScroll(pointerY: Float) {
+        val start = listState.layoutInfo.viewportStartOffset.toFloat()
+        val end = listState.layoutInfo.viewportEndOffset.toFloat()
+        val edge = 110f
+        autoScrollSpeed = when {
+            pointerY < start + edge -> -((start + edge - pointerY).coerceAtMost(edge) / edge) * 22f
+            pointerY > end - edge -> ((pointerY - (end - edge)).coerceAtMost(edge) / edge) * 22f
+            else -> 0f
+        }
     }
-
+    fun pointerYFor(id: String, localY: Float): Float {
+        val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }
+        return if (info != null) info.offset + info.size / 2f + localY else localY
+    }
+    fun persistOrder() {
+        val snapshot = products.orEmpty().sortedBy { it.orden }
+        if (snapshot.isEmpty()) return
+        saveJob?.cancel()
+        savingOrder = true
+        saveJob = scope.launch {
+            try {
+                delay(150)
+                snapshot.forEach { product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to product.orden)) }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                error = e.message ?: "No se pudo guardar el orden de los productos."
+                reload()
+            } finally { savingOrder = false }
+        }
+    }
     fun finishDrag(id: String, pointerY: Float) {
         autoScrollSpeed = 0f
         val visible = listState.layoutInfo.visibleItemsInfo
-        val targetInfo = visible.firstOrNull { info -> pointerY >= info.offset && pointerY < info.offset + info.size } ?: visible.minByOrNull { info -> kotlin.math.abs(pointerY - (info.offset + info.size / 2f)) }
+        val targetInfo = visible.firstOrNull { pointerY >= it.offset && pointerY < it.offset + it.size }
+            ?: visible.minByOrNull { kotlin.math.abs(pointerY - (it.offset + it.size / 2f)) }
         val targetId = targetInfo?.key as? String
         val current = products.orEmpty()
         val source = current.firstOrNull { it.id == id }
         val target = current.firstOrNull { it.id == targetId }
         if (source != null && target != null && source.id != target.id) {
-            products = current.map { product -> when (product.id) { source.id -> product.copy(orden = target.orden); target.id -> product.copy(orden = source.orden); else -> product } }
+            products = current.map { product -> when (product.id) {
+                source.id -> product.copy(orden = target.orden)
+                target.id -> product.copy(orden = source.orden)
+                else -> product
+            } }
             persistOrder()
         }
-        draggedId = null
-        dragVisualX = 0f
-        dragVisualY = 0f
+        draggedId = null; dragVisualX = 0f; dragVisualY = 0f
     }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -151,10 +182,22 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
                 if (search.isNotEmpty()) IconButton(onClick = { search = "" }, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Clear, "Limpiar", tint = AppMuted, modifier = Modifier.size(16.dp)) }
             }
             Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AdminFilterChip(if (familiaId == "todas") "Familia: Todas" else "Familia: ${familyById[familiaId]?.nombre ?: "Todas"}", Modifier.weight(1f)) { dialog = "familia" }
-                AdminFilterChip(statusFilter.label, Modifier.weight(1f)) { dialog = "estado" }
-                Box(Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (sortMode != SortMode.ORDEN) Color(0xFFF97316) else AppBorder, RoundedCornerShape(12.dp)).clickable { dialog = "orden" }, contentAlignment = Alignment.Center) { Icon(Icons.Default.FilterList, "Filtrar y ordenar", tint = if (sortMode != SortMode.ORDEN) Color(0xFFF97316) else AppMuted, modifier = Modifier.size(18.dp)) }
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                if (maxWidth < 340.dp) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        AdminFilterChip(if (familiaId == "todas") "Familia: Todas" else "Familia: ${familyById[familiaId]?.nombre ?: "Todas"}", Modifier.fillMaxWidth()) { dialog = "familia" }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AdminFilterChip(statusFilter.label, Modifier.weight(1f)) { dialog = "estado" }
+                            FilterButton(sortMode) { dialog = "orden" }
+                        }
+                    }
+                } else {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AdminFilterChip(if (familiaId == "todas") "Familia: Todas" else "Familia: ${familyById[familiaId]?.nombre ?: "Todas"}", Modifier.weight(1.4f)) { dialog = "familia" }
+                        AdminFilterChip(statusFilter.label, Modifier.weight(0.85f)) { dialog = "estado" }
+                        FilterButton(sortMode) { dialog = "orden" }
+                    }
+                }
             }
         }
         when {
@@ -162,11 +205,11 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
             error != null -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) { Text(error!!, color = MaterialTheme.colorScheme.error) }
             else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 items(filtered, key = { it.id }) { product ->
-                    val isDragging = draggedId == product.id
-                    ProductRow(product, familyById[product.familia_id]?.nombre ?: "", isDragging, if (isDragging) dragVisualX else 0f, if (isDragging) dragVisualY else 0f,
+                    val dragging = draggedId == product.id
+                    ProductRow(product, familyById[product.familia_id]?.nombre ?: "", dragging, if (dragging) dragVisualX else 0f, if (dragging) dragVisualY else 0f,
                         { if (draggedId == null) onProductClick(product.id) }, canReorder,
-                        { if (canReorder) { draggedId = product.id; dragVisualX = 0f; dragVisualY = 0f } },
-                        { amountX, amountY, localY -> if (draggedId == product.id) { dragVisualX += amountX; dragVisualY += amountY; updateAutoScroll(pointerYFor(product.id, localY)) } },
+                        { if (canReorder && draggedId == null) { draggedId = product.id; dragVisualX = 0f; dragVisualY = 0f } },
+                        { x, y, localY -> if (draggedId == product.id) { dragVisualX += x; dragVisualY += y; updateAutoScroll(pointerYFor(product.id, localY)) } },
                         { if (draggedId == product.id) finishDrag(product.id, pointerYFor(product.id, 0f) + dragVisualY) })
                 }
             }
@@ -176,6 +219,12 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         "familia" -> SelectionDialog("Selecciona una familia", listOf("todas" to "Familia: Todas") + familias.orEmpty().filter { it.activo }.map { it.id to it.nombre }, familiaId, { familiaId = it; dialog = null }, { dialog = null })
         "estado" -> SelectionDialog("Filtrar por estado", StatusFilter.entries.map { it.name to it.label }, status, { status = it; dialog = null }, { dialog = null })
         "orden" -> SelectionDialog("Ordenar productos", SortMode.entries.map { it.name to it.label }, sort, { sort = it; dialog = null }, { dialog = null })
+    }
+}
+
+@Composable private fun FilterButton(sortMode: SortMode, onClick: () -> Unit) {
+    Box(Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (sortMode != SortMode.ORDEN) Color(0xFFF97316) else AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(Icons.Default.FilterList, "Filtrar y ordenar", tint = if (sortMode != SortMode.ORDEN) Color(0xFFF97316) else AppMuted, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -193,25 +242,41 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
                         }
                     }
                 }
-                Spacer(Modifier.height(6.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = onDismiss) { Text("Cerrar", color = Color(0xFFF97316), fontWeight = FontWeight.Bold, fontSize = 15.sp) } }
+                Spacer(Modifier.height(6.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { TextButton(onClick = onDismiss) { Text("Cerrar", color = Color(0xFFF97316), fontWeight = FontWeight.Bold, fontSize = 15.sp) } }
             }
         }
     }
 }
 
-@Composable private fun AdminFilterChip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) { Row(modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1); Text("⌄", color = AppMuted, fontSize = 14.sp) } }
+@Composable private fun AdminFilterChip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(text, modifier = Modifier.weight(1f), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text("⌄", color = AppMuted, fontSize = 14.sp, modifier = Modifier.padding(start = 4.dp))
+    }
+}
 
 @Composable private fun ProductRow(product: Producto, family: String, isDragging: Boolean, dragVisualX: Float, dragVisualY: Float, onClick: () -> Unit, canReorder: Boolean, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
     Row(Modifier.fillMaxWidth().zIndex(if (isDragging) 10f else 0f).graphicsLayer { translationX = dragVisualX; translationY = dragVisualY; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) { Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3); if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1); if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) } }
+            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
+                Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3)
+                if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
+                if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) }
+            }
             Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.agotado) "Agotado" else "Visible", if (product.agotado) Color(0xFFFFE8E8) else SuccessBg, if (product.agotado) Color(0xFFDC2626) else SuccessText) }
         }
-        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) { detectDragGestures(onDragStart = { _ -> onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.x, dragAmount.y, change.position.y) } })
+        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) {
+            detectDragGestures(onDragStart = { onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.x, dragAmount.y, change.position.y) }
+        })
     }
 }
 
-@Composable private fun FeatureBadge(text: String, color: Color, background: Color, chefIcon: Boolean = false) { Row(Modifier.height(22.dp).clip(RoundedCornerShape(11.dp)).background(background).border(1.dp, color, RoundedCornerShape(11.dp)).padding(horizontal = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) { if (chefIcon) Text("👨‍🍳", fontSize = 9.sp, lineHeight = 10.sp, maxLines = 1) else Icon(Icons.Default.Lightbulb, null, tint = color, modifier = Modifier.size(11.dp)); Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false) } }
+@Composable private fun FeatureBadge(text: String, color: Color, background: Color, chefIcon: Boolean = false) {
+    Row(Modifier.height(22.dp).clip(RoundedCornerShape(11.dp)).background(background).border(1.dp, color, RoundedCornerShape(11.dp)).padding(horizontal = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        if (chefIcon) Text("👨‍🍳", fontSize = 9.sp, lineHeight = 10.sp, maxLines = 1) else Icon(Icons.Default.Lightbulb, null, tint = color, modifier = Modifier.size(11.dp))
+        Text(text, color = color, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
+    }
+}
+
 @Composable private fun StatusPill(text: String, background: Color, foreground: Color) { Box(Modifier.clip(RoundedCornerShape(16.dp)).background(background).padding(horizontal = 8.dp, vertical = 4.dp)) { Text(text, color = foreground, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold) } }
