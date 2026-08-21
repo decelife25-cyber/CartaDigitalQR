@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.ImagePlus
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -150,7 +149,7 @@ fun ConfiguracionScreen(onBackClick: () -> Unit) {
                             Text("Portada de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
                             Text("Cambia la imagen cuando quieras. La nueva portada queda activa inmediatamente y no depende de una caché anual.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp))
                         }
-                        Icon(Icons.Default.ImagePlus, null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Image, null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
                     }
                     Box(Modifier.fillMaxWidth().padding(top = 8.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(10.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                         if (portadaUrl.isNotBlank()) AsyncImage(model = portadaUrl, contentDescription = "Portada actual de la carta", modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
@@ -163,7 +162,7 @@ fun ConfiguracionScreen(onBackClick: () -> Unit) {
                         if (uploading) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .45f)), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp)) }
                     }
                     Button(onClick = { picker.launch("image/*") }, enabled = !uploading && !saving, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(36.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 10.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
-                        Icon(Icons.Default.ImagePlus, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(if (uploading) "Subiendo portada…" else "Sustituir portada", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+                        Icon(Icons.Default.Image, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(if (uploading) "Subiendo portada…" else "Sustituir portada", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                     }
                     Text("JPG, PNG o WebP · máximo 10 MB", modifier = Modifier.fillMaxWidth().padding(top = 2.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = AppMuted, fontSize = 9.sp)
                 }
@@ -245,7 +244,7 @@ private fun MultiField(label: String, value: String, onChange: (String) -> Unit,
 private fun publicCartaUrl(domain: String?): String {
     val raw = domain?.trim().orEmpty()
     if (raw.isBlank()) return "Dominio no configurado"
-    val normalized = if (raw.startsWith("http://", true) || raw.startsWith("https://", true)) raw else "https://$raw"
+    val normalized = if (raw.startsWith("http://", true) || raw.startsWith("https://")) raw else "https://$raw"
     return normalized.trimEnd('/')
 }
 
