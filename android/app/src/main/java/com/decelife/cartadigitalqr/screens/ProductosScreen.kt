@@ -111,46 +111,22 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     }
     val canReorder = search.isBlank() && sortMode == SortMode.ORDEN && !savingOrder
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            val speed = autoScrollSpeed
-            if (draggedId != null && speed != 0f) listState.scrollBy(speed)
-            withFrameNanos { }
-        }
-    }
+    LaunchedEffect(Unit) { while (true) { val speed = autoScrollSpeed; if (draggedId != null && speed != 0f) listState.scrollBy(speed); withFrameNanos { } } }
 
-    fun updateAutoScroll(pointerY: Float) {
-        val start = listState.layoutInfo.viewportStartOffset.toFloat()
-        val end = listState.layoutInfo.viewportEndOffset.toFloat()
-        val edge = 110f
-        autoScrollSpeed = when {
-            pointerY < start + edge -> -((start + edge - pointerY).coerceAtMost(edge) / edge) * 22f
-            pointerY > end - edge -> ((pointerY - (end - edge)).coerceAtMost(edge) / edge) * 22f
-            else -> 0f
-        }
-    }
-
-    fun pointerYFor(id: String, localY: Float): Float {
-        val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }
-        return if (info != null) info.offset + info.size / 2f + localY else localY
-    }
+    fun updateAutoScroll(pointerY: Float) { val start = listState.layoutInfo.viewportStartOffset.toFloat(); val end = listState.layoutInfo.viewportEndOffset.toFloat(); val edge = 110f; autoScrollSpeed = when { pointerY < start + edge -> -((start + edge - pointerY).coerceAtMost(edge) / edge) * 22f; pointerY > end - edge -> ((pointerY - (end - edge)).coerceAtMost(edge) / edge) * 22f; else -> 0f } }
+    fun pointerYFor(id: String, localY: Float): Float { val info = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == id }; return if (info != null) info.offset + info.size / 2f + localY else localY }
 
     fun persistOrder() {
         val ordered = products.orEmpty().sortedBy { it.orden }
         if (ordered.isEmpty()) return
         savingOrder = true
-        scope.launch {
-            try { ordered.forEach { product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to product.orden)) } }
-            catch (e: Exception) { error = e.message ?: "No se pudo guardar el orden de los productos."; reload() }
-            finally { savingOrder = false }
-        }
+        scope.launch { try { ordered.forEach { product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to product.orden)) } } catch (e: Exception) { error = e.message ?: "No se pudo guardar el orden de los productos."; reload() } finally { savingOrder = false } }
     }
 
     fun finishDrag(id: String, pointerY: Float) {
         autoScrollSpeed = 0f
         val visible = listState.layoutInfo.visibleItemsInfo
-        val targetInfo = visible.firstOrNull { info -> pointerY >= info.offset && pointerY < info.offset + info.size }
-            ?: visible.minByOrNull { info -> kotlin.math.abs(pointerY - (info.offset + info.size / 2f)) }
+        val targetInfo = visible.firstOrNull { info -> pointerY >= info.offset && pointerY < info.offset + info.size } ?: visible.minByOrNull { info -> kotlin.math.abs(pointerY - (info.offset + info.size / 2f)) }
         val targetId = targetInfo?.key as? String
         val current = products.orEmpty()
         val source = current.firstOrNull { it.id == id }
@@ -223,24 +199,16 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     }
 }
 
-@Composable private fun AdminFilterChip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Row(modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1); Text("⌄", color = AppMuted, fontSize = 14.sp) }
-}
+@Composable private fun AdminFilterChip(text: String, modifier: Modifier = Modifier, onClick: () -> Unit) { Row(modifier.height(36.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) { Text(text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1); Text("⌄", color = AppMuted, fontSize = 14.sp) } }
 
 @Composable private fun ProductRow(product: Producto, family: String, isDragging: Boolean, dragVisualX: Float, dragVisualY: Float, onClick: () -> Unit, canReorder: Boolean, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
     Row(Modifier.fillMaxWidth().graphicsLayer { translationX = dragVisualX; translationY = dragVisualY; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
-                Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3)
-                if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
-                if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) }
-            }
+            Column(Modifier.weight(1f).padding(horizontal = 10.dp)) { Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3); if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1); if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) } }
             Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.agotado) "Agotado" else "Visible", if (product.agotado) Color(0xFFFFE8E8) else SuccessBg, if (product.agotado) Color(0xFFDC2626) else SuccessText) }
         }
-        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) {
-            detectDragGestures(onDragStart = onDragStart, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.x, dragAmount.y, change.position.y) }
-        })
+        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) { detectDragGestures(onDragStart = { _ -> onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.x, dragAmount.y, change.position.y) } })
     }
 }
 
