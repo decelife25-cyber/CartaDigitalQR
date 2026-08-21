@@ -8,6 +8,13 @@ data class Familia(
     val foto_url: String?
 )
 
+data class Alergeno(
+    val id: String,
+    val nombre: String,
+    val orden: Int = 0,
+    val activo: Boolean = true
+)
+
 data class Producto(
     val id: String,
     val familia_id: String,
@@ -19,7 +26,8 @@ data class Producto(
     val agotado: Boolean,
     val destacado: Boolean,
     val sugerido: Boolean,
-    val foto_url: String?
+    val foto_url: String?,
+    val alergeno_ids: List<String> = emptyList()
 )
 
 data class Configuracion(

@@ -5,14 +5,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Logout
+import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -33,15 +35,19 @@ private val Orange = Color(0xFFFF7A00)
 @Composable
 fun AdminHeader(showHome: Boolean = false, onHome: (() -> Unit)? = null, onQr: () -> Unit = {}, onTheme: () -> Unit = {}, onLogout: () -> Unit = {}) {
     Surface(color = MaterialTheme.colorScheme.surface) {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 16.dp),
+            Arrangement.SpaceBetween,
+            Alignment.CenterVertically
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (showHome && onHome != null) IconButton(onClick = onHome, Modifier.size(48.dp)) { Icon(Icons.Default.Home, "Panel privado") }
-                Text("Panel Privado", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                if (showHome && onHome != null) IconButton(onClick = onHome, Modifier.size(40.dp)) { Icon(Icons.Outlined.Home, "Panel privado", modifier = Modifier.size(22.dp)) }
+                Text("Panel Privado", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onQr, Modifier.size(48.dp)) { Icon(Icons.Default.QrCode2, "Código QR") }
-                IconButton(onClick = onTheme, Modifier.size(48.dp)) { Icon(Icons.Default.DarkMode, "Modo noche") }
-                IconButton(onClick = onLogout, Modifier.size(48.dp)) { Icon(Icons.Default.Logout, "Cerrar sesión", tint = MaterialTheme.colorScheme.error) }
+                IconButton(onClick = onQr, Modifier.size(40.dp)) { Icon(Icons.Outlined.QrCode2, "Código QR", modifier = Modifier.size(22.dp)) }
+                IconButton(onClick = onTheme, Modifier.size(40.dp)) { Icon(Icons.Outlined.DarkMode, "Modo noche", modifier = Modifier.size(22.dp)) }
+                IconButton(onClick = onLogout, Modifier.size(40.dp)) { Icon(Icons.Outlined.Logout, "Cerrar sesión", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(22.dp)) }
             }
         }
     }
