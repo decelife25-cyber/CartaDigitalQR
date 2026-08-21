@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -77,6 +78,7 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
     val scope = rememberCoroutineScope()
 
     suspend fun reload() {
+        error = null
         try { familias = SupabaseRepository.getFamiliasAdmin() }
         catch (e: Exception) { error = e.message ?: "No se han podido cargar las familias." }
     }
@@ -120,12 +122,13 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
                         dragging = draggedId == familia.id,
                         onDragStart = { if (!savingOrder) { draggedId = familia.id; dragAccumulated = 0f } },
                         onDrag = { amount, threshold ->
-                            if (savingOrder) return@FamiliaRow
-                            dragAccumulated += amount
-                            while (dragAccumulated >= threshold) { moveLocal(familia.id, 1); dragAccumulated -= threshold }
-                            while (dragAccumulated <= -threshold) { moveLocal(familia.id, -1); dragAccumulated += threshold }
+                            if (!savingOrder) {
+                                dragAccumulated += amount
+                                while (dragAccumulated >= threshold) { moveLocal(familia.id, 1); dragAccumulated -= threshold }
+                                while (dragAccumulated <= -threshold) { moveLocal(familia.id, -1); dragAccumulated += threshold }
+                            }
                         },
-                        onDragEnd = { if (draggedId != null) persistOrder() }
+                        onDragEnd = { if (draggedId != null && !savingOrder) persistOrder() }
                     )
                 }
             }
