@@ -117,9 +117,19 @@ object SupabaseRepository {
         if (id == null) { val response = request("POST", "productos", payload.toString()); val created = JSONArray(response).optJSONObject(0) ?: throw IllegalStateException("No se pudo crear el producto."); replaceProductoAlergenos(created.getString("id"), alergenoIds) } else { request("PATCH", "productos?id=eq.$id", payload.toString()); replaceProductoAlergenos(id, alergenoIds) }
     }
 
+    suspend fun updateProductoFields(id: String, fields: Map<String, Any?>) {
+        val payload = JSONObject().apply { fields.forEach { (key, value) -> put(key, value ?: JSONObject.NULL) } }
+        request("PATCH", "productos?id=eq.$id", payload.toString())
+    }
+
     suspend fun saveFamilia(id: String?, nombre: String, descripcion: String?, fotoUrl: String?, activo: Boolean) {
         val payload = JSONObject().apply { put("nombre", nombre); put("descripcion", descripcion ?: JSONObject.NULL); put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL); put("activo", activo) }
         if (id == null) { val configJson = JSONArray(get("familias?select=configuracion_restaurante_id&configuracion_restaurante_id=not.is.null&limit=1")); val configId = configJson.optJSONObject(0)?.optString("configuracion_restaurante_id").orEmpty(); if (configId.isBlank()) throw IllegalStateException("No se pudo determinar el restaurante de la familia."); payload.put("configuracion_restaurante_id", configId); payload.put("orden", 0); request("POST", "familias", payload.toString()) } else request("PATCH", "familias?id=eq.$id", payload.toString())
+    }
+
+    suspend fun updateFamiliaFields(id: String, fields: Map<String, Any?>) {
+        val payload = JSONObject().apply { fields.forEach { (key, value) -> put(key, value ?: JSONObject.NULL) } }
+        request("PATCH", "familias?id=eq.$id", payload.toString())
     }
 
     suspend fun deleteFamilia(id: String) { request("DELETE", "familias?id=eq.$id") }
