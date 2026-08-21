@@ -152,7 +152,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                     Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
                 }
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.padding(horizontal = 6.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.padding(horizontal = 6.dp).offset(y = (-3).dp)) {
                 Text("VISIBLE", fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, color = AppMuted)
                 Toggle(visible) { visible = it }
             }
@@ -188,7 +188,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
 
                             Column(Modifier.weight(0.69f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 Label("NOMBRE DEL ARTÍCULO *")
-                                BasicTextField(value = nombre, onValueChange = { nombre = it }, modifier = Modifier.fillMaxWidth().height(36.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), singleLine = false, maxLines = 2, textStyle = TextStyle(color = AppText, fontSize = 14.sp, lineHeight = 16.sp, fontWeight = FontWeight.SemiBold), cursorBrush = SolidColor(OrangePrimary))
+                                BasicTextField(value = nombre, onValueChange = { nombre = it }, modifier = Modifier.fillMaxWidth().height(52.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), singleLine = false, maxLines = 2, textStyle = TextStyle(color = AppText, fontSize = 14.sp, lineHeight = 18.sp, fontWeight = FontWeight.SemiBold), cursorBrush = SolidColor(OrangePrimary))
                                 Label("DESCRIPCIÓN")
                                 BasicTextField(value = descripcion, onValueChange = { descripcion = it }, modifier = Modifier.fillMaxWidth().height(76.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), maxLines = 4, textStyle = TextStyle(color = AppText, fontSize = 11.sp, lineHeight = 16.sp), cursorBrush = SolidColor(OrangePrimary))
                             }
