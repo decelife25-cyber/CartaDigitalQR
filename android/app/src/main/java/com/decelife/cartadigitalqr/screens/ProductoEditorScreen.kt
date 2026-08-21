@@ -44,7 +44,9 @@ private val IconBg = mapOf(
 )
 
 private fun erudus(nombre: String): Pair<String, Color> {
-    val k = nombre.lowercase(Locale.ROOT).replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+    val k = nombre.lowercase(Locale.ROOT)
+        .replace("á", "a").replace("é", "e").replace("í", "i")
+        .replace("ó", "o").replace("ú", "u")
     val f = when {
         k.contains("gluten") || k.contains("cereal") -> "cereal.svg"
         k.contains("crustace") -> "crustaceans.svg"
@@ -120,62 +122,133 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize().background(AppBg)) {
         AdminHeader(showHome = true, onHome = onBack)
-        Row(Modifier.fillMaxWidth().height(44.dp).border(1.dp, AppBorder), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) { Icon(Icons.Default.ArrowBack, "Volver", modifier = Modifier.size(20.dp)) }
-            Text(if (productId == null) "Nuevo artículo" else "Editar artículo", modifier = Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = AppText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (productId != null) IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) { Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp)) }
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.padding(horizontal = 6.dp)) {
+        Row(
+            Modifier.fillMaxWidth().height(44.dp).border(1.dp, AppBorder),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Default.ArrowBack, "Volver", modifier = Modifier.size(20.dp))
+            }
+            Text(
+                if (productId == null) "Nuevo artículo" else "Editar artículo",
+                modifier = Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold,
+                color = AppText, maxLines = 1, overflow = TextOverflow.Ellipsis
+            )
+            if (productId != null) {
+                IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
+                }
+            }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(1.dp),
+                modifier = Modifier.padding(horizontal = 6.dp)
+            ) {
                 Text("VISIBLE", fontSize = 8.sp, fontWeight = FontWeight.ExtraBold, color = AppMuted)
                 Toggle(visible) { visible = it }
             }
         }
 
         Box(Modifier.fillMaxSize()) {
-            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 68.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 60.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 SectionCard {
                     Column(Modifier.padding(10.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
                             Column(Modifier.weight(0.31f)) {
-                                Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                                    if (fotoUrl.isNotBlank()) AsyncImage(model = fotoUrl, contentDescription = nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
-                                    else Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(30.dp))
+                                Box(
+                                    Modifier.fillMaxWidth().aspectRatio(1f)
+                                        .clip(RoundedCornerShape(10.dp)).background(AppSurfaceSoft)
+                                        .border(1.dp, AppBorder, RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (fotoUrl.isNotBlank()) {
+                                        AsyncImage(model = fotoUrl, contentDescription = nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
+                                    } else {
+                                        Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(30.dp))
+                                    }
                                 }
-                                Spacer(Modifier.height(6.dp))
-                                Button(onClick = { message = "La selección de fotografía se conecta en la siguiente iteración." }, modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(14.dp), contentPadding = PaddingValues(0.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
-                                    Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(7.dp)); Text("Cambiar foto", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Spacer(Modifier.height(4.dp))
+                                Button(
+                                    onClick = { message = "La selección de fotografía se conecta en la siguiente iteración." },
+                                    modifier = Modifier.fillMaxWidth().height(42.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 4.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)
+                                ) {
+                                    Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(5.dp))
+                                    Text("Cambiar foto", fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 }
                                 if (fotoUrl.isNotBlank()) {
-                                    Spacer(Modifier.height(6.dp))
-                                    Button(onClick = { fotoUrl = "" }, modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(12.dp), contentPadding = PaddingValues(0.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ErrorText)) { Text("Eliminar foto", fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                                    Spacer(Modifier.height(2.dp))
+                                    Button(
+                                        onClick = { fotoUrl = "" },
+                                        modifier = Modifier.fillMaxWidth().height(32.dp),
+                                        shape = RoundedCornerShape(8.dp),
+                                        contentPadding = PaddingValues(0.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ErrorText)
+                                    ) {
+                                        Text("Eliminar foto", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
-                            Column(Modifier.weight(0.69f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                            Column(Modifier.weight(0.69f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                                 Label("NOMBRE DEL ARTÍCULO *")
-                                BasicTextField(value = nombre, onValueChange = { nombre = it }, modifier = Modifier.fillMaxWidth().height(68.dp).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).padding(10.dp), singleLine = true, textStyle = TextStyle(color = AppText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold), cursorBrush = SolidColor(OrangePrimary))
+                                BasicTextField(
+                                    value = nombre, onValueChange = { nombre = it },
+                                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                                        .border(1.dp, AppBorder, RoundedCornerShape(10.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
+                                    singleLine = true,
+                                    textStyle = TextStyle(color = AppText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                                    cursorBrush = SolidColor(OrangePrimary)
+                                )
                                 Label("DESCRIPCIÓN")
-                                BasicTextField(value = descripcion, onValueChange = { descripcion = it }, modifier = Modifier.fillMaxWidth().height(148.dp).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).padding(10.dp), textStyle = TextStyle(color = AppText, fontSize = 11.sp, lineHeight = 16.sp), cursorBrush = SolidColor(OrangePrimary))
+                                BasicTextField(
+                                    value = descripcion, onValueChange = { descripcion = it },
+                                    modifier = Modifier.fillMaxWidth().height(96.dp)
+                                        .border(1.dp, AppBorder, RoundedCornerShape(10.dp)).padding(10.dp),
+                                    textStyle = TextStyle(color = AppText, fontSize = 11.sp, lineHeight = 15.sp),
+                                    cursorBrush = SolidColor(OrangePrimary)
+                                )
                             }
                         }
 
-                        Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 7.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Column(Modifier.weight(1.25f)) {
                                 Label("CATEGORÍA (FAMILIA) *")
                                 Box {
-                                    Row(modifier = Modifier.fillMaxWidth().height(68.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (familyOpen) SuccessText else AppBorder, RoundedCornerShape(12.dp)).clickable { familyOpen = !familyOpen }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .border(1.dp, if (familyOpen) SuccessText else AppBorder, RoundedCornerShape(10.dp))
+                                            .clickable { familyOpen = !familyOpen }
+                                            .padding(horizontal = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
                                         Text(familiaNombre, fontSize = 14.sp, color = AppText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(if (familyOpen) "⌃" else "⌄", fontSize = 22.sp, color = if (familyOpen) SuccessText else AppText)
+                                        Text(if (familyOpen) "⌃" else "⌄", fontSize = 18.sp, color = if (familyOpen) SuccessText else AppText)
                                     }
                                     if (familyOpen) {
-                                        Column(Modifier.fillMaxWidth().heightIn(max = 492.dp).clip(RoundedCornerShape(12.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).padding(vertical = 4.dp)) {
-                                            Row(modifier = Modifier.fillMaxWidth().height(48.dp).clickable { familiaId = ""; familyOpen = false }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                                Text("Selecciona una familia", fontSize = 14.sp, color = AppText)
-                                                if (familiaId.isBlank()) Icon(Icons.Default.Check, null, tint = SuccessText, modifier = Modifier.size(20.dp))
-                                            }
+                                        Column(
+                                            Modifier.fillMaxWidth().heightIn(max = 340.dp)
+                                                .clip(RoundedCornerShape(10.dp)).background(AppSurfaceSoft)
+                                                .border(1.dp, AppBorder, RoundedCornerShape(10.dp)).padding(vertical = 2.dp)
+                                        ) {
+                                            FamilyOption("Selecciona una familia", familiaId.isBlank(), 40.dp) { familiaId = ""; familyOpen = false }
                                             familias.forEach { f ->
-                                                Row(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(8.dp)).background(if (f.id == familiaId) Color(0x1A10B981) else Color.Transparent).clickable { familiaId = f.id; familyOpen = false }.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                                    Text(f.nombre, fontSize = 14.sp, fontWeight = if (f.id == familiaId) FontWeight.Bold else FontWeight.Normal, color = if (f.id == familiaId) SuccessText else AppText)
-                                                    if (f.id == familiaId) Icon(Icons.Default.Check, null, tint = SuccessText, modifier = Modifier.size(20.dp))
-                                                }
+                                                FamilyOption(f.nombre, f.id == familiaId, 40.dp) { familiaId = f.id; familyOpen = false }
                                             }
                                         }
                                     }
@@ -183,11 +256,28 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                             }
                             Column(Modifier.weight(0.75f)) {
                                 Label("PRECIO *")
-                                BasicTextField(value = precio, onValueChange = { precio = it }, modifier = Modifier.fillMaxWidth().height(68.dp).border(1.dp, AppBorder, RoundedCornerShape(12.dp)).padding(start = 10.dp, end = 26.dp, top = 10.dp, bottom = 10.dp), singleLine = true, textStyle = TextStyle(color = AppText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold), cursorBrush = SolidColor(OrangePrimary), decorationBox = { inner -> Box(Modifier.fillMaxSize()) { inner(); Text("€", modifier = Modifier.align(Alignment.CenterEnd), color = AppMuted, fontSize = 11.sp) } })
+                                BasicTextField(
+                                    value = precio, onValueChange = { precio = it },
+                                    modifier = Modifier.fillMaxWidth().height(50.dp)
+                                        .border(1.dp, AppBorder, RoundedCornerShape(10.dp))
+                                        .padding(start = 10.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
+                                    singleLine = true,
+                                    textStyle = TextStyle(color = AppText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+                                    cursorBrush = SolidColor(OrangePrimary),
+                                    decorationBox = { inner ->
+                                        Box(Modifier.fillMaxSize()) {
+                                            inner()
+                                            Text("€", modifier = Modifier.align(Alignment.CenterEnd), color = AppMuted, fontSize = 11.sp)
+                                        }
+                                    }
+                                )
                             }
                         }
 
-                        Row(Modifier.fillMaxWidth().padding(top = 10.dp).border(1.dp, AppBorder), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 7.dp).border(1.dp, AppBorder),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
                             Status("Disponible", !agotado, null) { agotado = !it }
                             Status("Especialidad", especialidad, "👨‍🍳") { especialidad = it }
                             Status("Sugerencia", sugerencia, null) { sugerencia = it }
@@ -197,19 +287,26 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
 
                 SectionCard {
                     Column(Modifier.padding(10.dp)) {
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(
+                            Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
                             Column {
                                 Text("Alérgenos", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
                                 Text("Selecciona los alérgenos que contiene este artículo.", fontSize = 11.sp, color = AppMuted)
                             }
-                            Box(Modifier.size(34.dp).clip(RoundedCornerShape(17.dp)).background(AppSurfaceSoft), contentAlignment = Alignment.Center) { Text(selected.size.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = OrangePrimary) }
+                            Box(Modifier.size(34.dp).clip(RoundedCornerShape(17.dp)).background(AppSurfaceSoft), contentAlignment = Alignment.Center) {
+                                Text(selected.size.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = OrangePrimary)
+                            }
                         }
                         Spacer(Modifier.height(6.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             alergenos.chunked(2).forEach { pair ->
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     pair.forEach { a ->
-                                        AlergenoChip(a, selected.contains(a.id), loader, Modifier.weight(1f)) { selected = if (selected.contains(a.id)) selected - a.id else selected + a.id }
+                                        AlergenoChip(a, selected.contains(a.id), loader, Modifier.weight(1f)) {
+                                            selected = if (selected.contains(a.id)) selected - a.id else selected + a.id
+                                        }
                                     }
                                     if (pair.size == 1) Spacer(Modifier.weight(1f))
                                 }
@@ -220,26 +317,45 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 message?.let { Text(it, Modifier.padding(horizontal = 12.dp), color = AppMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
             }
 
-            Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(AppBg).padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onBack, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = AppSurface, contentColor = AppMuted), border = BorderStroke(1.dp, AppBorder)) { Text("Cancelar", fontSize = 14.sp, fontWeight = FontWeight.Bold) }
-                Button(onClick = {
-                    val n = nombre.trim()
-                    val p = precio.replace(',', '.').toDoubleOrNull()
-                    if (n.isBlank()) { message = "El producto necesita un nombre."; return@Button }
-                    if (familiaId.isBlank()) { message = "Selecciona una familia."; return@Button }
-                    if (p == null || p < 0) { message = "Introduce un precio válido."; return@Button }
-                    saving = true
-                    message = null
-                    scope.launch {
-                        try {
-                            SupabaseRepository.saveProducto(productId, n, descripcion.trim().ifBlank { null }, p, familiaId, fotoUrl.trim().ifBlank { null }, visible, agotado, especialidad, sugerencia, selected.toList())
-                            onBack()
-                        } catch (e: Exception) {
-                            message = e.message ?: "No se pudo guardar."
-                        } finally { saving = false }
-                    }
-                }, enabled = !saving, modifier = Modifier.weight(1.7f).height(52.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
-                    Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+            Row(
+                Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(AppBg).padding(horizontal = 8.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onBack, modifier = Modifier.weight(1f).height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = AppSurface, contentColor = AppMuted),
+                    border = BorderStroke(1.dp, AppBorder)
+                ) { Text("Cancelar", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                Button(
+                    onClick = {
+                        val n = nombre.trim()
+                        val p = precio.replace(',', '.').toDoubleOrNull()
+                        if (n.isBlank()) { message = "El producto necesita un nombre."; return@Button }
+                        if (familiaId.isBlank()) { message = "Selecciona una familia."; return@Button }
+                        if (p == null || p < 0) { message = "Introduce un precio válido."; return@Button }
+                        saving = true
+                        message = null
+                        scope.launch {
+                            try {
+                                SupabaseRepository.saveProducto(
+                                    productId, n, descripcion.trim().ifBlank { null }, p, familiaId,
+                                    fotoUrl.trim().ifBlank { null }, visible, agotado, especialidad, sugerencia,
+                                    selected.toList()
+                                )
+                                onBack()
+                            } catch (e: Exception) {
+                                message = e.message ?: "No se pudo guardar."
+                            } finally { saving = false }
+                        }
+                    },
+                    enabled = !saving, modifier = Modifier.weight(1.7f).height(44.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)
+                ) {
+                    Icon(Icons.Default.Save, null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -248,15 +364,39 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
 
 @Composable
 private fun SectionCard(content: @Composable () -> Unit) {
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(AppSurface).border(1.dp, AppBorder, RoundedCornerShape(12.dp))) { content() }
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(AppSurface)
+            .border(1.dp, AppBorder, RoundedCornerShape(12.dp))
+    ) { content() }
 }
 
 @Composable
-private fun Label(text: String) { Text(text, color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold) }
+private fun Label(text: String) {
+    Text(text, color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+}
+
+@Composable
+private fun FamilyOption(text: String, selected: Boolean, height: androidx.compose.ui.unit.Dp, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(height)
+            .clip(RoundedCornerShape(7.dp))
+            .background(if (selected) Color(0x1A10B981) else Color.Transparent)
+            .clickable(onClick = onClick).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text, fontSize = 13.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, color = if (selected) SuccessText else AppText)
+        if (selected) Icon(Icons.Default.Check, null, tint = SuccessText, modifier = Modifier.size(17.dp))
+    }
+}
 
 @Composable
 private fun Status(label: String, checked: Boolean, icon: String?, onChange: (Boolean) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.padding(vertical = 8.dp)) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = Modifier.padding(vertical = 7.dp)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             if (icon != null) Text(icon, fontSize = 11.sp)
             if (label == "Sugerencia") Icon(Icons.Default.Lightbulb, null, tint = SuccessText, modifier = Modifier.size(11.dp))
@@ -268,7 +408,13 @@ private fun Status(label: String, checked: Boolean, icon: String?, onChange: (Bo
 
 @Composable
 private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(modifier = Modifier.width(36.dp).height(20.dp).clip(RoundedCornerShape(10.dp)).background(if (checked) SuccessText else Color(0xFFD1D5DB)).clickable { onChange(!checked) }.padding(2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (checked) Arrangement.End else Arrangement.Start) {
+    Row(
+        modifier = Modifier.width(36.dp).height(20.dp).clip(RoundedCornerShape(10.dp))
+            .background(if (checked) SuccessText else Color(0xFFD1D5DB)).clickable { onChange(!checked) }
+            .padding(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = if (checked) Arrangement.End else Arrangement.Start
+    ) {
         Box(Modifier.size(16.dp).clip(RoundedCornerShape(8.dp)).background(Color.White))
     }
 }
@@ -276,13 +422,29 @@ private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
 @Composable
 private fun AlergenoChip(a: Alergeno, selected: Boolean, loader: ImageLoader, modifier: Modifier, onClick: () -> Unit) {
     val assetAndBg = erudus(a.nombre)
-    Row(modifier = modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp)).border(1.dp, if (selected) Color(0xFFF97316) else AppBorder, RoundedCornerShape(12.dp)).background(if (selected) Color(0x1AF97316) else AppSurfaceSoft).clickable(onClick = onClick).padding(horizontal = 6.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(16.dp).border(1.dp, if (selected) Color(0xFFF97316) else AppMuted, RoundedCornerShape(2.dp)), contentAlignment = Alignment.Center) {
+    Row(
+        modifier = modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
+            .border(1.dp, if (selected) Color(0xFFF97316) else AppBorder, RoundedCornerShape(12.dp))
+            .background(if (selected) Color(0x1AF97316) else AppSurfaceSoft)
+            .clickable(onClick = onClick).padding(horizontal = 6.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            Modifier.size(16.dp).clip(RoundedCornerShape(2.dp))
+                .background(if (selected) Color(0x1AF97316) else Color.Transparent)
+                .border(1.dp, if (selected) Color(0xFFF97316) else AppMuted, RoundedCornerShape(2.dp)),
+            contentAlignment = Alignment.Center
+        ) {
             if (selected) Icon(Icons.Default.Check, null, tint = SuccessText, modifier = Modifier.size(11.dp))
         }
         Spacer(Modifier.width(6.dp))
         Box(Modifier.size(30.dp).clip(RoundedCornerShape(15.dp)).background(assetAndBg.second), contentAlignment = Alignment.Center) {
-            if (assetAndBg.first.isNotBlank()) AsyncImage(model = "file:///android_asset/erudus/${assetAndBg.first}", imageLoader = loader, contentDescription = null, modifier = Modifier.size(28.dp))
+            if (assetAndBg.first.isNotBlank()) {
+                AsyncImage(
+                    model = "file:///android_asset/erudus/${assetAndBg.first}", imageLoader = loader,
+                    contentDescription = null, modifier = Modifier.size(28.dp)
+                )
+            }
         }
         Spacer(Modifier.width(6.dp))
         Text(a.nombre, modifier = Modifier.weight(1f), color = AppText, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, lineHeight = 11.sp)
