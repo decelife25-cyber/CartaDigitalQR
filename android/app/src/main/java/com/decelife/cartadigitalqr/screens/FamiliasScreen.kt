@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,7 +50,7 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
 @Composable private fun FamiliaRow(familia: Familia, onClick: () -> Unit, onDragStart: () -> Unit, onDrag: (Float, Float) -> Unit, onDragEnd: () -> Unit) {
     Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface).border(1.dp, AppBorder).padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) { Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!familia.foto_url.isNullOrBlank()) AsyncImage(model = familia.foto_url, contentDescription = familia.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(fallbackIcons[familia.nombre] ?: Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }; Text(familia.nombre, Modifier.weight(1f).padding(horizontal = 12.dp), fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1); Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (familia.activo) SuccessBg else Color(0x149CA3AF)).padding(horizontal = 8.dp, vertical = 4.dp)) { Text(if (familia.activo) "Visible" else "Oculta", color = if (familia.activo) SuccessText else AppMuted, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold) } }
-        Icon(Icons.Default.DragIndicator, "Reordenar", tint = AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(familia.id) { detectDragGesturesAfterLongPress(onDragStart = onDragStart, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.y, 30.dp.toPx()) } })
+        Icon(Icons.Default.DragIndicator, "Reordenar", tint = AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(familia.id) { detectDragGesturesAfterLongPress(onDragStart = { _ -> onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> onDrag(dragAmount.y, 30.dp.toPx()) } })
     }
 }
 @Composable private fun LoadingState() { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
