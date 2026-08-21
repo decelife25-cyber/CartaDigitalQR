@@ -85,45 +85,23 @@ object SupabaseRepository {
     private fun parseFamilias(json: JSONArray): List<Familia> = buildList(json.length()) {
         for (i in 0 until json.length()) {
             val item = json.getJSONObject(i)
-            add(
-                Familia(
-                    item.getString("id"),
-                    item.optString("nombre"),
-                    item.optInt("orden", 0),
-                    item.optBoolean("activo", true),
-                    item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" },
-                    item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" },
-                    item.optString("configuracion_restaurante_id").takeIf { it.isNotBlank() && it != "null" }
-                )
-            )
+            add(Familia(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0), item.optBoolean("activo", true), item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" }, item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" }, item.optString("configuracion_restaurante_id").takeIf { it.isNotBlank() && it != "null" }))
         }
     }
 
     suspend fun getAlergenos(): List<Alergeno> {
         val json = JSONArray(get("alergenos?select=id,nombre,orden&order=orden.asc"))
-        return buildList(json.length()) {
-            for (i in 0 until json.length()) {
-                val item = json.getJSONObject(i)
-                add(Alergeno(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0)))
-            }
-        }
+        return buildList(json.length()) { for (i in 0 until json.length()) { val item = json.getJSONObject(i); add(Alergeno(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0))) } }
     }
 
     suspend fun getProductos(): List<Producto> {
         val json = JSONArray(get("productos?select=*&activo=eq.true&order=orden.asc"))
-        return buildList(json.length()) {
-            for (i in 0 until json.length()) {
-                val item = json.getJSONObject(i)
-                add(Producto(item.getString("id"), item.optString("familia_id"), item.optString("nombre"), item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" }, item.optDouble("precio", 0.0), item.optInt("orden", 0), item.optBoolean("activo", true), item.optBoolean("agotado", false), item.optBoolean("destacado", false), item.optBoolean("sugerido", false), item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" }))
-            }
-        }
+        return buildList(json.length()) { for (i in 0 until json.length()) { val item = json.getJSONObject(i); add(Producto(item.getString("id"), item.optString("familia_id"), item.optString("nombre"), item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" }, item.optDouble("precio", 0.0), item.optInt("orden", 0), item.optBoolean("activo", true), item.optBoolean("agotado", false), item.optBoolean("destacado", false), item.optBoolean("sugerido", false), item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" })) } }
     }
 
     suspend fun getProductoAlergenos(productId: String): List<String> {
         val json = JSONArray(get("producto_alergeno?select=alergeno_id&producto_id=eq.$productId"))
-        return buildList(json.length()) {
-            for (i in 0 until json.length()) add(json.getJSONObject(i).optString("alergeno_id"))
-        }
+        return buildList(json.length()) { for (i in 0 until json.length()) add(json.getJSONObject(i).optString("alergeno_id")) }
     }
 
     suspend fun replaceProductoAlergenos(productId: String, alergenoIds: List<String>) {
@@ -134,44 +112,13 @@ object SupabaseRepository {
     }
 
     suspend fun saveProducto(id: String?, nombre: String, descripcion: String?, precio: Double, familiaId: String, fotoUrl: String?, activo: Boolean, agotado: Boolean, destacado: Boolean, sugerido: Boolean, alergenoIds: List<String>) {
-        val payload = JSONObject().apply {
-            put("nombre", nombre)
-            put("descripcion", descripcion ?: JSONObject.NULL)
-            put("precio", precio)
-            put("familia_id", familiaId)
-            put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
-            put("activo", activo)
-            put("agotado", agotado)
-            put("destacado", destacado)
-            put("sugerido", sugerido)
-        }
-        if (id == null) {
-            val response = request("POST", "productos", payload.toString())
-            val created = JSONArray(response).optJSONObject(0) ?: throw IllegalStateException("No se pudo crear el producto.")
-            replaceProductoAlergenos(created.getString("id"), alergenoIds)
-        } else {
-            request("PATCH", "productos?id=eq.$id", payload.toString())
-            replaceProductoAlergenos(id, alergenoIds)
-        }
+        val payload = JSONObject().apply { put("nombre", nombre); put("descripcion", descripcion ?: JSONObject.NULL); put("precio", precio); put("familia_id", familiaId); put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL); put("activo", activo); put("agotado", agotado); put("destacado", destacado); put("sugerido", sugerido) }
+        if (id == null) { val response = request("POST", "productos", payload.toString()); val created = JSONArray(response).optJSONObject(0) ?: throw IllegalStateException("No se pudo crear el producto."); replaceProductoAlergenos(created.getString("id"), alergenoIds) } else { request("PATCH", "productos?id=eq.$id", payload.toString()); replaceProductoAlergenos(id, alergenoIds) }
     }
 
     suspend fun saveFamilia(id: String?, nombre: String, descripcion: String?, fotoUrl: String?, activo: Boolean) {
-        val payload = JSONObject().apply {
-            put("nombre", nombre)
-            put("descripcion", descripcion ?: JSONObject.NULL)
-            put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
-            put("activo", activo)
-        }
-        if (id == null) {
-            val configJson = JSONArray(get("familias?select=configuracion_restaurante_id&configuracion_restaurante_id=not.is.null&limit=1"))
-            val configId = configJson.optJSONObject(0)?.optString("configuracion_restaurante_id").orEmpty()
-            if (configId.isBlank()) throw IllegalStateException("No se pudo determinar el restaurante de la familia.")
-            payload.put("configuracion_restaurante_id", configId)
-            payload.put("orden", 0)
-            request("POST", "familias", payload.toString())
-        } else {
-            request("PATCH", "familias?id=eq.$id", payload.toString())
-        }
+        val payload = JSONObject().apply { put("nombre", nombre); put("descripcion", descripcion ?: JSONObject.NULL); put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL); put("activo", activo) }
+        if (id == null) { val configJson = JSONArray(get("familias?select=configuracion_restaurante_id&configuracion_restaurante_id=not.is.null&limit=1")); val configId = configJson.optJSONObject(0)?.optString("configuracion_restaurante_id").orEmpty(); if (configId.isBlank()) throw IllegalStateException("No se pudo determinar el restaurante de la familia."); payload.put("configuracion_restaurante_id", configId); payload.put("orden", 0); request("POST", "familias", payload.toString()) } else request("PATCH", "familias?id=eq.$id", payload.toString())
     }
 
     suspend fun deleteFamilia(id: String) { request("DELETE", "familias?id=eq.$id") }
@@ -190,6 +137,41 @@ object SupabaseRepository {
         if (index == -1) return
         val path = fotoUrl.substring(index + marker.length)
         if (!path.startsWith("familias/")) return
+        storageRequest("DELETE", "productos/$path")
+    }
+
+    suspend fun saveConfiguracion(config: Configuracion) {
+        val payload = JSONObject().apply {
+            put("nombre", config.nombre.trim())
+            put("telefono", config.telefono?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("direccion", config.direccion?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("descripcion", config.descripcion?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("horario", config.horario?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("logo_url", config.logo_url?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("color_principal", config.color_principal?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("qr_url", config.qr_url?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("dominio", config.dominio?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("url_reservas_mesa", config.url_reservas_mesa?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("portada_url", config.portada_url?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            put("updated_at", java.time.Instant.now().toString())
+        }
+        request("PATCH", "configuracion_restaurante?id=eq.${config.id}", payload.toString())
+    }
+
+    suspend fun uploadConfiguracionPortada(bytes: ByteArray, contentType: String, extension: String): String {
+        val safeExtension = extension.lowercase().replace(Regex("[^a-z0-9]"), "").ifBlank { "jpg" }
+        val path = "publico/portada-${System.currentTimeMillis()}-${(100000..999999).random()}.$safeExtension"
+        storageRequest("POST", path, bytes, contentType)
+        return "$baseUrl/storage/v1/object/public/$path"
+    }
+
+    suspend fun deleteConfiguracionPortada(fotoUrl: String) {
+        if (fotoUrl.isBlank()) return
+        val marker = "/storage/v1/object/public/productos/"
+        val index = fotoUrl.indexOf(marker)
+        if (index == -1) return
+        val path = fotoUrl.substring(index + marker.length)
+        if (!path.startsWith("publico/")) return
         storageRequest("DELETE", "productos/$path")
     }
 
