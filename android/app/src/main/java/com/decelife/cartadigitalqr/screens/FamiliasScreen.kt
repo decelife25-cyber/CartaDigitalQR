@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.decelife.cartadigitalqr.data.SupabaseRepository
 import com.decelife.cartadigitalqr.models.Familia
@@ -106,7 +107,7 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
 }
 
 @Composable private fun FamiliaRow(familia: Familia, isDragging: Boolean, dragVisualX: Float, dragVisualY: Float, onClick: () -> Unit, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
-    Row(Modifier.fillMaxWidth().graphicsLayer { translationX = dragVisualX; translationY = dragVisualY; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().zIndex(if (isDragging) 10f else 0f).graphicsLayer { translationX = dragVisualX; translationY = dragVisualY; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!familia.foto_url.isNullOrBlank()) AsyncImage(model = familia.foto_url, contentDescription = familia.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(fallbackIcons[familia.nombre] ?: Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }
             Text(familia.nombre, Modifier.weight(1f).padding(horizontal = 12.dp), fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
