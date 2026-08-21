@@ -46,15 +46,56 @@ object SupabaseRepository {
         } finally { connection.disconnect() }
     }
 
+    private suspend fun storageRequest(method: String, path: String, bytes: ByteArray? = null, contentType: String? = null): String = withContext(Dispatchers.IO) {
+        require(baseUrl.isNotBlank()) { "Falta la URL de Supabase en la compilación de Android." }
+        require(apiKey.isNotBlank()) { "Falta la clave pública de Supabase en la compilación de Android." }
+        val connection = (URL("$baseUrl/storage/v1/object/$path").openConnection() as HttpURLConnection).apply {
+            requestMethod = method
+            connectTimeout = TIMEOUT_MS
+            readTimeout = TIMEOUT_MS
+            doInput = true
+            setRequestProperty("apikey", apiKey)
+            setRequestProperty("Authorization", "Bearer $apiKey")
+            if (contentType != null) setRequestProperty("Content-Type", contentType)
+            setRequestProperty("x-upsert", "false")
+            if (bytes != null) doOutput = true
+        }
+        try {
+            if (bytes != null) connection.outputStream.use { it.write(bytes) }
+            val code = connection.responseCode
+            val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+            val response = stream?.use { input -> BufferedReader(InputStreamReader(input, Charsets.UTF_8)).use { it.readText() } }.orEmpty()
+            if (code !in 200..299) throw IllegalStateException("Supabase Storage HTTP $code: $response")
+            response
+        } finally { connection.disconnect() }
+    }
+
     private suspend fun get(pathAndQuery: String) = request("GET", pathAndQuery)
 
     suspend fun getFamilias(): List<Familia> {
         val json = JSONArray(get("familias?select=*&activo=eq.true&order=orden.asc"))
-        return buildList(json.length()) {
-            for (i in 0 until json.length()) {
-                val item = json.getJSONObject(i)
-                add(Familia(item.getString("id"), item.optString("nombre"), item.optInt("orden", 0), item.optBoolean("activo", true), item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" }))
-            }
+        return parseFamilias(json)
+    }
+
+    suspend fun getFamiliasAdmin(): List<Familia> {
+        val json = JSONArray(get("familias?select=*&order=orden.asc"))
+        return parseFamilias(json)
+    }
+
+    private fun parseFamilias(json: JSONArray): List<Familia> = buildList(json.length()) {
+        for (i in 0 until json.length()) {
+            val item = json.getJSONObject(i)
+            add(
+                Familia(
+                    item.getString("id"),
+                    item.optString("nombre"),
+                    item.optInt("orden", 0),
+                    item.optBoolean("activo", true),
+                    item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" },
+                    item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" },
+                    item.optString("configuracion_restaurante_id").takeIf { it.isNotBlank() && it != "null" }
+                )
+            )
         }
     }
 
@@ -112,6 +153,44 @@ object SupabaseRepository {
             request("PATCH", "productos?id=eq.$id", payload.toString())
             replaceProductoAlergenos(id, alergenoIds)
         }
+    }
+
+    suspend fun saveFamilia(id: String?, nombre: String, descripcion: String?, fotoUrl: String?, activo: Boolean) {
+        val payload = JSONObject().apply {
+            put("nombre", nombre)
+            put("descripcion", descripcion ?: JSONObject.NULL)
+            put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL)
+            put("activo", activo)
+        }
+        if (id == null) {
+            val configJson = JSONArray(get("familias?select=configuracion_restaurante_id&configuracion_restaurante_id=not.is.null&limit=1"))
+            val configId = configJson.optJSONObject(0)?.optString("configuracion_restaurante_id").orEmpty()
+            if (configId.isBlank()) throw IllegalStateException("No se pudo determinar el restaurante de la familia.")
+            payload.put("configuracion_restaurante_id", configId)
+            payload.put("orden", 0)
+            request("POST", "familias", payload.toString())
+        } else {
+            request("PATCH", "familias?id=eq.$id", payload.toString())
+        }
+    }
+
+    suspend fun deleteFamilia(id: String) { request("DELETE", "familias?id=eq.$id") }
+
+    suspend fun uploadFamiliaFoto(bytes: ByteArray, contentType: String, extension: String): String {
+        val safeExtension = extension.lowercase().replace(Regex("[^a-z0-9]"), "").ifBlank { "jpg" }
+        val path = "productos/familias/${System.currentTimeMillis()}-${(100000..999999).random()}.$safeExtension"
+        storageRequest("POST", path, bytes, contentType)
+        return "$baseUrl/storage/v1/object/public/$path"
+    }
+
+    suspend fun deleteFamiliaFoto(fotoUrl: String) {
+        if (fotoUrl.isBlank()) return
+        val marker = "/storage/v1/object/public/productos/"
+        val index = fotoUrl.indexOf(marker)
+        if (index == -1) return
+        val path = fotoUrl.substring(index + marker.length)
+        if (!path.startsWith("familias/")) return
+        storageRequest("DELETE", "productos/$path")
     }
 
     suspend fun getConfiguracion(): Configuracion? {
