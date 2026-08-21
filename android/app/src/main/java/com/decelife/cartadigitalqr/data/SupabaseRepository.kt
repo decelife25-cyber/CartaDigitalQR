@@ -18,6 +18,7 @@ object SupabaseRepository {
     private const val TIMEOUT_MS = 15_000
     private val baseUrl get() = BuildConfig.SUPABASE_URL.trimEnd('/')
     private val apiKey get() = BuildConfig.SUPABASE_ANON_KEY
+    private val authHeader get() = SupabaseAuth.bearerToken()?.let { "Bearer $it" } ?: "Bearer $apiKey"
 
     private suspend fun request(method: String, pathAndQuery: String, body: String? = null): String = withContext(Dispatchers.IO) {
         require(baseUrl.isNotBlank()) { "Falta la URL de Supabase en la compilación de Android." }
@@ -28,7 +29,7 @@ object SupabaseRepository {
             readTimeout = TIMEOUT_MS
             doInput = true
             setRequestProperty("apikey", apiKey)
-            setRequestProperty("Authorization", "Bearer $apiKey")
+            setRequestProperty("Authorization", authHeader)
             setRequestProperty("Accept", "application/json")
             if (body != null) {
                 doOutput = true
@@ -55,7 +56,7 @@ object SupabaseRepository {
             readTimeout = TIMEOUT_MS
             doInput = true
             setRequestProperty("apikey", apiKey)
-            setRequestProperty("Authorization", "Bearer $apiKey")
+            setRequestProperty("Authorization", authHeader)
             if (contentType != null) setRequestProperty("Content-Type", contentType)
             setRequestProperty("x-upsert", "false")
             if (bytes != null) doOutput = true
