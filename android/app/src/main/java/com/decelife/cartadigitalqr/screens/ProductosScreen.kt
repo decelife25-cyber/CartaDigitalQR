@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -163,8 +164,6 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         dragVisualY = 0f
     }
 
-    fun clearFilters() { search = ""; familiaId = "todas"; status = StatusFilter.TODOS.name; sort = SortMode.ORDEN.name }
-
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AdminHeader(showHome = true, onHome = onBackClick)
         ScreenHeader(title = "Productos", actionText = "+ Nuevo producto", onBack = onBackClick, onAction = onNewProduct)
@@ -187,24 +186,11 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
             else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 items(filtered, key = { it.id }) { product ->
                     val isDragging = draggedId == product.id
-                    ProductRow(
-                        product = product,
-                        family = familyById[product.familia_id]?.nombre ?: "",
-                        isDragging = isDragging,
-                        dragVisualX = if (isDragging) dragVisualX else 0f,
-                        dragVisualY = if (isDragging) dragVisualY else 0f,
-                        onClick = { if (draggedId == null) onProductClick(product.id) },
-                        canReorder = canReorder,
-                        onDragStart = { if (canReorder) { draggedId = product.id; dragVisualX = 0f; dragVisualY = 0f } },
-                        onDrag = { amountX, amountY, localY ->
-                            if (draggedId == product.id) {
-                                dragVisualX += amountX
-                                dragVisualY += amountY
-                                updateAutoScroll(pointerYFor(product.id, localY))
-                            }
-                        },
-                        onDragEnd = { if (draggedId == product.id) finishDrag(product.id, pointerYFor(product.id, 0f) + dragVisualY) }
-                    )
+                    ProductRow(product, familyById[product.familia_id]?.nombre ?: "", isDragging, if (isDragging) dragVisualX else 0f, if (isDragging) dragVisualY else 0f,
+                        { if (draggedId == null) onProductClick(product.id) }, canReorder,
+                        { if (canReorder) { draggedId = product.id; dragVisualX = 0f; dragVisualY = 0f } },
+                        { amountX, amountY, localY -> if (draggedId == product.id) { dragVisualX += amountX; dragVisualY += amountY; updateAutoScroll(pointerYFor(product.id, localY)) } },
+                        { if (draggedId == product.id) finishDrag(product.id, pointerYFor(product.id, 0f) + dragVisualY) })
                 }
             }
         }
@@ -253,14 +239,7 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
             Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.agotado) "Agotado" else "Visible", if (product.agotado) Color(0xFFFFE8E8) else SuccessBg, if (product.agotado) Color(0xFFDC2626) else SuccessText) }
         }
         Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) {
-            detectDragGestures(
-                onDragStart = { onDragStart() },
-                onDragCancel = onDragEnd,
-                onDragEnd = onDragEnd
-            ) { change, dragAmount ->
-                change.consume()
-                onDrag(dragAmount.x, dragAmount.y, change.position.y)
-            }
+            detectDragGestures(onDragStart = onDragStart, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.x, dragAmount.y, change.position.y) }
         })
     }
 }
