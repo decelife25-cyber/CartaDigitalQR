@@ -5,7 +5,9 @@ data class Familia(
     val nombre: String,
     val orden: Int,
     val activo: Boolean,
-    val foto_url: String?
+    val foto_url: String?,
+    val descripcion: String? = null,
+    val configuracion_restaurante_id: String? = null
 )
 
 data class Alergeno(
