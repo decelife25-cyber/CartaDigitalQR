@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -23,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.fastFirstOrNull
 import coil.compose.AsyncImage
 import com.decelife.cartadigitalqr.data.SupabaseRepository
 import com.decelife.cartadigitalqr.models.Familia
@@ -81,12 +81,11 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
             ?: visible.minByOrNull { info -> kotlin.math.abs(pointerY - (info.offset + info.size / 2f)) }
         val targetId = targetInfo?.key as? String
         val targetIndex = current.indexOfFirst { it.id == targetId }
-        var ordered = current
         if (targetIndex >= 0 && targetIndex != sourceIndex) {
             val mutable = current.toMutableList()
             val moved = mutable.removeAt(sourceIndex)
             mutable.add(targetIndex.coerceIn(0, mutable.size), moved)
-            ordered = mutable.mapIndexed { index, item -> item.copy(orden = index) }
+            val ordered = mutable.mapIndexed { index, item -> item.copy(orden = index) }
             familias = ordered
             persistOrder(ordered)
         }
@@ -163,7 +162,7 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
             Icons.Default.DragIndicator,
             "Reordenar",
             tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted,
-            modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(familia.id, savingOrder) {
+            modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(familia.id) {
                 detectDragGestures(
                     onDragStart = { onDragStart() },
                     onDragCancel = onDragEnd,
