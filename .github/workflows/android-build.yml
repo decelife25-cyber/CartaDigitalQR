@@ -84,6 +84,7 @@ jobs:
       run: |
         cd android
         ./gradlew assembleRelease
+        cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/CartaDigitalQR-v${GITHUB_RUN_NUMBER}.apk
 
     - name: Verify APK signature
       run: |
@@ -92,7 +93,7 @@ jobs:
           echo "Error: apksigner not found."
           exit 1
         fi
-        "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+        "$APKSIGNER" verify --verbose --print-certs "android/app/build/outputs/apk/release/CartaDigitalQR-v${GITHUB_RUN_NUMBER}.apk"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
@@ -100,7 +101,7 @@ jobs:
         name: CartaDigitalQR-Release-v${{ github.run_number }}
         if-no-files-found: error
         retention-days: 30
-        path: android/app/build/outputs/apk/release/app-release.apk
+        path: android/app/build/outputs/apk/release/CartaDigitalQR-v${{ github.run_number }}.apk
 
     - name: Remove release keystore
       if: always()
