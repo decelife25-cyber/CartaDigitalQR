@@ -23,6 +23,7 @@ import com.decelife.cartadigitalqr.ui.components.QrCartaDialog
 fun AppNavigation(
     isNight: Boolean,
     onToggleTheme: () -> Unit,
+    onLogout: () -> Unit,
 ) {
     val navController = rememberNavController()
     var showQr by remember { mutableStateOf(false) }
@@ -36,14 +37,7 @@ fun AppNavigation(
         },
         showQr = { showQr = true },
         toggleTheme = onToggleTheme,
-        // Android currently has no Supabase Auth session/login flow; keep the header action useful
-        // by returning to the private-panel root without pretending to sign out server-side.
-        logout = {
-            navController.navigate("home") {
-                popUpTo("home") { inclusive = false }
-                launchSingleTop = true
-            }
-        },
+        logout = onLogout,
         isNight = isNight,
     )
 
