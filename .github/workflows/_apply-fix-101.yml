@@ -90,3 +90,5 @@ jobs:
           git rm .github/workflows/_apply-fix-101.yml
           git commit -m "chore: remove temporary patch workflow [auto-fix]"
           git push
+
+# trigger
