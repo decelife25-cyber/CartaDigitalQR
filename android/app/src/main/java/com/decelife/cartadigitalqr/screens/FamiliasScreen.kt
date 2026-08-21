@@ -7,7 +7,6 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.animateItemPlacement
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,16 +43,11 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
     var draggedId by remember { mutableStateOf<String?>(null) }
     var dragAccumulated by remember { mutableStateOf(0f) }
     var dragVisualOffset by remember { mutableStateOf(0f) }
-    var dragPointerY by remember { mutableStateOf(0f) }
     var savingOrder by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val listState = remember { LazyListState() }
 
-    suspend fun reload() {
-        error = null
-        try { familias = SupabaseRepository.getFamiliasAdmin() }
-        catch (e: Exception) { error = e.message ?: "No se han podido cargar las familias." }
-    }
+    suspend fun reload() { error = null; try { familias = SupabaseRepository.getFamiliasAdmin() } catch (e: Exception) { error = e.message ?: "No se han podido cargar las familias." } }
     LaunchedEffect(Unit) { reload() }
 
     fun moveLocal(id: String, direction: Int) {
@@ -71,20 +65,14 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
     fun persistOrder() {
         val ordered = familias.orEmpty().sortedBy { it.orden }
         if (ordered.isEmpty() || savingOrder) return
-        // Liberar inmediatamente el elemento arrastrado: al soltar ya no debe quedar seleccionado.
         draggedId = null
         dragVisualOffset = 0f
         dragAccumulated = 0f
         savingOrder = true
         scope.launch {
-            try {
-                ordered.forEachIndexed { index, familia ->
-                    SupabaseRepository.updateFamiliaFields(familia.id, mapOf("orden" to index))
-                }
-            } catch (e: Exception) {
-                error = e.message ?: "No se pudo guardar el orden de las familias."
-                reload()
-            } finally { savingOrder = false }
+            try { ordered.forEachIndexed { index, familia -> SupabaseRepository.updateFamiliaFields(familia.id, mapOf("orden" to index)) } }
+            catch (e: Exception) { error = e.message ?: "No se pudo guardar el orden de las familias."; reload() }
+            finally { savingOrder = false }
         }
     }
 
@@ -92,25 +80,17 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
         if (savingOrder || draggedId != id) return
         dragAccumulated += amount
         dragVisualOffset += amount
-        dragPointerY = pointerY
-        while (dragAccumulated >= threshold) {
-            moveLocal(id, 1)
-            dragAccumulated -= threshold
-            dragVisualOffset -= threshold
-        }
-        while (dragAccumulated <= -threshold) {
-            moveLocal(id, -1)
-            dragAccumulated += threshold
-            dragVisualOffset += threshold
-        }
+        while (dragAccumulated >= threshold) { moveLocal(id, 1); dragAccumulated -= threshold; dragVisualOffset -= threshold }
+        while (dragAccumulated <= -threshold) { moveLocal(id, -1); dragAccumulated += threshold; dragVisualOffset += threshold }
         val viewportEnd = listState.layoutInfo.viewportEndOffset.toFloat()
-        val edge = 110f
-        val scrollAmount = when {
-            pointerY < edge -> -18f
-            viewportEnd > 0f && pointerY > viewportEnd - edge -> 18f
-            else -> 0f
+        val edge = 120f
+        if (pointerY < edge) {
+            val first = listState.layoutInfo.visibleItemsInfo.firstOrNull()
+            if (first != null && first.index > 0) scope.launch { listState.animateScrollToItem(first.index - 1) }
+        } else if (viewportEnd > 0f && pointerY > viewportEnd - edge) {
+            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+            if (last != null && last.index < listState.layoutInfo.totalItemsCount - 1) scope.launch { listState.animateScrollToItem(last.index + 1) }
         }
-        if (scrollAmount != 0f) scope.launch { listState.scrollBy(scrollAmount) }
     }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -122,60 +102,25 @@ fun FamiliasScreen(onBackClick: () -> Unit, onNewFamily: () -> Unit, onFamilyCli
             else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 items(familias.orEmpty().sortedBy { it.orden }, key = { it.id }) { familia ->
                     val isDragging = draggedId == familia.id
-                    FamiliaRow(
-                        familia = familia,
-                        isDragging = isDragging,
-                        dragVisualOffset = if (isDragging) dragVisualOffset else 0f,
-                        onClick = { if (draggedId == null && !savingOrder) onFamilyClick(familia.id) },
-                        onDragStart = {
-                            if (!savingOrder) {
-                                draggedId = familia.id
-                                dragAccumulated = 0f
-                                dragVisualOffset = 0f
-                            }
-                        },
-                        onDrag = { amount, threshold, pointerY -> handleDrag(amount, threshold, pointerY, familia.id) },
-                        onDragEnd = { if (draggedId == familia.id) persistOrder() }
-                    )
+                    FamiliaRow(familia, isDragging, if (isDragging) dragVisualOffset else 0f,
+                        { if (draggedId == null && !savingOrder) onFamilyClick(familia.id) },
+                        { if (!savingOrder) { draggedId = familia.id; dragAccumulated = 0f; dragVisualOffset = 0f } },
+                        { amount, threshold, pointerY -> handleDrag(amount, threshold, pointerY, familia.id) },
+                        { if (draggedId == familia.id) persistOrder() })
                 }
             }
         }
     }
 }
 
-@Composable
-private fun FamiliaRow(familia: Familia, isDragging: Boolean, dragVisualOffset: Float, onClick: () -> Unit, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth()
-            .animateItemPlacement()
-            .graphicsLayer { translationY = dragVisualOffset; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }
-            .background(if (isDragging) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surface)
-            .border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder)
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+@Composable private fun FamiliaRow(familia: Familia, isDragging: Boolean, dragVisualOffset: Float, onClick: () -> Unit, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
+    Row(Modifier.fillMaxWidth().graphicsLayer { translationY = dragVisualOffset; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 16.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
-                if (!familia.foto_url.isNullOrBlank()) AsyncImage(model = familia.foto_url, contentDescription = familia.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
-                else Icon(fallbackIcons[familia.nombre] ?: Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp))
-            }
+            Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!familia.foto_url.isNullOrBlank()) AsyncImage(model = familia.foto_url, contentDescription = familia.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(fallbackIcons[familia.nombre] ?: Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }
             Text(familia.nombre, Modifier.weight(1f).padding(horizontal = 12.dp), fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
-            Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (familia.activo) SuccessBg else Color(0x149CA3AF)).padding(horizontal = 8.dp, vertical = 4.dp)) {
-                Text(if (familia.activo) "Visible" else "Oculta", color = if (familia.activo) SuccessText else AppMuted, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
-            }
+            Box(Modifier.clip(RoundedCornerShape(16.dp)).background(if (familia.activo) SuccessBg else Color(0x149CA3AF)).padding(horizontal = 8.dp, vertical = 4.dp)) { Text(if (familia.activo) "Visible" else "Oculta", color = if (familia.activo) SuccessText else AppMuted, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold) }
         }
-        Icon(
-            Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted,
-            modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(familia.id, isDragging) {
-                detectDragGesturesAfterLongPress(
-                    onDragStart = { onDragStart() },
-                    onDragCancel = onDragEnd,
-                    onDragEnd = onDragEnd
-                ) { change, dragAmount ->
-                    onDrag(dragAmount.y, 76.dp.toPx(), change.position.y)
-                }
-            }
-        )
+        Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(familia.id, isDragging) { detectDragGesturesAfterLongPress(onDragStart = { onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> onDrag(dragAmount.y, 76.dp.toPx(), change.position.y) } })
     }
 }
 
