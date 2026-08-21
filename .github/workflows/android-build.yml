@@ -2,12 +2,12 @@ name: Android Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feat/**" ]
     paths:
       - 'android/**'
       - '.github/workflows/android-build.yml'
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "feat/**" ]
     paths:
       - 'android/**'
       - '.github/workflows/android-build.yml'
@@ -84,6 +84,12 @@ jobs:
       run: |
         cd android
         ./gradlew assembleRelease
+        VERSION_NAME=$(sed -n 's/.*val appVersionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)
+        if [ -z "$VERSION_NAME" ]; then
+          echo "Error: could not read appVersionName from android/app/build.gradle.kts"
+          exit 1
+        fi
+        cp app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/CartaDigitalQR-v${VERSION_NAME}.apk"
 
     - name: Verify APK signature
       run: |
@@ -92,15 +98,16 @@ jobs:
           echo "Error: apksigner not found."
           exit 1
         fi
-        "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+        VERSION_NAME=$(sed -n 's/.*val appVersionName = "\([^"]*\)".*/\1/p' android/app/build.gradle.kts)
+        "$APKSIGNER" verify --verbose --print-certs "android/app/build/outputs/apk/release/CartaDigitalQR-v${VERSION_NAME}.apk"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: CartaDigitalQR-Release-v${{ github.run_number }}
+        name: CartaDigitalQR-Release
         if-no-files-found: error
         retention-days: 30
-        path: android/app/build/outputs/apk/release/app-release.apk
+        path: android/app/build/outputs/apk/release/CartaDigitalQR-v*.apk
 
     - name: Remove release keystore
       if: always()

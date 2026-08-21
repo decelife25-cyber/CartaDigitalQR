@@ -12,6 +12,13 @@ val releaseKeyPassword = System.getenv("KEY_PASSWORD")
 val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
+// Versionado del proyecto. No depende del contador de GitHub Actions.
+// Formato: MAJOR.MINOR.PATCH, por ejemplo 1.0.099 -> 1.0.100 -> 1.1.0.
+val appVersionName = "1.0.101"
+val appVersionParts = appVersionName.split(".").map { it.toInt() }
+require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
+val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
+
 android {
     namespace = "com.decelife.cartadigitalqr"
     compileSdk = 34
@@ -19,8 +26,8 @@ android {
         applicationId = "com.decelife.cartadigitalqr"
         minSdk = 24
         targetSdk = 34
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 5).coerceAtLeast(5)
-        versionName = "1.4"
+        versionCode = appVersionCode
+        versionName = appVersionName
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
         buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabaseAnonKey))
         vectorDrawables { useSupportLibrary = true }
@@ -63,6 +70,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.security:security-crypto:1.1.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("io.coil-kt:coil-svg:2.6.0")
 }
