@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.consume
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -92,13 +93,9 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
     val scope = rememberCoroutineScope()
 
     suspend fun reload() {
-        try {
-            val (loadedFamilies, loadedProducts) = SupabaseRepository.getCatalogo()
-            familias = loadedFamilies
-            products = loadedProducts
-        } catch (e: Exception) {
-            error = e.message ?: "No se han podido cargar los productos."
-        }
+        error = null
+        try { val (loadedFamilies, loadedProducts) = SupabaseRepository.getCatalogo(); familias = loadedFamilies; products = loadedProducts }
+        catch (e: Exception) { error = e.message ?: "No se han podido cargar los productos." }
     }
 
     LaunchedEffect(Unit) { reload() }
@@ -146,15 +143,9 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         if (ordered.isEmpty()) return
         savingOrder = true
         scope.launch {
-            try {
-                ordered.forEachIndexed { index, product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to index)) }
-            } catch (e: Exception) {
-                error = e.message ?: "No se pudo guardar el orden de los productos."
-                reload()
-            } finally {
-                savingOrder = false
-                draggedId = null
-            }
+            try { ordered.forEachIndexed { index, product -> SupabaseRepository.updateProductoFields(product.id, mapOf("orden" to index)) } }
+            catch (e: Exception) { error = e.message ?: "No se pudo guardar el orden de los productos."; reload() }
+            finally { savingOrder = false; draggedId = null }
         }
     }
 
@@ -180,13 +171,15 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 items(filtered, key = { it.id }) { product ->
                     ProductRow(product, familyById[product.familia_id]?.nombre ?: "", onClick = { onProductClick(product.id) }, canReorder = canReorder, dragging = draggedId == product.id,
-                        onDragStart = { draggedId = product.id; dragAccumulated = 0f },
+                        onDragStart = { if (canReorder) { draggedId = product.id; dragAccumulated = 0f } },
                         onDrag = { amount, threshold ->
-                            dragAccumulated += amount
-                            while (dragAccumulated >= threshold) { moveLocal(product.id, 1); dragAccumulated -= threshold }
-                            while (dragAccumulated <= -threshold) { moveLocal(product.id, -1); dragAccumulated += threshold }
+                            if (canReorder) {
+                                dragAccumulated += amount
+                                while (dragAccumulated >= threshold) { moveLocal(product.id, 1); dragAccumulated -= threshold }
+                                while (dragAccumulated <= -threshold) { moveLocal(product.id, -1); dragAccumulated += threshold }
+                            }
                         },
-                        onDragEnd = { persistOrder() })
+                        onDragEnd = { if (draggedId != null) persistOrder() })
                 }
             }
         }
@@ -229,7 +222,7 @@ private fun SelectionDialog(title: String, options: List<Pair<String, String>>, 
             Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.agotado) "Agotado" else "Visible", if (product.agotado) Color(0xFFFFE8E8) else SuccessBg, if (product.agotado) Color(0xFFDC2626) else SuccessText) }
         }
         Icon(Icons.Default.DragIndicator, "Reordenar", tint = AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(canReorder, product.id) {
-            detectDragGesturesAfterLongPress(onDragStart = { onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount ->
+            detectDragGesturesAfterLongPress(onDragStart = { if (canReorder) onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount ->
                 change.consume(); onDrag(dragAmount.y, 30.dp.toPx())
             }
         })
