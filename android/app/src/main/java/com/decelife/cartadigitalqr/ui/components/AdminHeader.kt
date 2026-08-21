@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.QrCode2
+import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -34,6 +35,12 @@ private val Orange = Color(0xFFFF7A00)
 
 @Composable
 fun AdminHeader(showHome: Boolean = false, onHome: (() -> Unit)? = null, onQr: () -> Unit = {}, onTheme: () -> Unit = {}, onLogout: () -> Unit = {}) {
+    val shared = LocalAdminActions.current
+    val homeAction = { shared.goHome() }
+    val qrAction = if (onQr === {}) shared.showQr else onQr
+    val themeAction = if (onTheme === {}) shared.toggleTheme else onTheme
+    val logoutAction = if (onLogout === {}) shared.logout else onLogout
+
     Surface(color = MaterialTheme.colorScheme.surface) {
         Row(
             Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 16.dp),
@@ -41,13 +48,15 @@ fun AdminHeader(showHome: Boolean = false, onHome: (() -> Unit)? = null, onQr: (
             Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (showHome && onHome != null) IconButton(onClick = onHome, Modifier.size(40.dp)) { Icon(Icons.Outlined.Home, "Panel privado", modifier = Modifier.size(22.dp)) }
+                if (showHome) IconButton(onClick = homeAction, Modifier.size(40.dp)) { Icon(Icons.Outlined.Home, "Panel privado", modifier = Modifier.size(22.dp)) }
                 Text("Panel Privado", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onQr, Modifier.size(40.dp)) { Icon(Icons.Outlined.QrCode2, "Código QR", modifier = Modifier.size(22.dp)) }
-                IconButton(onClick = onTheme, Modifier.size(40.dp)) { Icon(Icons.Outlined.DarkMode, "Modo noche", modifier = Modifier.size(22.dp)) }
-                IconButton(onClick = onLogout, Modifier.size(40.dp)) { Icon(Icons.Outlined.Logout, "Cerrar sesión", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(22.dp)) }
+                IconButton(onClick = qrAction, Modifier.size(40.dp)) { Icon(Icons.Outlined.QrCode2, "Código QR", modifier = Modifier.size(22.dp)) }
+                IconButton(onClick = themeAction, Modifier.size(40.dp)) {
+                    Icon(if (shared.isNight) Icons.Outlined.WbSunny else Icons.Outlined.DarkMode, if (shared.isNight) "Modo día" else "Modo noche", modifier = Modifier.size(22.dp))
+                }
+                IconButton(onClick = logoutAction, Modifier.size(40.dp)) { Icon(Icons.Outlined.Logout, "Cerrar sesión", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(22.dp)) }
             }
         }
     }
