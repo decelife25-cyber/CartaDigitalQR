@@ -44,5 +44,6 @@ data class Configuracion(
     val qr_url: String?,
     val dominio: String?,
     val url_reservas_mesa: String?,
-    val portada_url: String?
+    val portada_url: String?,
+    val redes_sociales: Map<String, String> = emptyMap()
 )
