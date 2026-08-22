@@ -5,6 +5,7 @@ plugins {
 
 val supabaseUrl = providers.environmentVariable("VITE_SUPABASE_URL").orElse("").get()
 val supabaseAnonKey = providers.environmentVariable("VITE_SUPABASE_ANON_KEY").orElse("").get()
+val githubRunNumber = providers.environmentVariable("GITHUB_RUN_NUMBER").orElse("—").get()
 val releaseKeystoreFile = System.getenv("KEYSTORE_FILE")
 val releaseStorePassword = System.getenv("KEYSTORE_PASSWORD")
 val releaseKeyAlias = System.getenv("KEY_ALIAS")
@@ -13,8 +14,8 @@ val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releas
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 // Versionado del proyecto. No depende del contador de GitHub Actions.
-// Formato: MAJOR.MINOR.PATCH, por ejemplo 1.0.099 -> 1.0.100 -> 1.1.0.
-val appVersionName = "1.0.103"
+// Formato: MAJOR.MINOR.PATCH. El contador de GitHub se muestra aparte como referencia técnica.
+val appVersionName = "1.0.104"
 val appVersionParts = appVersionName.split(".").map { it.toInt() }
 require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
 val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
@@ -30,6 +31,7 @@ android {
         versionName = appVersionName
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
         buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabaseAnonKey))
+        buildConfigField("String", "GITHUB_RUN_NUMBER", quoteBuildConfig(githubRunNumber))
         vectorDrawables { useSupportLibrary = true }
     }
     signingConfigs {
@@ -58,8 +60,6 @@ android {
 if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) } && !hasReleaseSigning) {
     error("Release build requires KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD.")
 }
-
-// Trigger de compilación para la APK 1.0.103 desde la base funcional 1.0.101.
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")

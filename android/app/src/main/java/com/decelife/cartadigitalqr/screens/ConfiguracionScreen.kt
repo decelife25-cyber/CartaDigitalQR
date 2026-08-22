@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,10 +25,12 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.decelife.cartadigitalqr.BuildConfig
 import com.decelife.cartadigitalqr.data.SupabaseRepository
 import com.decelife.cartadigitalqr.models.Configuracion
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
@@ -39,9 +40,10 @@ import com.decelife.cartadigitalqr.ui.theme.AppMuted
 import com.decelife.cartadigitalqr.ui.theme.AppSurface
 import com.decelife.cartadigitalqr.ui.theme.AppSurfaceSoft
 import com.decelife.cartadigitalqr.ui.theme.AppText
-import com.decelife.cartadigitalqr.ui.theme.ErrorText
 import com.decelife.cartadigitalqr.ui.theme.OrangePrimary
 import kotlinx.coroutines.launch
+
+private const val DEFAULT_CARTA_URL = "https://www.decelife.com/carta-camborio"
 
 @Composable
 fun ConfiguracionScreen(onBackClick: () -> Unit) {
@@ -110,9 +112,7 @@ fun ConfiguracionScreen(onBackClick: () -> Unit) {
             try {
                 SupabaseRepository.saveConfiguracion(draft.copy(portada_url = portadaUrl.ifBlank { null }))
                 val old = previousPortadaUrl
-                if (old.isNotBlank() && old != portadaUrl) {
-                    runCatching { SupabaseRepository.deleteConfiguracionPortada(old) }
-                }
+                if (old.isNotBlank() && old != portadaUrl) runCatching { SupabaseRepository.deleteConfiguracionPortada(old) }
                 previousPortadaUrl = portadaUrl
                 config = draft.copy(portada_url = portadaUrl.ifBlank { null })
                 message = "Cambios guardados correctamente."
@@ -126,78 +126,99 @@ fun ConfiguracionScreen(onBackClick: () -> Unit) {
         AdminHeader(showHome = true, onHome = onBackClick)
         ScreenBar("Configuración", onBackClick, true, saving, ::save)
 
-        Box(Modifier.fillMaxSize()) {
-            Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp).padding(bottom = 70.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SectionCard {
-                    Text("Restaurante", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                    Text("Información que verá el cliente en la carta.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                        Field("NOMBRE", draft.nombre, { draft = draft.copy(nombre = it) }, Modifier.weight(1f))
-                        Field("TELÉFONO", draft.telefono.orEmpty(), { draft = draft.copy(telefono = it) }, Modifier.weight(1f))
-                    }
-                    Field("DIRECCIÓN", draft.direccion.orEmpty(), { draft = draft.copy(direccion = it) })
-                    MultiField("DESCRIPCIÓN", draft.descripcion.orEmpty(), { draft = draft.copy(descripcion = it) }, 58.dp)
-                    MultiField("HORARIO", draft.horario.orEmpty(), { draft = draft.copy(horario = it) }, 58.dp)
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp).padding(bottom = 70.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            SectionCard {
+                Text("Restaurante", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("Información que verá el cliente en la carta.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Field("NOMBRE", draft.nombre, { draft = draft.copy(nombre = it) }, Modifier.weight(1f))
+                    Field("TELÉFONO", draft.telefono.orEmpty(), { draft = draft.copy(telefono = it) }, Modifier.weight(1f))
                 }
+                Field("DIRECCIÓN", draft.direccion.orEmpty(), { draft = draft.copy(direccion = it) })
+                MultiField("DESCRIPCIÓN", draft.descripcion.orEmpty(), { draft = draft.copy(descripcion = it) }, 58.dp)
+                MultiField("HORARIO", draft.horario.orEmpty(), { draft = draft.copy(horario = it) }, 58.dp)
+            }
 
-                SectionCard {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        Column(Modifier.weight(1f)) {
-                            Text("Portada de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                            Text("Cambia la imagen cuando quieras. La nueva portada queda activa inmediatamente y no depende de una caché anual.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp))
-                        }
-                        Icon(Icons.Default.Image, null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
+            SectionCard {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Portada de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                        Text("Cambia la imagen cuando quieras. La nueva portada queda activa inmediatamente y no depende de una caché anual.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp))
                     }
-                    Box(Modifier.fillMaxWidth().padding(top = 8.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(10.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                        if (portadaUrl.isNotBlank()) AsyncImage(model = portadaUrl, contentDescription = "Portada actual de la carta", modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
-                        else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(30.dp))
-                                Text("Portada actual", color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                        if (uploading) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .45f)), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp)) }
-                    }
-                    Button(onClick = { picker.launch("image/*") }, enabled = !uploading && !saving, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(36.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 10.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
-                        Icon(Icons.Default.Image, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(if (uploading) "Subiendo portada…" else "Sustituir portada", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-                    }
-                    Text("JPG, PNG o WebP · máximo 10 MB", modifier = Modifier.fillMaxWidth().padding(top = 2.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = AppMuted, fontSize = 9.sp)
+                    Icon(Icons.Default.Image, null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
                 }
-
-                SectionCard {
-                    Text("Código QR de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                    Text("El QR se genera automáticamente con el enlace de la carta. Si usas un dominio propio, el QR puede mantenerse fijo.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
-                    val qrUrl = qrImageUrl(draft.dominio, draft.qr_url)
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(120.dp).clip(RoundedCornerShape(10.dp)).background(Color.White).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-                            if (qrUrl != null) AsyncImage(model = qrUrl, contentDescription = "Código QR de la carta", modifier = Modifier.fillMaxSize().padding(7.dp))
-                            else Icon(Icons.Default.QrCode2, null, tint = Color.Black, modifier = Modifier.size(64.dp))
-                        }
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Field("DOMINIO ESTABLE DE LA CARTA (OPCIONAL)", draft.dominio.orEmpty(), { draft = draft.copy(dominio = it) })
-                            Text("Enlace que abre el QR", color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            Text(publicCartaUrl(draft.dominio), color = AppText, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Field("IMAGEN QR PERSONALIZADA (OPCIONAL)", draft.qr_url.orEmpty(), { draft = draft.copy(qr_url = it) })
+                Box(Modifier.fillMaxWidth().padding(top = 8.dp).aspectRatio(16f / 9f).clip(RoundedCornerShape(10.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                    if (portadaUrl.isNotBlank()) AsyncImage(model = portadaUrl, contentDescription = "Portada actual de la carta", modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
+                    else {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(30.dp))
+                            Text("Portada actual", color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
+                    if (uploading) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = .45f)), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp)) }
                 }
+                Button(onClick = { picker.launch("image/*") }, enabled = !uploading && !saving, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(36.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 10.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
+                    Icon(Icons.Default.Image, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(if (uploading) "Subiendo portada…" else "Sustituir portada", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
+                }
+                Text("JPG, PNG o WebP · máximo 10 MB", modifier = Modifier.fillMaxWidth().padding(top = 2.dp), textAlign = TextAlign.Center, color = AppMuted, fontSize = 9.sp)
+            }
 
-                SectionCard {
-                    Text("Reserva de mesa", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                    Text("Aplicación externa que se abrirá al pulsar 'Reservar mesa'.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
-                    Field("PROGRAMA DE RESERVAS DE MESA", draft.url_reservas_mesa.orEmpty(), { draft = draft.copy(url_reservas_mesa = it) })
+            SectionCard {
+                Text("Código QR de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("El QR se genera automáticamente con el enlace de la carta. Si usas un dominio propio, el QR puede mantenerse fijo aunque cambie dónde apunta ese dominio.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                val qrUrl = qrImageUrl(draft.dominio, draft.qr_url)
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    if (maxWidth < 600.dp) {
+                        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                            QrPreview(qrUrl)
+                            Spacer(Modifier.height(10.dp))
+                            QrFields(draft, onDraftChange = { draft = it })
+                        }
+                    } else {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            QrPreview(qrUrl)
+                            Spacer(Modifier.width(14.dp))
+                            QrFields(draft, onDraftChange = { draft = it }, Modifier.weight(1f))
+                        }
+                    }
                 }
+            }
 
-                SectionCard {
-                    Text("Identidad visual", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                    Text("Logo y color principal de la carta.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
-                    Field("URL DEL LOGOTIPO", draft.logo_url.orEmpty(), { draft = draft.copy(logo_url = it) })
-                    Field("COLOR PRINCIPAL", draft.color_principal.orEmpty(), { draft = draft.copy(color_principal = it) })
+            SectionCard {
+                Text("Reserva de mesa", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("Aplicación externa que se abrirá al pulsar 'Reservar mesa'.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                Field("PROGRAMA DE RESERVAS DE MESA", draft.url_reservas_mesa.orEmpty(), { draft = draft.copy(url_reservas_mesa = it) })
+            }
+
+            SectionCard {
+                Text("Identidad visual", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("Logo y color principal de la carta.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                Field("URL DEL LOGOTIPO", draft.logo_url.orEmpty(), { draft = draft.copy(logo_url = it) })
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val colorValue = draft.color_principal?.trim().orEmpty().ifBlank { "#c8a96e" }
+                    val previewColor = runCatching { Color(android.graphics.Color.parseColor(colorValue)) }.getOrElse { Color(0xFFC8A96E) }
+                    Box(Modifier.size(38.dp).clip(RoundedCornerShape(8.dp)).background(previewColor).border(1.dp, AppBorder, RoundedCornerShape(8.dp)))
+                    Field("COLOR PRINCIPAL", draft.color_principal.orEmpty(), { draft = draft.copy(color_principal = it) }, Modifier.weight(1f))
                 }
+            }
+
+            SectionCard {
+                Text("Redes sociales", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("Enlaces opcionales que puede mostrar la carta.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                Field("INSTAGRAM", draft.redes_sociales["instagram"].orEmpty(), { draft = draft.withSocial("instagram", it) })
+                Field("FACEBOOK", draft.redes_sociales["facebook"].orEmpty(), { draft = draft.withSocial("facebook", it) })
+                Field("WEB", draft.redes_sociales["web"].orEmpty(), { draft = draft.withSocial("web", it) })
+            }
+
+            SectionCard {
+                Text("Versión instalada", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("Información técnica de esta instalación. No es editable.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
+                InfoRow("Versión", BuildConfig.VERSION_NAME)
+                InfoRow("VersionCode", BuildConfig.VERSION_CODE.toString())
+                InfoRow("Compilación GitHub", BuildConfig.GITHUB_RUN_NUMBER)
             }
         }
     }
@@ -207,9 +228,37 @@ fun ConfiguracionScreen(onBackClick: () -> Unit) {
     }
 }
 
+private fun Configuracion.withSocial(key: String, value: String): Configuracion = copy(redes_sociales = redes_sociales.toMutableMap().apply { this[key] = value })
+
+@Composable
+private fun QrPreview(qrUrl: String?) {
+    Box(Modifier.size(150.dp).clip(RoundedCornerShape(10.dp)).background(Color.White).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+        if (qrUrl != null) AsyncImage(model = qrUrl, contentDescription = "Código QR de la carta", modifier = Modifier.fillMaxSize().padding(8.dp))
+        else Icon(Icons.Default.QrCode2, null, tint = Color.Black, modifier = Modifier.size(74.dp))
+    }
+}
+
+@Composable
+private fun QrFields(draft: Configuracion, onDraftChange: (Configuracion) -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Field("DOMINIO ESTABLE DE LA CARTA (OPCIONAL)", draft.dominio.orEmpty(), { onDraftChange(draft.copy(dominio = it)) })
+        Text("Enlace que abre el QR", color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+        Text(publicCartaUrl(draft.dominio), color = AppText, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.fillMaxWidth(), softWrap = true)
+        Field("IMAGEN QR PERSONALIZADA (OPCIONAL)", draft.qr_url.orEmpty(), { onDraftChange(draft.copy(qr_url = it)) })
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = AppMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(value, color = AppText, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.End, modifier = Modifier.padding(start = 12.dp))
+    }
+}
+
 @Composable
 private fun ScreenBar(title: String, onBack: () -> Unit, showSave: Boolean, saving: Boolean, onSave: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(44.dp).border(0.dp, Color.Transparent), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().height(44.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) { Icon(Icons.Default.ArrowBack, "Volver", tint = AppText, modifier = Modifier.size(20.dp)) }
         Text(title, Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = AppText, maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (showSave) {
@@ -229,7 +278,20 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
 private fun Field(label: String, value: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.padding(bottom = 7.dp)) {
         Text(label, color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 3.dp))
-        BasicTextField(value = value, onValueChange = onChange, modifier = Modifier.fillMaxWidth().height(36.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).background(AppSurfaceSoft, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 5.dp), singleLine = true, textStyle = TextStyle(color = AppText, fontSize = 12.sp, lineHeight = 15.sp), cursorBrush = SolidColor(OrangePrimary), decorationBox = { inner -> if (value.isEmpty()) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) { Text("...", color = AppMuted, fontSize = 12.sp) } }; inner() })
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            modifier = Modifier.fillMaxWidth().height(36.dp).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).background(AppSurfaceSoft, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp),
+            singleLine = true,
+            textStyle = TextStyle(color = AppText, fontSize = 12.sp, lineHeight = 16.sp),
+            cursorBrush = SolidColor(OrangePrimary),
+            decorationBox = { inner ->
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
+                    if (value.isEmpty()) Text("...", color = AppMuted, fontSize = 12.sp)
+                    inner()
+                }
+            }
+        )
     }
 }
 
@@ -243,14 +305,12 @@ private fun MultiField(label: String, value: String, onChange: (String) -> Unit,
 
 private fun publicCartaUrl(domain: String?): String {
     val raw = domain?.trim().orEmpty()
-    if (raw.isBlank()) return "Dominio no configurado"
+    if (raw.isBlank()) return DEFAULT_CARTA_URL
     val normalized = if (raw.startsWith("http://", true) || raw.startsWith("https://")) raw else "https://$raw"
     return normalized.trimEnd('/')
 }
 
 private fun qrImageUrl(domain: String?, configuredQr: String?): String? {
     configuredQr?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
-    val publicUrl = publicCartaUrl(domain)
-    if (publicUrl == "Dominio no configurado") return null
-    return "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=${java.net.URLEncoder.encode(publicUrl, "UTF-8")}"
+    return "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=${Uri.encode(publicCartaUrl(domain))}"
 }

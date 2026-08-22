@@ -164,6 +164,9 @@ object SupabaseRepository {
             put("dominio", config.dominio?.trim()?.ifBlank { null } ?: JSONObject.NULL)
             put("url_reservas_mesa", config.url_reservas_mesa?.trim()?.ifBlank { null } ?: JSONObject.NULL)
             put("portada_url", config.portada_url?.trim()?.ifBlank { null } ?: JSONObject.NULL)
+            val social = JSONObject()
+            config.redes_sociales.forEach { (key, value) -> social.put(key, value.trim()) }
+            put("redes_sociales", social)
             put("updated_at", java.time.Instant.now().toString())
         }
         request("PATCH", "configuracion_restaurante?id=eq.${config.id}", payload.toString())
@@ -190,7 +193,28 @@ object SupabaseRepository {
         val json = JSONArray(get("configuracion_restaurante?select=*&activo=eq.true&limit=1"))
         if (json.length() == 0) return null
         val item = json.getJSONObject(0)
-        return Configuracion(item.getString("id"), item.optString("nombre"), item.optString("telefono").takeIf { it.isNotBlank() && it != "null" }, item.optString("direccion").takeIf { it.isNotBlank() && it != "null" }, item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" }, item.optString("horario").takeIf { it.isNotBlank() && it != "null" }, item.optString("logo_url").takeIf { it.isNotBlank() && it != "null" }, item.optString("color_principal").takeIf { it.isNotBlank() && it != "null" }, item.optString("qr_url").takeIf { it.isNotBlank() && it != "null" }, item.optString("dominio").takeIf { it.isNotBlank() && it != "null" }, item.optString("url_reservas_mesa").takeIf { it.isNotBlank() && it != "null" }, item.optString("portada_url").takeIf { it.isNotBlank() && it != "null" })
+        val socialObject = item.optJSONObject("redes_sociales")
+        val social = mutableMapOf<String, String>()
+        if (socialObject != null) {
+            for (key in listOf("instagram", "facebook", "web")) {
+                socialObject.optString(key).takeIf { it.isNotBlank() && it != "null" }?.let { social[key] = it }
+            }
+        }
+        return Configuracion(
+            item.getString("id"),
+            item.optString("nombre"),
+            item.optString("telefono").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("direccion").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("horario").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("logo_url").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("color_principal").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("qr_url").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("dominio").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("url_reservas_mesa").takeIf { it.isNotBlank() && it != "null" },
+            item.optString("portada_url").takeIf { it.isNotBlank() && it != "null" },
+            social
+        )
     }
 
     suspend fun getCatalogo(): Pair<List<Familia>, List<Producto>> = getFamilias() to getProductos()
