@@ -147,10 +147,16 @@ private fun Field(label: String, value: String) {
     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
         Text(label, color = AppMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 4.dp))
         Box(
-            Modifier.fillMaxWidth().height(36.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, AppBorder, RoundedCornerShape(8.dp)).background(AppSurfaceSoft).padding(horizontal = 12.dp),
+            Modifier.fillMaxWidth().height(32.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, AppBorder, RoundedCornerShape(8.dp)).background(AppSurfaceSoft).padding(horizontal = 12.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            Text(value.ifEmpty { "..." }, fontSize = 14.sp, color = if (value.isEmpty()) AppMuted else MaterialTheme.colorScheme.onBackground, maxLines = 1)
+            Text(
+                value.ifEmpty { "..." },
+                fontSize = 14.sp,
+                lineHeight = 18.sp,
+                color = if (value.isEmpty()) AppMuted else MaterialTheme.colorScheme.onBackground,
+                maxLines = 1
+            )
         }
     }
 }
