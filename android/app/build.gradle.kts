@@ -16,6 +16,13 @@ val releaseKeyPassword = System.getenv("KEY_PASSWORD")
 val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
+// Numeración del proyecto: la versión visible es independiente del contador de GitHub.
+val appVersionName = "1.0.102"
+val appVersionParts = appVersionName.split(".").map { it.toInt() }
+require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
+val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
+val githubBuildNumber = System.getenv("GITHUB_RUN_NUMBER") ?: "local"
+
 android {
     namespace = "com.decelife.cartadigitalqr"
     compileSdk = 34
@@ -23,10 +30,11 @@ android {
         applicationId = "com.decelife.cartadigitalqr"
         minSdk = 24
         targetSdk = 34
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 5).coerceAtLeast(5)
-        versionName = "1.4"
+        versionCode = appVersionCode
+        versionName = appVersionName
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
         buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabasePublishableKey))
+        buildConfigField("String", "GITHUB_BUILD_NUMBER", quoteBuildConfig(githubBuildNumber))
         vectorDrawables { useSupportLibrary = true }
     }
     signingConfigs {
