@@ -4,8 +4,7 @@ plugins {
 }
 
 val supabaseUrl = providers.environmentVariable("VITE_SUPABASE_URL").orElse("").get()
-// Prefer the modern Supabase publishable key. It is intended for client applications
-// and avoids embedding an expired legacy JWT-based anon key in the APK.
+// Keep the same Supabase client key used by the last confirmed functional Android base.
 val supabasePublishableKey = providers.environmentVariable("VITE_SUPABASE_PUBLISHABLE_KEY")
     .orElse("sb_publishable_pxNsIH4abNe9YNdAkoqlkA_uBMuhS8i")
     .get()
@@ -16,6 +15,12 @@ val releaseKeyPassword = System.getenv("KEY_PASSWORD")
 val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
+val appVersionName = "1.0.103"
+val appVersionParts = appVersionName.split(".").map { it.toInt() }
+require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
+val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
+val githubBuildNumber = System.getenv("GITHUB_RUN_NUMBER") ?: "local"
+
 android {
     namespace = "com.decelife.cartadigitalqr"
     compileSdk = 34
@@ -23,10 +28,11 @@ android {
         applicationId = "com.decelife.cartadigitalqr"
         minSdk = 24
         targetSdk = 34
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 5).coerceAtLeast(5)
-        versionName = "1.4"
+        versionCode = appVersionCode
+        versionName = appVersionName
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
         buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabasePublishableKey))
+        buildConfigField("String", "GITHUB_BUILD_NUMBER", quoteBuildConfig(githubBuildNumber))
         vectorDrawables { useSupportLibrary = true }
     }
     signingConfigs {
