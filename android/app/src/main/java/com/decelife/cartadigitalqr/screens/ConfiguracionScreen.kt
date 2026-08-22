@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.decelife.cartadigitalqr.BuildConfig
 import com.decelife.cartadigitalqr.data.SupabaseRepository
 import com.decelife.cartadigitalqr.models.Configuracion
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
@@ -129,6 +130,13 @@ private fun ConfigContent(config: Configuracion) {
             Text("Logo y color principal de la carta.", color = AppMuted, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
             Field("URL DEL LOGOTIPO", config.logo_url.orEmpty())
             Field("COLOR PRINCIPAL", config.color_principal.orEmpty())
+        }
+        SectionCard {
+            Text("Información de la aplicación", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Datos técnicos de esta instalación. No son editables.", color = AppMuted, fontSize = 12.sp, modifier = Modifier.padding(top = 2.dp, bottom = 10.dp))
+            Field("VERSIÓN INSTALADA", BuildConfig.VERSION_NAME)
+            Field("CÓDIGO ANDROID", BuildConfig.VERSION_CODE.toString())
+            Field("BUILD GITHUB", BuildConfig.GITHUB_BUILD_NUMBER)
         }
         Spacer(Modifier.height(8.dp))
     }
