@@ -24,10 +24,7 @@ import com.decelife.cartadigitalqr.ui.components.QrCartaDialog
 fun AppNavigation(isNight: Boolean, onToggleTheme: () -> Unit, onLogout: () -> Unit) {
     val navController = rememberNavController()
     var showQr by remember { mutableStateOf(false) }
-    val actions = AdminActions(
-        goHome = { navController.navigate("home") { popUpTo("home") { inclusive = false }; launchSingleTop = true } },
-        showQr = { showQr = true }, toggleTheme = onToggleTheme, logout = onLogout, isNight = isNight,
-    )
+    val actions = AdminActions(goHome = { navController.navigate("home") { popUpTo("home") { inclusive = false }; launchSingleTop = true } }, showQr = { showQr = true }, toggleTheme = onToggleTheme, logout = onLogout, isNight = isNight)
     CompositionLocalProvider(LocalAdminActions provides actions) {
         NavHost(navController = navController, startDestination = "home") {
             composable("home") { HomeScreen(onNavigateToFamilias = { navController.navigate("familias") }, onNavigateToProductos = { navController.navigate("productos") }, onNavigateToConfiguracion = { navController.navigate("configuracion") }) }
@@ -38,11 +35,7 @@ fun AppNavigation(isNight: Boolean, onToggleTheme: () -> Unit, onLogout: () -> U
             composable("producto/nuevo") { ProductoEditorScreen(productId = null, onBack = { navController.popBackStack() }) }
             composable("producto/{id}") { entry -> ProductoEditorScreen(productId = entry.arguments?.getString("id"), onBack = { navController.popBackStack() }) }
             composable("configuracion") { ConfiguracionScreen(onBackClick = { navController.popBackStack() }, onNavigateToPortadas = { navController.navigate("portadas") }) }
-            composable("portadas") {
-                val configId = navController.previousBackStackEntry?.savedStateHandle?.get<String>("configuracion_id")
-                if (configId != null) PortadasScreen(configuracionId = configId, onBackClick = { navController.popBackStack() })
-                else ConfiguracionScreen(onBackClick = { navController.popBackStack() }, onNavigateToPortadas = { })
-            }
+            composable("portadas") { PortadasScreen(onBackClick = { navController.popBackStack() }) }
         }
         if (showQr) QrCartaDialog(onClose = { showQr = false })
     }
