@@ -44,7 +44,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun PortadasScreen(configuracionId: String, onBackClick: () -> Unit) {
+fun PortadasScreen(onBackClick: () -> Unit) {
+    var configuracionId by remember { mutableStateOf<String?>(null) }
     var portadas by remember { mutableStateOf<List<PortadaAndroid>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var busy by remember { mutableStateOf(false) }
@@ -59,16 +60,20 @@ fun PortadasScreen(configuracionId: String, onBackClick: () -> Unit) {
     fun reload() {
         scope.launch {
             loading = true
-            try { portadas = withContext(Dispatchers.IO) { PortadasRepository.list(configuracionId) } }
-            catch (e: Exception) { message = e.message ?: "No se pudieron cargar las portadas." }
+            try {
+                val id = configuracionId ?: withContext(Dispatchers.IO) { SupabaseRepository.getConfiguracion()?.id }
+                if (id == null) throw IllegalStateException("No se ha encontrado la configuración del restaurante.")
+                configuracionId = id
+                portadas = withContext(Dispatchers.IO) { PortadasRepository.list(id) }
+            } catch (e: Exception) { message = e.message ?: "No se pudieron cargar las portadas." }
             finally { loading = false }
         }
     }
 
-    LaunchedEffect(configuracionId) { reload() }
+    LaunchedEffect(Unit) { reload() }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri == null || busy) return@rememberLauncherForActivityResult
+        if (uri == null || busy || configuracionId == null) return@rememberLauncherForActivityResult
         busy = true
         scope.launch {
             try {
@@ -80,7 +85,8 @@ fun PortadasScreen(configuracionId: String, onBackClick: () -> Unit) {
                 val extension = mime.substringAfter('/', "jpg").lowercase().let { if (it == "jpeg") "jpg" else it }
                 val (url, path) = withContext(Dispatchers.IO) { PortadasRepository.upload(bytes, mime, extension) }
                 val name = uri.lastPathSegment?.substringAfterLast('/')?.substringBeforeLast('.')?.ifBlank { "Nueva portada" } ?: "Nueva portada"
-                withContext(Dispatchers.IO) { PortadasRepository.insert(configuracionId, name, url, path, portadas.isEmpty()) }
+                val id = configuracionId!!
+                withContext(Dispatchers.IO) { PortadasRepository.insert(id, name, url, path, portadas.isEmpty()) }
                 if (portadas.isEmpty()) withContext(Dispatchers.IO) { SupabaseRepository.saveConfiguracion(SupabaseRepository.getConfiguracion()!!.copy(portada_url = url)) }
                 reload()
             } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." }
@@ -89,22 +95,15 @@ fun PortadasScreen(configuracionId: String, onBackClick: () -> Unit) {
     }
 
     fun activate(item: PortadaAndroid) {
+        val id = configuracionId ?: return
         busy = true
-        scope.launch {
-            try { withContext(Dispatchers.IO) { PortadasRepository.activate(configuracionId, item.id, item.imageUrl) }; reload() }
-            catch (e: Exception) { message = e.message ?: "No se pudo activar la portada." }
-            finally { busy = false }
-        }
+        scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.activate(id, item.id, item.imageUrl) }; reload() } catch (e: Exception) { message = e.message ?: "No se pudo activar la portada." } finally { busy = false } }
     }
 
     fun delete(item: PortadaAndroid) {
         if (item.activa) { message = "Activa otra portada antes de eliminar esta."; return }
         busy = true
-        scope.launch {
-            try { withContext(Dispatchers.IO) { PortadasRepository.delete(item) }; reload() }
-            catch (e: Exception) { message = e.message ?: "No se pudo eliminar la portada." }
-            finally { busy = false }
-        }
+        scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.delete(item) }; reload() } catch (e: Exception) { message = e.message ?: "No se pudo eliminar la portada." } finally { busy = false } }
     }
 
     Column(Modifier.fillMaxSize().background(AppBg)) {
@@ -114,45 +113,26 @@ fun PortadasScreen(configuracionId: String, onBackClick: () -> Unit) {
             Text("Portadas", Modifier.weight(1f), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
             Text("${portadas.size}/10", color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 10.dp))
         }
-
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SectionCard {
-                Text("Biblioteca de portadas", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                Text("Guarda hasta 10 portadas. Solo una queda como predeterminada; las programadas pueden tomar el control automáticamente.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp))
-            }
-
+            SectionCard { Text("Biblioteca de portadas", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText); Text("Guarda hasta 10 portadas. Solo una queda como predeterminada; las programadas pueden tomar el control automáticamente.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp)) }
             if (loading) Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = OrangePrimary, modifier = Modifier.size(24.dp)) }
             else portadas.forEach { item ->
                 SectionCard {
-                    Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(9.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(9.dp))) {
-                        AsyncImage(model = item.imageUrl, contentDescription = item.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)))
-                        if (item.activa) Surface(color = Color(0xFF22C55E), shape = RoundedCornerShape(bottomEnd = 9.dp)) { Row(Modifier.padding(horizontal = 8.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.CheckCircle, null, tint = Color.White, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("PREDETERMINADA", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold) } }
-                    }
+                    Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(9.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(9.dp))) { AsyncImage(model = item.imageUrl, contentDescription = item.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp))); if (item.activa) Surface(color = Color(0xFF22C55E), shape = RoundedCornerShape(bottomEnd = 9.dp)) { Row(Modifier.padding(horizontal = 8.dp, vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.CheckCircle, null, tint = Color.White, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("PREDETERMINADA", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold) } } }
                     if (editing == item.id) {
-                        BasicField("Nombre", editName, { editName = it })
-                        BasicField("Desde (ISO, opcional)", editFrom, { editFrom = it })
-                        BasicField("Hasta (ISO, opcional)", editUntil, { editUntil = it })
-                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) {
-                            Button(onClick = { busy = true; scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.update(item.id, editName.trim(), editFrom.trim().ifBlank { null }, editUntil.trim().ifBlank { null }) }; editing = null; reload() } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { busy = false } } }, enabled = !busy, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)) { Icon(Icons.Default.Save, null, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(4.dp)); Text("Guardar", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }
-                            OutlinedButton(onClick = { editing = null }, modifier = Modifier.weight(1f)) { Text("Cancelar", fontSize = 11.sp) }
-                        }
+                        BasicField("Nombre", editName, { editName = it }); BasicField("Desde (ISO, opcional)", editFrom, { editFrom = it }); BasicField("Hasta (ISO, opcional)", editUntil, { editUntil = it })
+                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth()) { Button(onClick = { busy = true; scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.update(item.id, editName.trim(), editFrom.trim().ifBlank { null }, editUntil.trim().ifBlank { null }) }; editing = null; reload() } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { busy = false } } }, enabled = !busy, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)) { Icon(Icons.Default.Save, null, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(4.dp)); Text("Guardar", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }; OutlinedButton(onClick = { editing = null }, modifier = Modifier.weight(1f)) { Text("Cancelar", fontSize = 11.sp) } }
                     } else {
                         Text(item.nombre, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = AppText, modifier = Modifier.padding(top = 7.dp))
                         if (item.desde != null || item.hasta != null) Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) { Icon(Icons.Default.CalendarMonth, null, tint = AppMuted, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(4.dp)); Text("${item.desde ?: "sin inicio"} → ${item.hasta ?: "sin fin"}", color = AppMuted, fontSize = 9.sp) }
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth().padding(top = 7.dp)) {
-                            Button(onClick = { activate(item) }, enabled = !busy && !item.activa, modifier = Modifier.weight(1f).height(34.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)) { Text(if (item.activa) "Predeterminada" else "Activar ahora", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold) }
-                            IconButton(onClick = { editing = item.id; editName = item.nombre; editFrom = item.desde.orEmpty(); editUntil = item.hasta.orEmpty() }, enabled = !busy, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Edit, "Editar", tint = AppMuted, modifier = Modifier.size(17.dp)) }
-                            IconButton(onClick = { delete(item) }, enabled = !busy && !item.activa, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Delete, "Eliminar", tint = Color(0xFFDC2626), modifier = Modifier.size(17.dp)) }
-                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth().padding(top = 7.dp)) { Button(onClick = { activate(item) }, enabled = !busy && !item.activa, modifier = Modifier.weight(1f).height(34.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)) { Text(if (item.activa) "Predeterminada" else "Activar ahora", fontSize = 10.sp, fontWeight = FontWeight.ExtraBold) }; IconButton(onClick = { editing = item.id; editName = item.nombre; editFrom = item.desde.orEmpty(); editUntil = item.hasta.orEmpty() }, enabled = !busy, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Edit, "Editar", tint = AppMuted, modifier = Modifier.size(17.dp)) }; IconButton(onClick = { delete(item) }, enabled = !busy && !item.activa, modifier = Modifier.size(34.dp)) { Icon(Icons.Default.Delete, "Eliminar", tint = Color(0xFFDC2626), modifier = Modifier.size(17.dp)) } }
                     }
                 }
             }
-
             Button(onClick = { picker.launch("image/*") }, enabled = !busy && portadas.size < 10, modifier = Modifier.fillMaxWidth().height(38.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary), shape = RoundedCornerShape(8.dp)) { Icon(Icons.Default.Image, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(5.dp)); Text("Añadir portada", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold) }
-            Text("La fecha se guarda en ISO (por ejemplo 2026-12-15T00:00:00+01:00). En la siguiente iteración podemos sustituir estos campos por selectores de fecha y hora.", color = AppMuted, fontSize = 8.sp)
+            Text("La programación usa fechas ISO, por ejemplo 2026-12-15T00:00:00+01:00.", color = AppMuted, fontSize = 8.sp)
         }
     }
-
     if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("Portadas") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Aceptar", color = OrangePrimary) } })
 }
 
