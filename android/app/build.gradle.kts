@@ -24,8 +24,8 @@ android {
         minSdk = 24
         targetSdk = 34
         // App versioning is independent from GitHub Actions build numbers.
-        // 1.0.102 follows 1.0.101; the CI run number must never become the app version.
-        versionCode = 102
+        // 1.0.102 follows 1.0.101. The Android versionCode must remain higher than the installed 1.0.101 (158).
+        versionCode = 159
         versionName = "1.0.102"
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
         buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabasePublishableKey))
