@@ -23,8 +23,10 @@ android {
         applicationId = "com.decelife.cartadigitalqr"
         minSdk = 24
         targetSdk = 34
-        versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 5).coerceAtLeast(5)
-        versionName = "1.4"
+        // App versioning is independent from GitHub Actions build numbers.
+        // 1.0.102 follows 1.0.101; the CI run number must never become the app version.
+        versionCode = 102
+        versionName = "1.0.102"
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
         buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabasePublishableKey))
         vectorDrawables { useSupportLibrary = true }
