@@ -142,6 +142,7 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
     )
 }
 
+// Release-build verification marker; layout remains identical to main.
 @Composable
 private fun Field(label: String, value: String) {
     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
