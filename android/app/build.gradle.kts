@@ -4,7 +4,11 @@ plugins {
 }
 
 val supabaseUrl = providers.environmentVariable("VITE_SUPABASE_URL").orElse("").get()
-val supabaseAnonKey = providers.environmentVariable("VITE_SUPABASE_ANON_KEY").orElse("").get()
+// Prefer the modern Supabase publishable key. It is intended for client applications
+// and avoids embedding an expired legacy JWT-based anon key in the APK.
+val supabasePublishableKey = providers.environmentVariable("VITE_SUPABASE_PUBLISHABLE_KEY")
+    .orElse("sb_publishable_pxNsIH4abNe9YNdAkoqlkA_uBMuhS8i")
+    .get()
 val releaseKeystoreFile = System.getenv("KEYSTORE_FILE")
 val releaseStorePassword = System.getenv("KEYSTORE_PASSWORD")
 val releaseKeyAlias = System.getenv("KEY_ALIAS")
@@ -22,7 +26,7 @@ android {
         versionCode = (System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 5).coerceAtLeast(5)
         versionName = "1.4"
         buildConfigField("String", "SUPABASE_URL", quoteBuildConfig(supabaseUrl))
-        buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabaseAnonKey))
+        buildConfigField("String", "SUPABASE_ANON_KEY", quoteBuildConfig(supabasePublishableKey))
         vectorDrawables { useSupportLibrary = true }
     }
     signingConfigs {
