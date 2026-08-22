@@ -94,13 +94,17 @@ jobs:
         fi
         "$APKSIGNER" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
 
+    - name: Rename APK with app version
+      run: |
+        mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/CartaDigitalQR-v1.0.102.apk
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: CartaDigitalQR-Release-v${{ github.run_number }}
+        name: CartaDigitalQR-Release-1.0.102
         if-no-files-found: error
         retention-days: 30
-        path: android/app/build/outputs/apk/release/app-release.apk
+        path: android/app/build/outputs/apk/release/CartaDigitalQR-v1.0.102.apk
 
     - name: Remove release keystore
       if: always()
