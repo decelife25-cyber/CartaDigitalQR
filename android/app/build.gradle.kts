@@ -59,6 +59,8 @@ if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = tr
     error("Release build requires KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD.")
 }
 
+// Trigger de compilación para la APK 1.0.103 desde la base funcional 1.0.101.
+
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
