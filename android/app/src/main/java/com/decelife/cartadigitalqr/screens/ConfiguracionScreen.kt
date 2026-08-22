@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.decelife.cartadigitalqr.BuildConfig
 import com.decelife.cartadigitalqr.data.SupabaseRepository
 import com.decelife.cartadigitalqr.models.Configuracion
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
@@ -89,11 +90,7 @@ private fun ConfigContent(config: Configuracion) {
                 contentAlignment = Alignment.Center
             ) {
                 if (!config.portada_url.isNullOrBlank()) {
-                    AsyncImage(
-                        model = config.portada_url,
-                        contentDescription = "Portada actual",
-                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))
-                    )
+                    AsyncImage(model = config.portada_url, contentDescription = "Portada actual", modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)))
                 } else {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Image, null, tint = Color(0xFFE8D8B8), modifier = Modifier.size(30.dp))
@@ -131,6 +128,18 @@ private fun ConfigContent(config: Configuracion) {
             Field("COLOR PRINCIPAL", config.color_principal.orEmpty())
         }
         Spacer(Modifier.height(8.dp))
+        VersionFooter()
+    }
+}
+
+@Composable
+private fun VersionFooter() {
+    Column(
+        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Versión instalada", color = AppMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(BuildConfig.VERSION_NAME, color = AppMuted, fontSize = 12.sp)
     }
 }
 
@@ -142,7 +151,6 @@ private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
     )
 }
 
-// Release-build verification marker; layout remains identical to main.
 @Composable
 private fun Field(label: String, value: String) {
     Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
@@ -151,13 +159,7 @@ private fun Field(label: String, value: String) {
             Modifier.fillMaxWidth().height(32.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, AppBorder, RoundedCornerShape(8.dp)).background(AppSurfaceSoft).padding(horizontal = 12.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            Text(
-                value.ifEmpty { "..." },
-                fontSize = 14.sp,
-                lineHeight = 18.sp,
-                color = if (value.isEmpty()) AppMuted else MaterialTheme.colorScheme.onBackground,
-                maxLines = 1
-            )
+            Text(value.ifEmpty { "..." }, fontSize = 14.sp, lineHeight = 18.sp, color = if (value.isEmpty()) AppMuted else MaterialTheme.colorScheme.onBackground, maxLines = 1)
         }
     }
 }
