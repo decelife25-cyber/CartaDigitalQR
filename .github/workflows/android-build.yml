@@ -2,12 +2,12 @@ name: Android Build
 
 on:
   push:
-    branches: [ "main", "feat/**" ]
+    branches: [ "main", "feat/**", "fix/**" ]
     paths:
       - 'android/**'
       - '.github/workflows/android-build.yml'
   pull_request:
-    branches: [ "main", "feat/**" ]
+    branches: [ "main", "feat/**", "fix/**" ]
     paths:
       - 'android/**'
       - '.github/workflows/android-build.yml'
@@ -89,7 +89,7 @@ jobs:
           echo "Error: could not read appVersionName from android/app/build.gradle.kts"
           exit 1
         fi
-        cp app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/CartaDigitalQR-v${VERSION_NAME}.apk"
+        cp app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/carta_v${VERSION_NAME}.apk"
 
     - name: Verify APK signature
       run: |
@@ -99,15 +99,15 @@ jobs:
           exit 1
         fi
         VERSION_NAME=$(sed -n 's/.*val appVersionName = "\([^"]*\)".*/\1/p' android/app/build.gradle.kts)
-        "$APKSIGNER" verify --verbose --print-certs "android/app/build/outputs/apk/release/CartaDigitalQR-v${VERSION_NAME}.apk"
+        "$APKSIGNER" verify --verbose --print-certs "android/app/build/outputs/apk/release/carta_v${VERSION_NAME}.apk"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: CartaDigitalQR-Release
+        name: carta_v${{ github.event_name == 'workflow_dispatch' && 'manual' || 'build' }}
         if-no-files-found: error
         retention-days: 30
-        path: android/app/build/outputs/apk/release/CartaDigitalQR-v*.apk
+        path: android/app/build/outputs/apk/release/carta_v*.apk
 
     - name: Remove release keystore
       if: always()
