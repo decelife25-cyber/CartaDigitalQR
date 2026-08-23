@@ -23,6 +23,7 @@ object SupabaseRepository {
     private suspend fun request(method: String, pathAndQuery: String, body: String? = null): String = withContext(Dispatchers.IO) {
         require(baseUrl.isNotBlank()) { "Falta la URL de Supabase en la compilación de Android." }
         require(apiKey.isNotBlank()) { "Falta la clave pública de Supabase en la compilación de Android." }
+        SupabaseAuth.ensureValidSession()
         val connection = (URL("$baseUrl/rest/v1/$pathAndQuery").openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = TIMEOUT_MS
@@ -50,6 +51,7 @@ object SupabaseRepository {
     private suspend fun storageRequest(method: String, path: String, bytes: ByteArray? = null, contentType: String? = null): String = withContext(Dispatchers.IO) {
         require(baseUrl.isNotBlank()) { "Falta la URL de Supabase en la compilación de Android." }
         require(apiKey.isNotBlank()) { "Falta la clave pública de Supabase en la compilación de Android." }
+        SupabaseAuth.ensureValidSession()
         val connection = (URL("$baseUrl/storage/v1/object/$path").openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = TIMEOUT_MS
