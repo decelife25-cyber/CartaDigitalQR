@@ -1,9 +1,11 @@
 package com.decelife.cartadigitalqr.screens
 
-import android.app.DownloadManager
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -43,7 +45,14 @@ import com.decelife.cartadigitalqr.ui.theme.AppSurface
 import com.decelife.cartadigitalqr.ui.theme.AppSurfaceSoft
 import com.decelife.cartadigitalqr.ui.theme.AppText
 import com.decelife.cartadigitalqr.ui.theme.OrangePrimary
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private const val DEFAULT_CARTA_URL = "https://www.decelife.com/carta-camborio"
 
@@ -89,7 +98,7 @@ fun ConfiguracionScreen(onBackClick: () -> Unit, onNavigateToPortadas: () -> Uni
             }
             SectionCard {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                    Column(Modifier.weight(1f)) { Text("Portadas de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText); Text("Guarda hasta 10 portadas, activa la que quieras y programa cambios por fecha.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp)) }
+                    Column(Modifier.weight(1f)) { Text("Portadas de la carta", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText); Text("Guarda hasta 10 portadas, activa la que quieras y programa cambios por fecha y hora.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp)) }
                     Icon(Icons.Default.Image, null, tint = OrangePrimary, modifier = Modifier.size(18.dp))
                 }
                 Button(onClick = onNavigateToPortadas, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(36.dp), shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) { Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("Gestionar portadas", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold) }
@@ -99,8 +108,8 @@ fun ConfiguracionScreen(onBackClick: () -> Unit, onNavigateToPortadas: () -> Uni
                 Text("El QR se genera con el enlace de la carta que indiques abajo.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp))
                 val qrUrl = qrImageUrl(draft.dominio, draft.qr_url)
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    if (maxWidth < 600.dp) Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) { QrPreview(qrUrl); Spacer(Modifier.height(8.dp)); TextButton(onClick = { downloadQrPng(context, qrUrl) }, enabled = qrUrl != null, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) { Text("Descargar QR en PNG", color = OrangePrimary, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }; Spacer(Modifier.height(2.dp)); QrFields(draft, onDraftChange = { draft = it }) }
-                    else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(horizontalAlignment = Alignment.CenterHorizontally) { QrPreview(qrUrl); TextButton(onClick = { downloadQrPng(context, qrUrl) }, enabled = qrUrl != null, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) { Text("Descargar QR en PNG", color = OrangePrimary, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) } }; Spacer(Modifier.width(14.dp)); QrFields(draft, onDraftChange = { draft = it }, Modifier.weight(1f)) }
+                    if (maxWidth < 600.dp) Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) { QrPreview(qrUrl); Spacer(Modifier.height(8.dp)); TextButton(onClick = { downloadQrPng(context, qrUrl, scope) }, enabled = qrUrl != null, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) { Text("Descargar QR en PNG", color = OrangePrimary, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }; Spacer(Modifier.height(2.dp)); QrFields(draft, onDraftChange = { draft = it }) }
+                    else Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Column(horizontalAlignment = Alignment.CenterHorizontally) { QrPreview(qrUrl); TextButton(onClick = { downloadQrPng(context, qrUrl, scope) }, enabled = qrUrl != null, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) { Text("Descargar QR en PNG", color = OrangePrimary, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) } }; Spacer(Modifier.width(14.dp)); QrFields(draft, onDraftChange = { draft = it }, Modifier.weight(1f)) }
                 }
             }
             SectionCard { Text("Reserva de mesa", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText); Text("Aplicación externa que se abrirá al pulsar 'Reservar mesa'.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)); Field("PROGRAMA DE RESERVAS DE MESA", draft.url_reservas_mesa.orEmpty(), { draft = draft.copy(url_reservas_mesa = it) }) }
@@ -130,4 +139,26 @@ private fun Configuracion.withSocial(key: String, value: String): Configuracion 
 @Composable private fun MultiField(label: String, value: String, onChange: (String) -> Unit, height: androidx.compose.ui.unit.Dp) { Column(Modifier.fillMaxWidth().padding(bottom = 7.dp)) { Text(label, color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 3.dp)); BasicTextField(value = value, onValueChange = onChange, modifier = Modifier.fillMaxWidth().height(height).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).background(AppSurfaceSoft, RoundedCornerShape(9.dp)).padding(horizontal = 9.dp, vertical = 6.dp), maxLines = 4, textStyle = TextStyle(color = AppText, fontSize = 11.sp, lineHeight = 15.sp), cursorBrush = SolidColor(OrangePrimary)) } }
 private fun publicCartaUrl(domain: String?): String { val raw = domain?.trim().orEmpty(); if (raw.isBlank()) return DEFAULT_CARTA_URL; val normalized = if (raw.startsWith("http://", true) || raw.startsWith("https://")) raw else "https://$raw"; return normalized.trimEnd('/') }
 private fun qrImageUrl(domain: String?, configuredQr: String?): String? { configuredQr?.trim()?.takeIf { it.isNotBlank() }?.let { return it }; return "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=${java.net.URLEncoder.encode(publicCartaUrl(domain), "UTF-8")}" }
-private fun downloadQrPng(context: Context, qrUrl: String?) { if (qrUrl.isNullOrBlank()) return; runCatching { val request = DownloadManager.Request(Uri.parse(qrUrl)).setTitle("carta_qr.png").setDescription("Código QR de la carta").setMimeType("image/png").setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED).setAllowedOverMetered(true).setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "carta_qr.png"); val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager; manager.enqueue(request) } }
+private fun downloadQrPng(context: Context, qrUrl: String?, scope: kotlinx.coroutines.CoroutineScope) {
+    if (qrUrl.isNullOrBlank()) return
+    scope.launch(Dispatchers.IO) {
+        var outputUri: Uri? = null
+        try {
+            val connection = (URL(qrUrl).openConnection() as HttpURLConnection).apply { connectTimeout = 15000; readTimeout = 15000; requestMethod = "GET"; connect() }
+            if (connection.responseCode !in 200..299) throw IllegalStateException("No se pudo descargar el QR (HTTP ${connection.responseCode}).")
+            val bytes = connection.inputStream.use { it.readBytes() }
+            connection.disconnect()
+            if (bytes.isEmpty()) throw IllegalStateException("El archivo QR está vacío.")
+            val fileName = "carta_qr_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.png"
+            val values = ContentValues().apply { put(MediaStore.Downloads.DISPLAY_NAME, fileName); put(MediaStore.Downloads.MIME_TYPE, "image/png"); put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS); put(MediaStore.Downloads.IS_PENDING, 1) }
+            val resolver = context.contentResolver
+            outputUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: throw IllegalStateException("No se pudo crear el archivo en Descargas.")
+            resolver.openOutputStream(outputUri!!)?.use { it.write(bytes) } ?: throw IllegalStateException("No se pudo escribir el archivo QR.")
+            resolver.update(outputUri!!, ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }, null, null)
+            withContext(Dispatchers.Main) { Toast.makeText(context, "QR descargado en Descargas", Toast.LENGTH_LONG).show() }
+        } catch (e: Exception) {
+            outputUri?.let { runCatching { context.contentResolver.delete(it, null, null) } }
+            withContext(Dispatchers.Main) { Toast.makeText(context, "No se pudo descargar el QR: ${e.message ?: "error desconocido"}", Toast.LENGTH_LONG).show() }
+        }
+    }
+}
