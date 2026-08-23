@@ -7,8 +7,9 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
+import java.time.Instant
 
- data class PortadaAndroid(
+data class PortadaAndroid(
     val id: String,
     val nombre: String,
     val imageUrl: String,
@@ -58,14 +59,25 @@ object PortadasRepository {
         } finally { connection.disconnect() }
     }
 
+    private fun effectiveId(items: List<PortadaAndroid>, now: Instant = Instant.now()): String? {
+        val scheduled = items.filter { item ->
+            val from = item.desde?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            val until = item.hasta?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            (from != null || until != null) && (from == null || !now.isBefore(from)) && (until == null || !now.isAfter(until))
+        }.maxByOrNull { item -> item.desde?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: Instant.MIN }
+        return scheduled?.id ?: items.firstOrNull { it.activa }?.id
+    }
+
     fun list(configId: String): List<PortadaAndroid> {
         val json = JSONArray(request("GET", "portadas_carta?select=id,nombre,image_url,storage_path,activa,programada_desde,programada_hasta&configuracion_id=eq.$configId&order=created_at.asc"))
-        return buildList(json.length()) {
+        val items = buildList(json.length()) {
             for (i in 0 until json.length()) {
                 val item = json.getJSONObject(i)
                 add(PortadaAndroid(item.getString("id"), item.optString("nombre"), item.optString("image_url"), item.optString("storage_path").takeIf { it.isNotBlank() && it != "null" }, item.optBoolean("activa", false), item.optString("programada_desde").takeIf { it.isNotBlank() && it != "null" }, item.optString("programada_hasta").takeIf { it.isNotBlank() && it != "null" }))
             }
         }
+        val activeId = effectiveId(items)
+        return items.map { it.copy(activa = it.id == activeId) }
     }
 
     fun upload(bytes: ByteArray, mime: String, extension: String): Pair<String, String> {
