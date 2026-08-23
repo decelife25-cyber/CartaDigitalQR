@@ -1,6 +1,7 @@
 package com.decelife.cartadigitalqr.screens
 
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,33 +53,66 @@ private const val MAX_PORTADAS = 10
 
 private fun displayName(item: PortadaAndroid): String = if (item.nombre.trim().equals("Portada actual", ignoreCase = true)) "Habitual" else item.nombre
 
-private fun formatDate(iso: String?): String {
-    if (iso.isNullOrBlank()) return ""
-    return runCatching {
-        val date = Instant.parse(iso).atZone(ZoneId.systemDefault())
-        "%02d/%02d/%04d".format(date.dayOfMonth, date.monthValue, date.year)
-    }.getOrElse { "" }
+private fun parseInstant(value: String?): Instant? = value?.takeIf { it.isNotBlank() }?.let { runCatching { Instant.parse(it) }.getOrNull() }
+
+private fun formatDateTime(value: String?): String {
+    val instant = parseInstant(value) ?: return ""
+    val date = instant.atZone(ZoneId.systemDefault())
+    return "%02d/%02d/%04d  %02d:%02d".format(date.dayOfMonth, date.monthValue, date.year, date.hour, date.minute)
 }
 
-private fun scheduleText(item: PortadaAndroid): String? {
+private fun formatSchedule(item: PortadaAndroid): String? {
     if (item.desde == null && item.hasta == null) return null
-    val desde = item.desde?.let(::formatDate) ?: "sin fecha inicial"
-    val hasta = item.hasta?.let(::formatDate) ?: "sin fecha final"
+    val desde = item.desde?.let(::formatDateTime) ?: "sin fecha inicial"
+    val hasta = item.hasta?.let(::formatDateTime) ?: "sin fecha final"
     return "Se activará de $desde a $hasta"
 }
 
-private fun isoStartOfDay(year: Int, month: Int, day: Int): String = ZonedDateTime.of(year, month, day, 0, 0, 0, 0, ZoneId.systemDefault()).toInstant().toString()
-private fun isoEndOfDay(year: Int, month: Int, day: Int): String = ZonedDateTime.of(year, month, day, 23, 59, 59, 999_000_000, ZoneId.systemDefault()).toInstant().toString()
+private fun instantFor(year: Int, month: Int, day: Int, hour: Int, minute: Int): Instant =
+    ZonedDateTime.of(year, month, day, hour, minute, 0, 0, ZoneId.systemDefault()).toInstant()
 
 @Composable
-private fun DateSelector(label: String, value: String?, onChange: (String?) -> Unit, endOfDay: Boolean) {
+private fun DateTimeSelector(
+    label: String,
+    value: String?,
+    minimum: Instant?,
+    onChange: (String?) -> Unit,
+    onError: (String) -> Unit
+) {
     val context = LocalContext.current
-    val calendar = remember(value) { runCatching { Calendar.getInstance().apply { timeInMillis = Instant.parse(value).toEpochMilli() } }.getOrElse { Calendar.getInstance() } }
+    val current = parseInstant(value)?.atZone(ZoneId.systemDefault()) ?: ZonedDateTime.now()
     Column(Modifier.fillMaxWidth().padding(top = 6.dp)) {
         Text(label, color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         Row(Modifier.fillMaxWidth().padding(top = 3.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            OutlinedButton(onClick = { DatePickerDialog(context, { _, year, month, day -> onChange(if (endOfDay) isoEndOfDay(year, month + 1, day) else isoStartOfDay(year, month + 1, day)) }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show() }, modifier = Modifier.weight(1f).height(38.dp), contentPadding = PaddingValues(horizontal = 8.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText), border = androidx.compose.foundation.BorderStroke(1.dp, AppBorder)) {
-                Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(5.dp)); Text(if (value.isNullOrBlank()) "Seleccionar fecha" else formatDate(value), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            OutlinedButton(
+                onClick = {
+                    val picker = DatePickerDialog(context, { _, year, month, day ->
+                        val existing = parseInstant(value)?.atZone(ZoneId.systemDefault())
+                        val defaultHour = existing?.hour ?: ZonedDateTime.now().hour
+                        val defaultMinute = existing?.minute ?: ZonedDateTime.now().minute
+                        TimePickerDialog(context, { _, hour, minute ->
+                            val selected = instantFor(year, month + 1, day, hour, minute)
+                            val now = Instant.now()
+                            val min = minimum ?: now
+                            if (selected.isBefore(min)) {
+                                onError(if (minimum != null && minimum.isAfter(now)) "La fecha y hora debe ser posterior a la fecha y hora de inicio." else "No puedes programar una fecha y hora anteriores a la actual.")
+                            } else {
+                                onChange(selected.toString())
+                            }
+                        }, defaultHour, defaultMinute, true).show()
+                    }, current.year, current.monthValue - 1, current.dayOfMonth)
+                    val minInstant = minimum ?: Instant.now()
+                    picker.datePicker.minDate = minInstant.toEpochMilli()
+                    picker.show()
+                },
+                modifier = Modifier.weight(1f).height(38.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AppText),
+                border = androidx.compose.foundation.BorderStroke(1.dp, AppBorder)
+            ) {
+                Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(5.dp))
+                Text(if (value.isNullOrBlank()) "Seleccionar fecha y hora" else formatDateTime(value), fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
             if (!value.isNullOrBlank()) TextButton(onClick = { onChange(null) }, contentPadding = PaddingValues(horizontal = 6.dp)) { Text("Borrar", color = AppMuted, fontSize = 10.sp) }
         }
@@ -99,30 +133,78 @@ fun PortadasScreen(onBackClick: () -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    fun reload() { scope.launch { loading = true; try { val id = configuracionId ?: withContext(Dispatchers.IO) { SupabaseRepository.getConfiguracion()?.id }; if (id == null) throw IllegalStateException("No se ha encontrado la configuración del restaurante."); configuracionId = id; portadas = withContext(Dispatchers.IO) { PortadasRepository.list(id) } } catch (e: Exception) { message = e.message ?: "No se pudieron cargar las portadas." } finally { loading = false } } }
+    fun reload() {
+        scope.launch {
+            loading = true
+            try {
+                val id = configuracionId ?: withContext(Dispatchers.IO) { SupabaseRepository.getConfiguracion()?.id }
+                if (id == null) throw IllegalStateException("No se ha encontrado la configuración del restaurante.")
+                configuracionId = id
+                portadas = withContext(Dispatchers.IO) { PortadasRepository.list(id) }
+            } catch (e: Exception) {
+                message = e.message ?: "No se pudieron cargar las portadas."
+            } finally { loading = false }
+        }
+    }
+
     LaunchedEffect(Unit) { reload() }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri == null || busy || configuracionId == null) return@rememberLauncherForActivityResult
         busy = true
-        scope.launch { try {
-            if (portadas.size >= MAX_PORTADAS) throw IllegalStateException("No puedes añadir otra portada. Elimina una para liberar espacio.")
-            val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
-            if (mime !in setOf("image/jpeg", "image/png", "image/webp")) throw IllegalStateException("La portada debe ser JPG, PNG o WebP.")
-            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: throw IllegalStateException("No se pudo leer la imagen.")
-            if (bytes.size > 10 * 1024 * 1024) throw IllegalStateException("La portada no puede superar los 10 MB.")
-            val extension = mime.substringAfter('/', "jpg").lowercase().let { if (it == "jpeg") "jpg" else it }
-            val (url, path) = withContext(Dispatchers.IO) { PortadasRepository.upload(bytes, mime, extension) }
-            val name = uri.lastPathSegment?.substringAfterLast('/')?.substringBeforeLast('.')?.ifBlank { "Nueva portada" } ?: "Nueva portada"
-            val id = configuracionId!!
-            withContext(Dispatchers.IO) { PortadasRepository.insert(id, name, url, path, portadas.isEmpty()) }
-            if (portadas.isEmpty()) withContext(Dispatchers.IO) { SupabaseRepository.getConfiguracion()?.let { SupabaseRepository.saveConfiguracion(it.copy(portada_url = url)) } }
-            reload()
-        } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." } finally { busy = false } }
+        scope.launch {
+            try {
+                if (portadas.size >= MAX_PORTADAS) throw IllegalStateException("No puedes añadir otra portada. Elimina una para liberar espacio.")
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                if (mime !in setOf("image/jpeg", "image/png", "image/webp")) throw IllegalStateException("La portada debe ser JPG, PNG o WebP.")
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: throw IllegalStateException("No se pudo leer la imagen.")
+                if (bytes.size > 10 * 1024 * 1024) throw IllegalStateException("La portada no puede superar los 10 MB.")
+                val extension = mime.substringAfter('/', "jpg").lowercase().let { if (it == "jpeg") "jpg" else it }
+                val (url, path) = withContext(Dispatchers.IO) { PortadasRepository.upload(bytes, mime, extension) }
+                val name = uri.lastPathSegment?.substringAfterLast('/')?.substringBeforeLast('.')?.ifBlank { "Nueva portada" } ?: "Nueva portada"
+                val id = configuracionId!!
+                withContext(Dispatchers.IO) { PortadasRepository.insert(id, name, url, path, portadas.isEmpty()) }
+                if (portadas.isEmpty()) withContext(Dispatchers.IO) { SupabaseRepository.getConfiguracion()?.let { SupabaseRepository.saveConfiguracion(it.copy(portada_url = url)) } }
+                reload()
+            } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." }
+            finally { busy = false }
+        }
     }
 
-    fun activate(item: PortadaAndroid) { val id = configuracionId ?: return; busy = true; scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.activate(id, item.id, item.imageUrl) }; reload() } catch (e: Exception) { message = e.message ?: "No se pudo activar la portada." } finally { busy = false } } }
-    fun delete(item: PortadaAndroid) { if (item.activa) { message = "Activa otra portada antes de eliminar esta."; return }; busy = true; scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.delete(item) }; reload() } catch (e: Exception) { message = e.message ?: "No se pudo eliminar la portada." } finally { busy = false } } }
+    fun activate(item: PortadaAndroid) {
+        val id = configuracionId ?: return
+        busy = true
+        scope.launch {
+            try { withContext(Dispatchers.IO) { PortadasRepository.activate(id, item.id, item.imageUrl) }; reload() }
+            catch (e: Exception) { message = e.message ?: "No se pudo activar la portada." }
+            finally { busy = false }
+        }
+    }
+
+    fun delete(item: PortadaAndroid) {
+        if (item.activa) { message = "Activa otra portada antes de eliminar esta."; return }
+        busy = true
+        scope.launch {
+            try { withContext(Dispatchers.IO) { PortadasRepository.delete(item) }; reload() }
+            catch (e: Exception) { message = e.message ?: "No se pudo eliminar la portada." }
+            finally { busy = false }
+        }
+    }
+
+    fun saveEdit(item: PortadaAndroid) {
+        val from = parseInstant(editFrom)
+        val until = parseInstant(editUntil)
+        val now = Instant.now()
+        if (from != null && from.isBefore(now)) { message = "La fecha y hora inicial no puede ser anterior a la actual."; return }
+        if (until != null && until.isBefore(now)) { message = "La fecha y hora final no puede ser anterior a la actual."; return }
+        if (from != null && until != null && !until.isAfter(from)) { message = "La fecha y hora final debe ser posterior a la inicial."; return }
+        busy = true
+        scope.launch {
+            try { withContext(Dispatchers.IO) { PortadasRepository.update(item.id, editName.trim(), editFrom, editUntil) }; editing = null; reload() }
+            catch (e: Exception) { message = e.message ?: "No se pudo guardar." }
+            finally { busy = false }
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(AppBg)) {
         AdminHeader(showHome = true, onHome = onBackClick)
@@ -132,11 +214,14 @@ fun PortadasScreen(onBackClick: () -> Unit) {
             Text("${portadas.size}/$MAX_PORTADAS", color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 10.dp))
         }
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SectionCard { Text("Biblioteca de portadas", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText); Text("Guarda hasta 10 portadas. Solo una queda como habitual; las programadas pueden tomar el control automáticamente.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp)) }
+            SectionCard {
+                Text("Biblioteca de portadas", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
+                Text("Guarda hasta 10 portadas. Solo una queda como habitual; las programadas pueden tomar el control automáticamente.", color = AppMuted, fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp))
+            }
             if (loading) Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = OrangePrimary, modifier = Modifier.size(24.dp)) }
             else portadas.forEach { item ->
                 val shownName = displayName(item)
-                val scheduledText = scheduleText(item)
+                val scheduledText = formatSchedule(item)
                 SectionCard {
                     Box(Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(9.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(9.dp))) {
                         AsyncImage(model = item.imageUrl, contentDescription = shownName, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)))
@@ -144,10 +229,10 @@ fun PortadasScreen(onBackClick: () -> Unit) {
                     }
                     if (editing == item.id) {
                         BasicField("Nombre", editName, { editName = it })
-                        DateSelector("Desde", editFrom, { editFrom = it }, endOfDay = false)
-                        DateSelector("Hasta", editUntil, { editUntil = it }, endOfDay = true)
+                        DateTimeSelector("Desde", editFrom, null, { editFrom = it }, { message = it })
+                        DateTimeSelector("Hasta", editUntil, parseInstant(editFrom), { editUntil = it }, { message = it })
                         Row(horizontalArrangement = Arrangement.spacedBy(7.dp), modifier = Modifier.fillMaxWidth().padding(top = 7.dp)) {
-                            Button(onClick = { if (editFrom != null && editUntil != null && Instant.parse(editUntil).isBefore(Instant.parse(editFrom))) { message = "La fecha de fin debe ser posterior a la fecha de inicio."; return@Button }; busy = true; scope.launch { try { withContext(Dispatchers.IO) { PortadasRepository.update(item.id, editName.trim(), editFrom, editUntil) }; editing = null; reload() } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { busy = false } } }, enabled = !busy && editName.trim().isNotEmpty(), modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)) { Icon(Icons.Default.Save, null, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(4.dp)); Text("Guardar", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }
+                            Button(onClick = { saveEdit(item) }, enabled = !busy && editName.trim().isNotEmpty(), modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary)) { Icon(Icons.Default.Save, null, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(4.dp)); Text("Guardar", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }
                             OutlinedButton(onClick = { editing = null }, modifier = Modifier.weight(1f)) { Text("Cancelar", fontSize = 11.sp) }
                         }
                     } else {
