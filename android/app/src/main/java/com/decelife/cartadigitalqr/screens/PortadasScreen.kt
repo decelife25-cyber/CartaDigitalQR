@@ -42,6 +42,7 @@ import com.decelife.cartadigitalqr.ui.theme.AppSurfaceSoft
 import com.decelife.cartadigitalqr.ui.theme.AppText
 import com.decelife.cartadigitalqr.ui.theme.OrangePrimary
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -148,6 +149,16 @@ fun PortadasScreen(onBackClick: () -> Unit) {
     }
 
     LaunchedEffect(Unit) { reload() }
+
+    LaunchedEffect(configuracionId) {
+        val id = configuracionId ?: return@LaunchedEffect
+        while (true) {
+            delay(30_000)
+            runCatching {
+                withContext(Dispatchers.IO) { PortadasRepository.list(id) }
+            }.onSuccess { latest -> portadas = latest }
+        }
+    }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri == null || busy || configuracionId == null) return@rememberLauncherForActivityResult
