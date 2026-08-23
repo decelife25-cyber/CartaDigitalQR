@@ -12,7 +12,7 @@ val releaseKeyAlias = System.getenv("KEY_ALIAS")
 val releaseKeyPassword = System.getenv("KEY_PASSWORD")
 val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-val appVersionName = "1.0.108"
+val appVersionName = "1.0.109"
 val appVersionParts = appVersionName.split(".").map { it.toInt() }
 require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
 val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
