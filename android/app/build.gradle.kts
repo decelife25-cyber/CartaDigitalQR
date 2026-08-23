@@ -13,8 +13,6 @@ val releaseKeyPassword = System.getenv("KEY_PASSWORD")
 val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
-// Versionado del proyecto. No depende del contador de GitHub Actions.
-// Formato: MAJOR.MINOR.PATCH. El contador de GitHub se muestra aparte como referencia técnica.
 val appVersionName = "1.0.107"
 val appVersionParts = appVersionName.split(".").map { it.toInt() }
 require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
