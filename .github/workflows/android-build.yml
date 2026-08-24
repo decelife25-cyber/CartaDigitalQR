@@ -5,11 +5,23 @@ on:
     branches: [ "main", "feat/**", "fix/**" ]
     paths:
       - 'android/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'yarn.lock'
       - '.github/workflows/android-build.yml'
   pull_request:
     branches: [ "main", "feat/**", "fix/**" ]
     paths:
       - 'android/**'
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'yarn.lock'
       - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
