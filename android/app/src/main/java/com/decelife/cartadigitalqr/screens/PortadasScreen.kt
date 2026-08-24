@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.decelife.cartadigitalqr.data.PortadaAndroid
+import com.decelife.cartadigitalqr.data.PortadasRepository
 import com.decelife.cartadigitalqr.data.SupabaseRepository
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
 import com.decelife.cartadigitalqr.ui.theme.*
@@ -33,7 +35,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 
 private const val MAX_PORTADAS = 10
 private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
@@ -41,14 +42,14 @@ private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 @Composable
 fun PortadasScreen(onBackClick: () -> Unit) {
     var config by remember { mutableStateOf<com.decelife.cartadigitalqr.models.Configuracion?>(null) }
-    var portadas by remember { mutableStateOf<List<SupabaseRepository.Portada>>(emptyList()) }
+    var portadas by remember { mutableStateOf<List<PortadaAndroid>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     var addName by remember { mutableStateOf("") }
     var showAddName by remember { mutableStateOf(false) }
     var pendingName by remember { mutableStateOf("") }
-    var editing by remember { mutableStateOf<SupabaseRepository.Portada?>(null) }
+    var editing by remember { mutableStateOf<PortadaAndroid?>(null) }
     var editName by remember { mutableStateOf("") }
     var editFrom by remember { mutableStateOf<String?>(null) }
     var editUntil by remember { mutableStateOf<String?>(null) }
@@ -59,7 +60,7 @@ fun PortadasScreen(onBackClick: () -> Unit) {
         config = SupabaseRepository.getConfiguracion()
         val id = config?.id
         if (id.isNullOrBlank()) throw IllegalStateException("No hay una configuración activa.")
-        portadas = SupabaseRepository.getPortadas(id)
+        portadas = PortadasRepository.getPortadas(id)
     }
 
     LaunchedEffect(Unit) {
@@ -80,7 +81,7 @@ fun PortadasScreen(onBackClick: () -> Unit) {
                 val cfgId = config?.id ?: error("No hay una configuración activa.")
                 require(portadas.size < MAX_PORTADAS) { "Has alcanzado el límite de 10 portadas." }
                 val extension = when (mime) { "image/png" -> "png"; "image/webp" -> "webp"; else -> "jpg" }
-                SupabaseRepository.addPortada(cfgId, name, bytes, mime, extension, portadas.isEmpty())
+                PortadasRepository.addPortada(cfgId, name, bytes, mime, extension, portadas.isEmpty())
                 pendingName = ""
                 reload()
             } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." }
@@ -117,22 +118,22 @@ fun PortadasScreen(onBackClick: () -> Unit) {
                 Text("Guarda hasta 10 portadas. Solo una queda como habitual; las programadas pueden tomar el control automáticamente.", color = AppMuted, fontSize = 9.sp, lineHeight = 13.sp)
             }
             portadas.forEach { item ->
-                val scheduledNow = item.programada_desde != null && (item.programada_desde == null || Instant.parse(item.programada_desde).toEpochMilli() <= System.currentTimeMillis()) && (item.programada_hasta == null || System.currentTimeMillis() <= Instant.parse(item.programada_hasta).toEpochMilli())
+                val scheduledNow = item.programadaDesde != null && (item.programadaDesde == null || Instant.parse(item.programadaDesde).toEpochMilli() <= System.currentTimeMillis()) && (item.programadaHasta == null || System.currentTimeMillis() <= Instant.parse(item.programadaHasta).toEpochMilli())
                 SectionCard {
                     Box(Modifier.fillMaxWidth().height(250.dp).clip(RoundedCornerShape(12.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                        AsyncImage(model = item.image_url, contentDescription = item.nombre, modifier = Modifier.fillMaxHeight().fillMaxWidth(), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+                        AsyncImage(model = item.imageUrl, contentDescription = item.nombre, modifier = Modifier.fillMaxHeight().fillMaxWidth(), contentScale = androidx.compose.ui.layout.ContentScale.Fit)
                         if (item.activa || scheduledNow) Surface(Modifier.align(Alignment.TopStart).padding(8.dp), shape = RoundedCornerShape(12.dp), color = Color(0xFF22C55E)) { Text(if (scheduledNow && !item.activa) "ACTUAL POR FECHA" else "ACTUAL", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)) }
                     }
                     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(item.nombre, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = AppText)
-                            Text(if (item.activa) "Habitual" else if (item.programada_desde != null || item.programada_hasta != null) "Programada" else "Disponible", color = AppMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            if (item.programada_desde != null || item.programada_hasta != null) Text("${formatDate(item.programada_desde)} → ${formatDate(item.programada_hasta)}", color = AppMuted, fontSize = 9.sp)
+                            Text(if (item.activa) "Habitual" else if (item.programadaDesde != null || item.programadaHasta != null) "Programada" else "Disponible", color = AppMuted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            if (item.programadaDesde != null || item.programadaHasta != null) Text("${formatDate(item.programadaDesde)} → ${formatDate(item.programadaHasta)}", color = AppMuted, fontSize = 9.sp)
                         }
-                        IconButton(onClick = { editing = item; editName = item.nombre; editFrom = item.programada_desde?.let { runCatching { LocalDateTime.ofInstant(Instant.parse(it), ZoneId.systemDefault()).toString() }.getOrNull() }; editUntil = item.programada_hasta?.let { runCatching { LocalDateTime.ofInstant(Instant.parse(it), ZoneId.systemDefault()).toString() }.getOrNull() } }) { Icon(Icons.Default.Edit, "Editar", tint = AppMuted) }
-                        IconButton(onClick = { if (item.id == portadas.firstOrNull { it.activa }?.id) message = "Activa otra portada antes de eliminar esta." else { busy = true; scope.launch { try { SupabaseRepository.deletePortada(item); reload() } catch (e: Exception) { message = e.message ?: "No se pudo eliminar la portada." } finally { busy = false } } } }, enabled = !busy) { Icon(Icons.Default.Delete, "Eliminar", tint = Color(0xFFDC2626)) }
+                        IconButton(onClick = { editing = item; editName = item.nombre; editFrom = item.programadaDesde?.let { runCatching { LocalDateTime.ofInstant(Instant.parse(it), ZoneId.systemDefault()).toString() }.getOrNull() }; editUntil = item.programadaHasta?.let { runCatching { LocalDateTime.ofInstant(Instant.parse(it), ZoneId.systemDefault()).toString() }.getOrNull() } }) { Icon(Icons.Default.Edit, "Editar", tint = AppMuted) }
+                        IconButton(onClick = { if (item.id == portadas.firstOrNull { it.activa }?.id) message = "Activa otra portada antes de eliminar esta." else { busy = true; scope.launch { try { PortadasRepository.deletePortada(item); reload() } catch (e: Exception) { message = e.message ?: "No se pudo eliminar la portada." } finally { busy = false } } } }, enabled = !busy) { Icon(Icons.Default.Delete, "Eliminar", tint = Color(0xFFDC2626)) }
                     }
-                    Button(onClick = { if (item.activa) Unit else { busy = true; scope.launch { try { SupabaseRepository.activatePortada(config!!.id, item); reload() } catch (e: Exception) { message = e.message ?: "No se pudo activar la portada." } finally { busy = false } } } }, enabled = !busy && !item.activa, modifier = Modifier.fillMaxWidth().height(38.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, disabledContainerColor = AppSurfaceSoft, disabledContentColor = AppMuted), shape = RoundedCornerShape(20.dp)) { Text(if (item.activa) "Habitual" else "Usar como habitual", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }
+                    Button(onClick = { if (item.activa) Unit else { busy = true; scope.launch { try { PortadasRepository.activatePortada(config!!.id, item); reload() } catch (e: Exception) { message = e.message ?: "No se pudo activar la portada." } finally { busy = false } } } }, enabled = !busy && !item.activa, modifier = Modifier.fillMaxWidth().height(38.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, disabledContainerColor = AppSurfaceSoft, disabledContentColor = AppMuted), shape = RoundedCornerShape(20.dp)) { Text(if (item.activa) "Habitual" else "Usar como habitual", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold) }
                 }
             }
             Button(onClick = { if (portadas.size >= MAX_PORTADAS) message = "Has alcanzado el límite de 10 portadas." else { addName = ""; showAddName = true } }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(42.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary), shape = RoundedCornerShape(22.dp)) { Icon(Icons.Default.Add, null, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(6.dp)); Text("Añadir portada", fontWeight = FontWeight.ExtraBold) }
@@ -150,7 +151,7 @@ fun PortadasScreen(onBackClick: () -> Unit) {
             Text("Hasta", color = AppMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             OutlinedButton(onClick = { chooseDateTime(editUntil) { editUntil = it } }, modifier = Modifier.fillMaxWidth()) { Text(formatDate(editUntil)) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = { editFrom = null }, modifier = Modifier.weight(1f)) { Text("Borrar desde") }; OutlinedButton(onClick = { editUntil = null }, modifier = Modifier.weight(1f)) { Text("Borrar hasta") } }
-        } }, dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancelar") } }, confirmButton = { TextButton(onClick = { val from = editFrom?.let { runCatching { LocalDateTime.parse(it).atZone(ZoneId.systemDefault()).toInstant().toString() }.getOrNull() }; val until = editUntil?.let { runCatching { LocalDateTime.parse(it).atZone(ZoneId.systemDefault()).toInstant().toString() }.getOrNull() }; if (from != null && until != null && Instant.parse(until) <= Instant.parse(from)) message = "La fecha de fin debe ser posterior a la fecha de inicio." else { busy = true; scope.launch { try { SupabaseRepository.updatePortada(item.id, editName.trim(), from, until); editing = null; reload() } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." } finally { busy = false } } } }) { Text("Guardar", color = OrangePrimary) } })
+        } }, dismissButton = { TextButton(onClick = { editing = null }) { Text("Cancelar") } }, confirmButton = { TextButton(onClick = { val from = editFrom?.let { runCatching { LocalDateTime.parse(it).atZone(ZoneId.systemDefault()).toInstant().toString() }.getOrNull() }; val until = editUntil?.let { runCatching { LocalDateTime.parse(it).atZone(ZoneId.systemDefault()).toInstant().toString() }.getOrNull() }; if (from != null && until != null && Instant.parse(until) <= Instant.parse(from)) message = "La fecha de fin debe ser posterior a la fecha de inicio." else { busy = true; scope.launch { try { PortadasRepository.updatePortada(item.id, editName.trim(), from, until); editing = null; reload() } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." } finally { busy = false } } } }) { Text("Guardar", color = OrangePrimary) } })
     }
 
     if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("Portadas") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Aceptar", color = OrangePrimary) } })
