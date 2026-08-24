@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -293,9 +294,11 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
             }
             val y = size.height / 2f - (paint.ascent() + paint.descent()) / 2f
             val half = size.width * 0.44f
-            drawContext.canvas.nativeCanvas.drawLine(size.width / 2f - half, y - 8.dp.toPx(), size.width / 2f + half, y - 8.dp.toPx(), paint)
-            drawContext.canvas.nativeCanvas.drawText("AGOTADO", size.width / 2f, y, paint)
-            drawContext.canvas.nativeCanvas.drawLine(size.width / 2f - half, y + 5.dp.toPx(), size.width / 2f + half, y + 5.dp.toPx(), paint)
+            drawIntoCanvas { canvas ->
+                canvas.nativeCanvas.drawLine(size.width / 2f - half, y - 8.dp.toPx(), size.width / 2f + half, y - 8.dp.toPx(), paint)
+                canvas.nativeCanvas.drawText("AGOTADO", size.width / 2f, y, paint)
+                canvas.nativeCanvas.drawLine(size.width / 2f - half, y + 5.dp.toPx(), size.width / 2f + half, y + 5.dp.toPx(), paint)
+            }
         }
     }
 }
