@@ -64,11 +64,28 @@ object PortadasRepository {
 
     suspend fun getPortadas(configuracionId: String): List<PortadaAndroid> {
         val json = JSONArray(rest("GET", "portadas_carta?select=*&configuracion_id=eq.$configuracionId&order=created_at.asc"))
-        return buildList(json.length()) {
+        val now = java.time.Instant.now()
+        val items = buildList(json.length()) {
             for (i in 0 until json.length()) {
                 val item = json.getJSONObject(i)
                 add(PortadaAndroid(item.getString("id"), item.getString("configuracion_id"), item.optString("nombre"), item.optString("image_url"), item.optString("storage_path").takeIf { it.isNotBlank() && it != "null" }, item.optBoolean("activa"), item.optString("programada_desde").takeIf { it.isNotBlank() && it != "null" }, item.optString("programada_hasta").takeIf { it.isNotBlank() && it != "null" }))
             }
+        }
+        val expired = items.filter { item ->
+            val until = item.programadaHasta?.let { runCatching { java.time.Instant.parse(it) }.getOrNull() }
+            until != null && !now.isBefore(until)
+        }
+        expired.forEach { item ->
+            runCatching {
+                rest("PATCH", "portadas_carta?id=eq.${item.id}", JSONObject().apply {
+                    put("programada_desde", JSONObject.NULL)
+                    put("programada_hasta", JSONObject.NULL)
+                    put("updated_at", now.toString())
+                }.toString())
+            }
+        }
+        return items.map { item ->
+            if (expired.any { it.id == item.id }) item.copy(programadaDesde = null, programadaHasta = null) else item
         }
     }
 

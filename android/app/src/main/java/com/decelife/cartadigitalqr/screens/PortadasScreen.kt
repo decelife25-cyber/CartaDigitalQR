@@ -45,6 +45,11 @@ private fun formatDate(value: String?): String = parseInstant(value)?.atZone(Zon
 private fun localValue(value: String?): String? = parseInstant(value)?.atZone(ZoneId.systemDefault())?.toLocalDateTime()?.toString()
 private fun instantValue(value: String?): String? = value?.takeIf { it.isNotBlank() }?.let { runCatching { LocalDateTime.parse(it).atZone(ZoneId.systemDefault()).toInstant().toString() }.getOrNull() }
 
+private fun nextPortadaName(portadas: List<PortadaAndroid>): String {
+    val maxNumericName = portadas.mapNotNull { it.nombre.trim().toLongOrNull() }.maxOrNull()
+    return (maxNumericName?.plus(1) ?: 1_000_000_001L).toString()
+}
+
 @Composable
 fun PortadasScreen(onBackClick: () -> Unit) {
     var config by remember { mutableStateOf<com.decelife.cartadigitalqr.models.Configuracion?>(null) }
@@ -52,9 +57,6 @@ fun PortadasScreen(onBackClick: () -> Unit) {
     var loading by remember { mutableStateOf(true) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-    var showAddName by remember { mutableStateOf(false) }
-    var addName by remember { mutableStateOf("") }
-    var pendingName by remember { mutableStateOf("") }
     var editing by remember { mutableStateOf<PortadaAndroid?>(null) }
     var editName by remember { mutableStateOf("") }
     var editFrom by remember { mutableStateOf<String?>(null) }
@@ -75,7 +77,7 @@ fun PortadasScreen(onBackClick: () -> Unit) {
     }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri == null || pendingName.isBlank() || busy) return@rememberLauncherForActivityResult
+        if (uri == null || busy) return@rememberLauncherForActivityResult
         busy = true
         scope.launch {
             try {
@@ -86,8 +88,8 @@ fun PortadasScreen(onBackClick: () -> Unit) {
                 val cfgId = config?.id ?: error("No hay una configuración activa.")
                 require(portadas.size < MAX_PORTADAS) { "Has alcanzado el límite de 10 portadas." }
                 val extension = when (mime) { "image/png" -> "png"; "image/webp" -> "webp"; else -> "jpg" }
-                PortadasRepository.addPortada(cfgId, pendingName.trim(), bytes, mime, extension, portadas.isEmpty())
-                pendingName = ""
+                val name = nextPortadaName(portadas)
+                PortadasRepository.addPortada(cfgId, name, bytes, mime, extension, portadas.isEmpty())
                 reload()
             } catch (e: Exception) { message = e.message ?: "No se pudo guardar la portada." }
             finally { busy = false }
@@ -202,20 +204,12 @@ fun PortadasScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            Button(onClick = { if (portadas.size >= MAX_PORTADAS) message = "Has alcanzado el límite de 10 portadas." else { addName = ""; showAddName = true } }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(42.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary), shape = RoundedCornerShape(22.dp)) {
+            Button(onClick = { if (portadas.size >= MAX_PORTADAS) message = "Has alcanzado el límite de 10 portadas." else picker.launch("image/*") }, enabled = !busy, modifier = Modifier.fillMaxWidth().height(42.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary), shape = RoundedCornerShape(22.dp)) {
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(17.dp)); Spacer(Modifier.width(6.dp)); Text("Añadir portada", fontWeight = FontWeight.ExtraBold)
             }
             Text("JPG, PNG o WebP · máximo 10 MB", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = AppMuted, fontSize = 9.sp)
         }
     }
-
-    if (showAddName) AlertDialog(
-        onDismissRequest = { showAddName = false },
-        title = { Text("Nueva portada") },
-        text = { Column { Text("Ponle un nombre para identificarla después.", color = AppMuted, fontSize = 12.sp); Spacer(Modifier.height(8.dp)); OutlinedTextField(value = addName, onValueChange = { addName = it }, label = { Text("Nombre") }, singleLine = true) } },
-        dismissButton = { TextButton(onClick = { showAddName = false }) { Text("Cancelar") } },
-        confirmButton = { TextButton(onClick = { val clean = addName.trim(); if (clean.isBlank()) message = "El nombre de la portada es obligatorio." else { pendingName = clean; showAddName = false; picker.launch("image/*") } }) { Text("Continuar", color = OrangePrimary) } }
-    )
 
     if (message != null) AlertDialog(onDismissRequest = { message = null }, title = { Text("Portadas") }, text = { Text(message.orEmpty()) }, confirmButton = { TextButton(onClick = { message = null }) { Text("Aceptar", color = OrangePrimary) } })
 }
