@@ -1,5 +1,6 @@
 package com.decelife.cartadigitalqr.screens
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +50,7 @@ fun ConfiguracionScreen(onBackClick: () -> Unit, onOpenPortadas: () -> Unit) {
     var confirmSave by remember { mutableStateOf(false) }
     var confirmDownload by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         try { config = SupabaseRepository.getConfiguracion() }
@@ -85,9 +88,13 @@ fun ConfiguracionScreen(onBackClick: () -> Unit, onOpenPortadas: () -> Unit) {
     val createQrFile = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri: Uri? ->
         if (uri == null) { downloading = false; return@rememberLauncherForActivityResult }
         scope.launch {
-            try { val bytes = downloadBytes(qrUrl ?: error("Configura primero el enlace QR obligatorio.")); contextWrite(uri, bytes); message = "QR descargado correctamente." }
-            catch (e: Exception) { message = e.message ?: "No se pudo descargar el QR." }
-            finally { downloading = false }
+            try {
+                val bytes = downloadBytes(qrUrl ?: error("Configura primero el enlace QR obligatorio."))
+                writeFile(context, uri, bytes)
+                message = "QR descargado correctamente."
+            } catch (e: Exception) {
+                message = e.message ?: "No se pudo descargar el QR."
+            } finally { downloading = false }
         }
     }
 
@@ -132,8 +139,8 @@ private fun Configuracion.withSocial(key: String, value: String): Configuracion 
 
 private fun qrImageUrl(domain: String?, custom: String?): String? { val target = publicCartaUrl(domain); if (target.isBlank()) return null; return custom?.trim()?.takeIf { it.isNotBlank() } ?: "https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=12&data=${Uri.encode(target)}" }
 private fun publicCartaUrl(domain: String?): String { val raw = domain?.trim().orEmpty(); if (raw.isBlank()) return ""; val normalized = if (raw.startsWith("http://", true) || raw.startsWith("https://", true)) raw else "https://$raw"; return normalized.trimEnd('/') }
-private suspend fun downloadBytes(url: String): ByteArray = withContext(Dispatchers.IO) { val connection = (URL(url).openConnection() as HttpURLConnection).apply { connectTimeout = 15000; readTimeout = 15000; requestMethod = "GET" }; try { if (connection.responseCode !in 200..299) error("No se pudo descargar el QR."); connection.inputStream.use { it.readBytes() } } finally { connection.disconnect() } }
-private suspend fun contextWrite(uri: Uri, bytes: ByteArray) = withContext(Dispatchers.IO) { /* output handled by caller context through ContentResolver is intentionally avoided here */ }
+private suspend fun downloadBytes(url: String): ByteArray = withContext(Dispatchers.IO) { val connection = (URL(url).openConnection() as HttpURLConnection).apply { connectTimeout = 15000; readTimeout = 15000; requestMethod = "GET" }; try { if (connection.responseCode !in 200..299) error("No se pudo descargar el QR."); val contentType = connection.contentType?.lowercase().orEmpty(); if (!contentType.startsWith("image/")) error("El servidor no ha devuelto una imagen válida para el QR."); connection.inputStream.use { it.readBytes() }.also { bytes -> if (bytes.isEmpty()) error("El archivo QR recibido está vacío.") } } finally { connection.disconnect() } }
+private suspend fun writeFile(context: Context, uri: Uri, bytes: ByteArray) = withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.use { output -> output.write(bytes); output.flush() } ?: error("No se pudo crear el archivo gráfico del QR.") }
 
 @Composable private fun QrPreview(qrUrl: String?) { Box(Modifier.size(150.dp).clip(RoundedCornerShape(10.dp)).background(Color.White).border(1.dp, AppBorder, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) { if (qrUrl != null) AsyncImage(model = qrUrl, contentDescription = "Código QR de la carta", modifier = Modifier.fillMaxSize().padding(8.dp)) else Text("Falta el enlace QR obligatorio", color = AppMuted, fontSize = 10.sp, textAlign = TextAlign.Center, modifier = Modifier.padding(12.dp)) } }
 @Composable private fun QrDownloadButton(enabled: Boolean, onClick: () -> Unit) { TextButton(onClick = onClick, enabled = enabled) { Icon(Icons.Default.Download, null, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(5.dp)); Text("Descargar QR", fontSize = 11.sp, fontWeight = FontWeight.Bold) } }
