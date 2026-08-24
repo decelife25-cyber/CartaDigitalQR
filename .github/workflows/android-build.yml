@@ -1,5 +1,7 @@
 name: Android Build
 
+# Trigger rebuilds on main when the Android workflow itself is updated.
+
 on:
   push:
     branches: [ "main", "feat/**", "fix/**" ]
