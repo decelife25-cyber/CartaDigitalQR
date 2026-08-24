@@ -78,9 +78,11 @@ export default function Portada() {
     const element = textoPizarraRef.current;
     if (!element || sugerencias.length === 0) return;
     let frame = 0;
+    let cancelled = false;
     const fitText = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
+        if (cancelled) return;
         const maxSize = pizarraAmpliada ? 26 : 16;
         const minSize = 7;
         const step = 0.25;
@@ -94,9 +96,21 @@ export default function Portada() {
       });
     };
     fitText();
+    const fontReady = document.fonts?.ready.then(() => {
+      if (!cancelled) fitText();
+    });
+    const fontLoaded = document.fonts?.load('16px "Patrick Hand SC"').then(() => {
+      if (!cancelled) fitText();
+    });
+    void fontReady;
+    void fontLoaded;
     const observer = new ResizeObserver(fitText);
     observer.observe(element);
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); };
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [sugerencias, pizarraAmpliada]);
 
   if (loading) return <div className="flex h-[100dvh] w-full items-center justify-center bg-black text-white">Cargando...</div>;
