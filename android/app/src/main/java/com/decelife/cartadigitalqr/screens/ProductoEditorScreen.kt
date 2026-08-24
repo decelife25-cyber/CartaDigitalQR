@@ -15,7 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -72,6 +72,26 @@ private fun erudus(nombre: String): Pair<String, Color> {
     return f to (IconBg[f] ?: Color(0xFFF3F4F6))
 }
 
+private fun productEditorSnapshot(
+    nombre: String,
+    descripcion: String,
+    precio: String,
+    familiaId: String,
+    fotoUrl: String,
+    visible: Boolean,
+    agotado: Boolean,
+    especialidad: Boolean,
+    sugerencia: Boolean,
+    selected: Set<String>
+): String {
+    val normalizedPrice = precio.replace(',', '.').trim().toDoubleOrNull()?.let { String.format(Locale.US, "%.2f", it) } ?: precio.trim()
+    return listOf(
+        nombre.trim(), descripcion.trim(), normalizedPrice, familiaId, fotoUrl.trim(),
+        visible.toString(), agotado.toString(), especialidad.toString(), sugerencia.toString(),
+        selected.sorted().joinToString(",")
+    ).joinToString("\u001F")
+}
+
 @Composable
 fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var product by remember { mutableStateOf<Producto?>(null) }
@@ -120,14 +140,46 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var familyOpen by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var showUnsavedDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     val density = LocalDensity.current
     val loader = remember(context) { ImageLoader.Builder(context).components { add(SvgDecoder.Factory()) }.build() }
     val familiaNombre = familias.firstOrNull { it.id == familiaId }?.nombre ?: "Selecciona una familia"
+    val initialSnapshot = remember(product) {
+        productEditorSnapshot(
+            product?.nombre ?: "", product?.descripcion ?: "",
+            product?.let { String.format(Locale.US, "%.2f", it.precio) } ?: "0.00",
+            product?.familia_id ?: familias.firstOrNull()?.id.orEmpty(), product?.foto_url ?: "",
+            product?.activo ?: true, product?.agotado ?: false, product?.destacado ?: false,
+            product?.sugerido ?: false, selected
+        )
+    }
+    val currentSnapshot = productEditorSnapshot(nombre, descripcion, precio, familiaId, fotoUrl, visible, agotado, especialidad, sugerencia, selected)
+    val hasChanges = currentSnapshot != initialSnapshot
+
+    fun requestBack() {
+        if (hasChanges && !saving) showUnsavedDialog = true else onBack()
+    }
+
+    fun saveChanges() {
+        val n = nombre.trim()
+        val p = precio.replace(',', '.').toDoubleOrNull()
+        if (n.isBlank()) { message = "El producto necesita un nombre."; return }
+        if (familiaId.isBlank()) { message = "Selecciona una familia."; return }
+        if (p == null || p < 0) { message = "Introduce un precio válido."; return }
+        saving = true
+        message = null
+        scope.launch {
+            try {
+                SupabaseRepository.saveProducto(productId, n, descripcion.trim().ifBlank { null }, p, familiaId, fotoUrl.trim().ifBlank { null }, visible, agotado, especialidad, sugerencia, selected.toList())
+                onBack()
+            } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(AppBg)) {
-        AdminHeader(showHome = true, onHome = onBack)
+        AdminHeader(showHome = true, onHome = { requestBack() })
         Row(
             Modifier
                 .fillMaxWidth()
@@ -135,7 +187,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 .drawBehind { drawLine(AppBorder, Offset(0f, size.height - 0.5f), Offset(size.width, size.height - 0.5f), 1.dp.toPx()) },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack, modifier = Modifier.size(36.dp)) {
+            IconButton(onClick = { requestBack() }, modifier = Modifier.size(36.dp)) {
                 Icon(Icons.Default.ArrowBack, "Volver", modifier = Modifier.size(20.dp))
             }
             Text(
@@ -256,24 +308,30 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
             }
 
             Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(AppBg).padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onBack, modifier = Modifier.weight(1f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = AppSurface, contentColor = AppMuted), border = BorderStroke(1.dp, AppBorder)) { Text("Cancelar", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
-                Button(onClick = {
-                    val n = nombre.trim(); val p = precio.replace(',', '.').toDoubleOrNull()
-                    if (n.isBlank()) { message = "El producto necesita un nombre."; return@Button }
-                    if (familiaId.isBlank()) { message = "Selecciona una familia."; return@Button }
-                    if (p == null || p < 0) { message = "Introduce un precio válido."; return@Button }
-                    saving = true; message = null
-                    scope.launch {
-                        try {
-                            SupabaseRepository.saveProducto(productId, n, descripcion.trim().ifBlank { null }, p, familiaId, fotoUrl.trim().ifBlank { null }, visible, agotado, especialidad, sugerencia, selected.toList())
-                            onBack()
-                        } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
-                    }
-                }, enabled = !saving, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
+                Button(onClick = { requestBack() }, modifier = Modifier.weight(1f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = AppSurface, contentColor = AppMuted), border = BorderStroke(1.dp, AppBorder)) { Text("Cancelar", fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                Button(onClick = { saveChanges() }, enabled = !saving && hasChanges, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White, disabledContainerColor = AppSurfaceSoft, disabledContentColor = AppMuted)) {
                     Icon(Icons.Default.Save, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
+    }
+
+    if (showUnsavedDialog) {
+        AlertDialog(
+            onDismissRequest = { showUnsavedDialog = false },
+            title = { Text("Cambios sin guardar", fontWeight = FontWeight.ExtraBold) },
+            text = { Text("Hay modificaciones sin guardar. ¿Qué quieres hacer?") },
+            confirmButton = { TextButton(onClick = { showUnsavedDialog = false; saveChanges() }) { Text("Guardar", color = OrangePrimary, fontWeight = FontWeight.Bold) } },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(onClick = { showUnsavedDialog = false; onBack() }) { Text("Salir sin guardar", color = ErrorText, fontWeight = FontWeight.Bold) }
+                    TextButton(onClick = { showUnsavedDialog = false }) { Text("Cancelar", color = AppMuted, fontWeight = FontWeight.Bold) }
+                }
+            },
+            containerColor = AppSurface,
+            titleContentColor = AppText,
+            textContentColor = AppMuted
+        )
     }
 }
 
