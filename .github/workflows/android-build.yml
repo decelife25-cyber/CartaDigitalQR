@@ -80,15 +80,21 @@ jobs:
         KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
         cd android
-        ./gradlew assembleRelease
+        ./gradlew clean assembleRelease
         VERSION_NAME=$(sed -n 's/.*val appVersionName = "\([^"]*\)".*/\1/p' app/build.gradle.kts)
         test -n "$VERSION_NAME"
-        cp app/build/outputs/apk/release/app-release.apk "app/build/outputs/apk/release/carta_v${VERSION_NAME}.apk"
-    - name: Verify APK signature
+        APK="app/build/outputs/apk/release/carta_v${VERSION_NAME}.apk"
+        cp app/build/outputs/apk/release/app-release.apk "$APK"
+        test -f "$APK"
+        echo "Built APK: $APK"
+    - name: Verify APK signature and version
       run: |
         APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
         VERSION_NAME=$(sed -n 's/.*val appVersionName = "\([^"]*\)".*/\1/p' android/app/build.gradle.kts)
-        "$APKSIGNER" verify --verbose --print-certs "android/app/build/outputs/apk/release/carta_v${VERSION_NAME}.apk"
+        APK="android/app/build/outputs/apk/release/carta_v${VERSION_NAME}.apk"
+        "$APKSIGNER" verify --verbose --print-certs "$APK"
+        echo "Artifact filename: $(basename "$APK")"
+        test "$(basename "$APK")" = "carta_v${VERSION_NAME}.apk"
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
