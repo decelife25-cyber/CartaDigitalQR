@@ -12,14 +12,10 @@ val releaseKeyAlias = System.getenv("KEY_ALIAS")
 val releaseKeyPassword = System.getenv("KEY_PASSWORD")
 val hasReleaseSigning = listOf(releaseKeystoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword).all { !it.isNullOrBlank() }
 fun quoteBuildConfig(value: String) = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-
-// Versionado del proyecto. No depende del contador de GitHub Actions.
-// Formato: MAJOR.MINOR.PATCH. El contador de GitHub se muestra aparte como referencia técnica.
-val appVersionName = "1.0.104"
+val appVersionName = "1.0.108"
 val appVersionParts = appVersionName.split(".").map { it.toInt() }
 require(appVersionParts.size == 3) { "appVersionName must use MAJOR.MINOR.PATCH" }
 val appVersionCode = appVersionParts[0] * 1_000_000 + appVersionParts[1] * 1_000 + appVersionParts[2]
-
 android {
     namespace = "com.decelife.cartadigitalqr"
     compileSdk = 34
@@ -56,11 +52,7 @@ android {
     sourceSets["main"].assets.srcDir(rootProject.projectDir.parentFile.resolve("public/icons/alergenos"))
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
 }
-
-if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) } && !hasReleaseSigning) {
-    error("Release build requires KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD.")
-}
-
+if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) } && !hasReleaseSigning) error("Release build requires KEYSTORE_FILE, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD.")
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
