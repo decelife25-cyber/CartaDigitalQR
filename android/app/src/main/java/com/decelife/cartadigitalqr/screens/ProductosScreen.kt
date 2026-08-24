@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -258,13 +259,18 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
 @Composable private fun ProductRow(product: Producto, family: String, isDragging: Boolean, dragVisualX: Float, dragVisualY: Float, onClick: () -> Unit, canReorder: Boolean, onDragStart: () -> Unit, onDrag: (Float, Float, Float) -> Unit, onDragEnd: () -> Unit) {
     Row(Modifier.fillMaxWidth().zIndex(if (isDragging) 10f else 0f).graphicsLayer { translationX = dragVisualX; translationY = dragVisualY; shadowElevation = if (isDragging) 18f else 0f; alpha = if (isDragging) 0.98f else 1f }.background(if (isDragging) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface).border(if (isDragging) 2.dp else 1.dp, if (isDragging) MaterialTheme.colorScheme.primary else AppBorder).padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f).clickable(onClick = onClick), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }
+            Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) {
+                if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp))
+                if (product.agotado) {
+                    Text("AGOTADO", color = Color(0xFFDC2626), fontSize = 9.sp, fontWeight = FontWeight.Black, modifier = Modifier.rotate(-15f).border(1.5.dp, Color(0xFFDC2626), RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.92f)).padding(horizontal = 3.dp, vertical = 1.dp))
+                }
+            }
             Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                 Text(product.nombre, fontSize = 15.sp, lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 3)
                 if (family.isNotBlank()) Text(family, color = AppMuted, fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(top = 2.dp), maxLines = 1)
                 if (product.destacado || product.sugerido) Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) { if (product.destacado) FeatureBadge("ESPECIALIDAD", SpecialColor, SpecialBackground, true); if (product.sugerido) FeatureBadge("SUGERENCIA", SuggestedColor, SuggestedBackground) }
             }
-            Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.agotado) "Agotado" else "Visible", if (product.agotado) Color(0xFFFFE8E8) else SuccessBg, if (product.agotado) Color(0xFFDC2626) else SuccessText) }
+            Column(horizontalAlignment = Alignment.End) { Text(String.format(Locale.US, "%.2f €", product.precio), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold); Spacer(Modifier.height(4.dp)); StatusPill(if (product.activo) "Visible" else "Oculto", if (product.activo) SuccessBg else Color(0x1A94A3B8), if (product.activo) SuccessText else AppMuted) }
         }
         Icon(Icons.Default.DragIndicator, "Reordenar", tint = if (isDragging) MaterialTheme.colorScheme.primary else AppMuted, modifier = Modifier.padding(start = 6.dp).size(22.dp).pointerInput(product.id, canReorder) {
             detectDragGestures(onDragStart = { onDragStart() }, onDragCancel = onDragEnd, onDragEnd = onDragEnd) { change, dragAmount -> change.consume(); onDrag(dragAmount.x, dragAmount.y, change.position.y) }
