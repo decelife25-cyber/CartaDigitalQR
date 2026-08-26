@@ -3,8 +3,6 @@ name: Bridge UI fixes 1.0.120
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/bridge-ui-fixes-120.yml'
 
 permissions:
   contents: write
