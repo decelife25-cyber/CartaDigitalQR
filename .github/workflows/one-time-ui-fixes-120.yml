@@ -1,0 +1,94 @@
+name: Apply UI fixes 1.0.120
+
+on:
+  push:
+    branches: [ "fix/ui-product-delete-rice-note-120-v2" ]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'fix/ui-product-delete-rice-note-120-v2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply requested UI and product fixes
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              s = p.read_text()
+              if old not in s:
+                  raise SystemExit(f"Pattern not found in {path}: {old[:120]!r}")
+              p.write_text(s.replace(old, new, 1))
+
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/HomeScreen.kt', 'HomeSectionItem("Familias", "Organiza las categorías de la carta.", Icons.Filled.FolderOpen, AccentPurple, onNavigateToFamilias)\n                HomeSectionItem("Productos", "Crea, edita y ordena los platos.", Icons.Filled.Inventory2, AccentOrange, onNavigateToProductos)', 'HomeSectionItem("Familias", "Organiza las categorías de la carta.", Icons.Filled.AutoAwesomeMosaic, AccentPurple, onNavigateToFamilias)\n                HomeSectionItem("Productos", "Crea, edita y ordena los platos.", Icons.Filled.RestaurantMenu, AccentOrange, onNavigateToProductos)')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/FamiliasScreen.kt', 'Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!familia.foto_url.isNullOrBlank()) AsyncImage(model = familia.foto_url, contentDescription = familia.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(fallbackIcons[familia.nombre] ?: Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }', 'Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFF6F0FF)), contentAlignment = Alignment.Center) { if (!familia.foto_url.isNullOrBlank()) AsyncImage(model = familia.foto_url, contentDescription = familia.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(fallbackIcons[familia.nombre] ?: Icons.Default.AutoAwesomeMosaic, null, tint = Color(0xFF7C5CE0), modifier = Modifier.size(28.dp)) }')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/ProductosScreen.kt', 'Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFAF5EE)), contentAlignment = Alignment.Center) { if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.Image, null, tint = Color(0xFF8C6A48), modifier = Modifier.size(24.dp)) }', 'Box(Modifier.size(50.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFFFF7E8)), contentAlignment = Alignment.Center) { if (!product.foto_url.isNullOrBlank()) AsyncImage(model = product.foto_url, contentDescription = product.nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp))) else Icon(Icons.Default.RestaurantMenu, null, tint = Color(0xFFE08A00), modifier = Modifier.size(28.dp)) }')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/FamiliaEditorScreen.kt', 'else Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(30.dp))', 'else Icon(Icons.Default.AutoAwesomeMosaic, null, tint = AccentPurple, modifier = Modifier.size(30.dp))')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/FamiliaEditorScreen.kt', 'Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))', 'Icon(Icons.Default.RemoveCircleOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(21.dp))')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/ProductoEditorScreen.kt', 'var message by remember { mutableStateOf<String?>(null) }\n    val scope = rememberCoroutineScope()', 'var message by remember { mutableStateOf<String?>(null) }\n    var confirmDelete by remember { mutableStateOf(false) }\n    val scope = rememberCoroutineScope()')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/ProductoEditorScreen.kt', 'IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) {\n                    Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))\n                }', 'IconButton(onClick = { confirmDelete = true }, enabled = !saving, modifier = Modifier.size(32.dp)) {\n                    Icon(Icons.Default.RemoveCircleOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(21.dp))\n                }')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/ProductoEditorScreen.kt', 'else Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(28.dp))', 'else Icon(Icons.Default.RestaurantMenu, null, tint = Color(0xFFE08A00), modifier = Modifier.size(28.dp))')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/screens/ProductoEditorScreen.kt', '    }\n}\n\n@Composable\nprivate fun SectionCard(content: @Composable () -> Unit) {', '''    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { if (!saving) confirmDelete = false },
+            title = { Text("¿Eliminar producto?") },
+            text = { Text("Se eliminará «${nombre.trim()}». Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = productId ?: return@TextButton
+                    confirmDelete = false
+                    saving = true
+                    scope.launch {
+                        try {
+                            SupabaseRepository.deleteProducto(id)
+                            onBack()
+                        } catch (e: Exception) {
+                            message = e.message ?: "No se pudo eliminar el producto."
+                        } finally {
+                            saving = false
+                        }
+                    }
+                }, enabled = !saving) { Text("Eliminar", color = ErrorText) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }, enabled = !saving) { Text("Cancelar") } }
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(content: @Composable () -> Unit) {''')
+          replace('android/app/src/main/java/com/decelife/cartadigitalqr/data/SupabaseRepository.kt', '    suspend fun updateProductoFields(id: String, fields: Map<String, Any?>) {\n        val payload = JSONObject().apply { fields.forEach { (key, value) -> put(key, value ?: JSONObject.NULL) } }\n        request("PATCH", "productos?id=eq.$id", payload.toString())\n    }', '    suspend fun updateProductoFields(id: String, fields: Map<String, Any?>) {\n        val payload = JSONObject().apply { fields.forEach { (key, value) -> put(key, value ?: JSONObject.NULL) } }\n        request("PATCH", "productos?id=eq.$id", payload.toString())\n    }\n\n    suspend fun deleteProducto(id: String) {\n        request("DELETE", "producto_alergeno?producto_id=eq.$id")\n        request("DELETE", "productos?id=eq.$id")\n    }')
+          replace('src/pages/ListadoPlatos.tsx', "const PIZARRA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/ICONOS/pizarra.png?v=1';", "const PIZARRA_IMAGE = 'https://raw.githubusercontent.com/decelife25-cyber/CartaDigitalQR/main/docs/REFERENCIAS/ICONOS/pizarra.png?v=1';\nconst RICE_NOTE = 'Precio por persona · Mínimo 2 personas';")
+          replace('src/pages/ListadoPlatos.tsx', "  const familyName = isSuggestions ? 'Sugerencias' : familia?.nombre || 'Resultados de búsqueda'; const heading = isSuggestions ? 'Sugerencias' : isSearch ? `Resultados para «${searchQuery}»` : familyName; const toggleSelection = (productoId: string) => { if (isSelected(productoId)) removeSelection(productoId); else addSelection(productoId); };", "  const familyName = isSuggestions ? 'Sugerencias' : familia?.nombre || 'Resultados de búsqueda'; const heading = isSuggestions ? 'Sugerencias' : isSearch ? `Resultados para «${searchQuery}»` : familyName; const isRiceFamily = normalize(familyName) === 'arroces'; const toggleSelection = (productoId: string) => { if (isSelected(productoId)) removeSelection(productoId); else addSelection(productoId); };")
+          replace('src/pages/ListadoPlatos.tsx', "const cardHeight = manyAllergens ? 'h-[180px]' : 'h-[124px]';", "const cardHeight = manyAllergens ? (isRiceFamily ? 'h-[198px]' : 'h-[180px]') : (isRiceFamily ? 'h-[148px]' : 'h-[124px]');")
+          replace('src/pages/ListadoPlatos.tsx', '<h2 className="pr-[60px] text-[15px] font-extrabold leading-[1.08] break-words line-clamp-3">{producto.nombre}</h2><span className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none" style={{ color: \'var(--app-text)\' }} aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>{producto.precio.toFixed(2)}€</span>', '<h2 className="pr-[60px] text-[15px] font-extrabold leading-[1.08] break-words line-clamp-3">{producto.nombre}</h2>{isRiceFamily && <p className="mt-1 pr-[60px] text-[10px] font-bold leading-tight" style={{ color: \'var(--app-muted)\' }}>{RICE_NOTE}</p>}<span className="absolute right-3 top-3 w-16 whitespace-nowrap text-right text-[16px] font-extrabold leading-none" style={{ color: \'var(--app-text)\' }} aria-label={`Precio ${producto.precio.toFixed(2)} euros`}>{producto.precio.toFixed(2)}€</span>')
+          replace('src/pages/FichaPlato.tsx', "function IndicadoresProducto({ producto }: { producto: Producto }) { if (!producto.destacado && !producto.sugerido) return null; return <div className=\"mt-3 flex w-full items-start gap-2\" aria-label=\"Indicadores del producto\"><div className=\"flex min-w-0 flex-col items-start gap-2\">{producto.destacado && <span className=\"inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide\" style={{ borderColor: '#f59e0b', color: '#d97706', background: 'rgba(245,158,11,.08)' }}><span className=\"text-sm leading-none\" aria-hidden=\"true\">👨‍🍳</span>ESPECIALIDAD</span>}{producto.sugerido && <span className=\"inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide\" style={{ borderColor: '#10b981', color: '#059669', background: 'rgba(16,185,129,.08)' }}><Lightbulb className=\"h-3.5 w-3.5\" />SUGERENCIA</span>}</div><div className=\"ml-auto shrink-0 rounded-2xl px-4 py-2 text-xl font-extrabold\" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>{producto.precio.toFixed(2)}€</div></div>; }", "function IndicadoresProducto({ producto }: { producto: Producto }) { if (!producto.destacado && !producto.sugerido) return null; return <div className=\"mt-3 flex w-full items-start gap-2\" aria-label=\"Indicadores del producto\"><div className=\"flex min-w-0 flex-col items-start gap-2\">{producto.destacado && <span className=\"inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide\" style={{ borderColor: '#f59e0b', color: '#d97706', background: 'rgba(245,158,11,.08)' }}><span className=\"text-sm leading-none\" aria-hidden=\"true\">👨‍🍳</span>ESPECIALIDAD</span>}{producto.sugerido && <span className=\"inline-flex max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide\" style={{ borderColor: '#10b981', color: '#059669', background: 'rgba(16,185,129,.08)' }}><Lightbulb className=\"h-3.5 w-3.5\" />SUGERENCIA</span>}</div><div className=\"ml-auto shrink-0 rounded-2xl px-4 py-2 text-xl font-extrabold\" style={{ background: 'var(--app-surface-soft)', color: 'var(--app-text)' }}>{producto.precio.toFixed(2)}€</div></div>; }\n\nfunction cleanRiceDescription(description: string | null, isRice: boolean): string | null { if (!description) return null; if (!isRice) return description; const cleaned = description.replace(/precio por persona\\.?\\s*mínimo 2 personas\\.?/gi, '').trim(); return cleaned || null; }")
+          replace('src/pages/FichaPlato.tsx', "  const { id } = useParams<{ id: string }>(); const navigate = useNavigate(); const [producto, setProducto] = useState<Producto | null>(null); const [loading, setLoading] = useState(true); const { isSelected, addSelection, removeSelection } = useSelectionStore();", "  const { id } = useParams<{ id: string }>(); const navigate = useNavigate(); const [producto, setProducto] = useState<Producto | null>(null); const [familiaNombre, setFamiliaNombre] = useState(''); const [loading, setLoading] = useState(true); const { isSelected, addSelection, removeSelection } = useSelectionStore();")
+          replace('src/pages/FichaPlato.tsx', "  useEffect(() => { async function loadData() { if (!id) return; try { setProducto(await api.getProductoById(id)); } finally { setLoading(false); } } void loadData(); }, [id]);", "  useEffect(() => { async function loadData() { if (!id) return; try { const [productoData, familiasData] = await Promise.all([api.getProductoById(id), api.getFamilias()]); setProducto(productoData); if (productoData) setFamiliaNombre(familiasData.find((familia) => familia.id === productoData.familia_id)?.nombre ?? ''); } finally { setLoading(false); } } void loadData(); }, [id]);")
+          replace('src/pages/FichaPlato.tsx', "  const selected = isSelected(producto.id); const toggleSelection = () => { if (producto.agotado) return; if (selected) removeSelection(producto.id); else addSelection(producto.id); };", "  const selected = isSelected(producto.id); const isRiceFamily = familiaNombre.trim().toLocaleLowerCase('es') === 'arroces'; const descripcionVisible = cleanRiceDescription(producto.descripcion, isRiceFamily); const toggleSelection = () => { if (producto.agotado) return; if (selected) removeSelection(producto.id); else addSelection(producto.id); };")
+          replace('src/pages/FichaPlato.tsx', "      {producto.descripcion && <p className=\"mt-4 text-[16px] leading-7\" style={{ color: 'var(--app-muted)' }}>{producto.descripcion}</p>}", "      {isRiceFamily && <p className=\"mt-2 text-sm font-extrabold\" style={{ color: 'var(--app-muted)' }}>{RICE_NOTE}</p>}\n      {descripcionVisible && <p className=\"mt-4 text-[16px] leading-7\" style={{ color: 'var(--app-muted)' }}>{descripcionVisible}</p>}")
+          replace('android/app/build.gradle.kts', 'val appVersionName = "1.0.119"', 'val appVersionName = "1.0.120"')
+          print('All requested source replacements applied.')
+          PY
+
+      - name: Commit source changes and remove one-time workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/one-time-ui-fixes-120.yml
+          git add android src .github/workflows/one-time-ui-fixes-120.yml
+          git diff --cached --check
+          git diff --cached --stat
+          git commit -m "feat: improve product management and rice pricing note"
+          git push
