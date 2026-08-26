@@ -1,10 +1,9 @@
 name: Apply UI fixes 1.0.120
 
 on:
-  push:
-    branches: [ "fix/ui-product-delete-rice-note-120" ]
-    paths:
-      - '.github/workflows/one-time-ui-fixes-120.yml'
+  pull_request:
+    branches: [ "main" ]
+    types: [opened, synchronize]
 
 permissions:
   contents: write
@@ -12,8 +11,12 @@ permissions:
 jobs:
   apply:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Apply requested UI and product fixes
         run: |
