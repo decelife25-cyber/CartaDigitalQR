@@ -45,6 +45,12 @@ object SupabaseAuth {
 
     fun bearerToken(): String? = accessToken
 
+    suspend fun ensureValidSession(): Boolean {
+        if (accessToken == null) return false
+        if (expiresAt > System.currentTimeMillis() + 30_000) return true
+        return refresh()
+    }
+
     suspend fun signIn(email: String, password: String): String? = withContext(Dispatchers.IO) {
         val baseUrl = BuildConfig.SUPABASE_URL.trimEnd('/')
         val apiKey = BuildConfig.SUPABASE_ANON_KEY
