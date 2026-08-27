@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.RestaurantMenu
+import androidx.compose.material.icons.filled.SettingsSuggest
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,9 +45,9 @@ fun HomeScreen(onNavigateToFamilias: () -> Unit, onNavigateToProductos: () -> Un
             }
             Spacer(Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                HomeSectionItem("Familias", "Organiza las categorías de la carta.", Icons.Filled.FolderOpen, AccentPurple, onNavigateToFamilias)
-                HomeSectionItem("Productos", "Crea, edita y ordena los platos.", Icons.Filled.Inventory2, AccentOrange, onNavigateToProductos)
-                HomeSectionItem("Configuración", "Ajustes generales de la carta.", Icons.Filled.Settings, AccentSlate, onNavigateToConfiguracion)
+                HomeSectionItem("Familias", "Organiza las categorías de la carta.", Icons.Filled.RestaurantMenu, AccentPurple, onNavigateToFamilias)
+                HomeSectionItem("Productos", "Crea, edita y ordena los platos.", Icons.Filled.MenuBook, AccentOrange, onNavigateToProductos)
+                HomeSectionItem("Configuración", "Ajustes generales de la carta.", Icons.Filled.SettingsSuggest, AccentSlate, onNavigateToConfiguracion)
             }
         }
     }
