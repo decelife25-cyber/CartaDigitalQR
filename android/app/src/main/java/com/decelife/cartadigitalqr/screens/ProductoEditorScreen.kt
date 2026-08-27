@@ -120,6 +120,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var familyOpen by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     val density = LocalDensity.current
@@ -148,8 +149,8 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 overflow = TextOverflow.Ellipsis
             )
             if (productId != null) {
-                IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
+                IconButton(onClick = { confirmDelete = true }, enabled = !saving, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.DeleteForever, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
                 }
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.padding(horizontal = 6.dp).offset(y = (-3).dp)) {
@@ -275,6 +276,36 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
             }
         }
     }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { if (!saving) confirmDelete = false },
+            title = { Text("¿Eliminar artículo?") },
+            text = { Text("Se eliminará «${nombre.trim()}». Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (productId == null || saving) return@TextButton
+                        confirmDelete = false
+                        saving = true
+                        message = null
+                        scope.launch {
+                            try {
+                                SupabaseRepository.deleteProducto(productId)
+                                onBack()
+                            } catch (e: Exception) {
+                                message = e.message ?: "No se pudo eliminar el artículo."
+                            } finally {
+                                saving = false
+                            }
+                        }
+                    },
+                    enabled = !saving
+                ) { Text("Eliminar", color = ErrorText) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }, enabled = !saving) { Text("Cancelar") } }
+        )
+    }
 }
 
 @Composable
@@ -286,44 +317,8 @@ private fun SectionCard(content: @Composable () -> Unit) {
 private fun Label(text: String) { Text(text, color = AppMuted, fontSize = 9.sp, fontWeight = FontWeight.SemiBold) }
 
 @Composable
-private fun FamilyOption(text: String, selected: Boolean, height: androidx.compose.ui.unit.Dp, onClick: () -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().height(height).clip(RoundedCornerShape(6.dp)).background(if (selected) Color(0x1A10B981) else Color.Transparent).clickable(onClick = onClick).padding(horizontal = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(text, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, color = if (selected) SuccessText else AppText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (selected) Icon(Icons.Default.Check, null, tint = SuccessText, modifier = Modifier.size(15.dp))
-    }
-}
-
-@Composable
-private fun Status(label: String, checked: Boolean, icon: String?, onChange: (Boolean) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(1.dp), modifier = Modifier.offset(y = (-1).dp).padding(vertical = 1.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            if (icon != null) Text(icon, fontSize = 10.sp)
-            if (label == "Sugerencia") Icon(Icons.Default.Lightbulb, null, tint = SuccessText, modifier = Modifier.size(11.dp))
-            Text(label.uppercase(Locale.ROOT), fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = if (checked) SuccessText else AppMuted)
-        }
-        Toggle(checked, onChange)
-    }
-}
-
-@Composable
 private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(modifier = Modifier.width(36.dp).height(20.dp).clip(RoundedCornerShape(10.dp)).background(if (checked) SuccessText else Color(0xFFD1D5DB)).clickable { onChange(!checked) }.padding(2.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (checked) Arrangement.End else Arrangement.Start) {
         Box(Modifier.size(16.dp).clip(RoundedCornerShape(8.dp)).background(Color.White))
-    }
-}
-
-@Composable
-private fun AlergenoChip(a: Alergeno, selected: Boolean, loader: ImageLoader, modifier: Modifier, onClick: () -> Unit) {
-    val assetAndBg = erudus(a.nombre)
-    Row(modifier = modifier.heightIn(min = 48.dp).clip(RoundedCornerShape(9.dp)).border(1.dp, if (selected) Color(0xFFF97316) else AppBorder, RoundedCornerShape(9.dp)).background(if (selected) Color(0x1AF97316) else AppSurfaceSoft).clickable(onClick = onClick).padding(horizontal = 6.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(16.dp).clip(RoundedCornerShape(2.dp)).border(1.dp, if (selected) Color(0xFFF97316) else AppMuted, RoundedCornerShape(2.dp)).background(if (selected) Color(0xFFF97316) else Color.Transparent), contentAlignment = Alignment.Center) {
-            if (selected) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(11.dp))
-        }
-        Spacer(Modifier.width(5.dp))
-        Box(Modifier.size(30.dp).clip(RoundedCornerShape(15.dp)).background(assetAndBg.second), contentAlignment = Alignment.Center) {
-            if (assetAndBg.first.isNotBlank()) AsyncImage(model = "file:///android_asset/erudus/${assetAndBg.first}", imageLoader = loader, contentDescription = null, modifier = Modifier.size(28.dp))
-        }
-        Spacer(Modifier.width(5.dp))
-        Text(a.nombre, modifier = Modifier.weight(1f), color = AppText, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, lineHeight = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
