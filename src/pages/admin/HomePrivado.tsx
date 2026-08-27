@@ -1,10 +1,10 @@
-import { FolderOpen, Package, Settings, ArrowRight } from 'lucide-react';
+import { ArrowRight, SlidersHorizontal, Tags, UtensilsCrossed } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const sections = [
-  { title: 'Familias', description: 'Organiza las categorías de la carta.', icon: FolderOpen, accent: '#8b5cf6', path: '/admin/familias' },
-  { title: 'Productos', description: 'Crea, edita y ordena los platos.', icon: Package, accent: '#f59e0b', path: '/admin/productos' },
-  { title: 'Configuración', description: 'Ajustes generales de la carta.', icon: Settings, accent: '#64748b', path: '/admin/configuracion' },
+  { title: 'Familias', description: 'Organiza las categorías de la carta.', icon: Tags, accent: '#8b5cf6', path: '/admin/familias' },
+  { title: 'Productos', description: 'Crea, edita y ordena los platos.', icon: UtensilsCrossed, accent: '#f59e0b', path: '/admin/productos' },
+  { title: 'Configuración', description: 'Ajustes generales de la carta.', icon: SlidersHorizontal, accent: '#64748b', path: '/admin/configuracion' },
 ] as const;
 
 export default function HomePrivado() {
