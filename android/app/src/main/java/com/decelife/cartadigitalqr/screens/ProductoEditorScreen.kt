@@ -119,6 +119,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var sugerencia by remember(product) { mutableStateOf(product?.sugerido ?: false) }
     var familyOpen by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
+    var deleteOpen by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -148,7 +149,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 overflow = TextOverflow.Ellipsis
             )
             if (productId != null) {
-                IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) {
+                IconButton(onClick = { deleteOpen = true }, enabled = !saving, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
                 }
             }
@@ -273,6 +274,35 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                     Icon(Icons.Default.Save, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
+        }
+
+        if (deleteOpen && productId != null) {
+            AlertDialog(
+                onDismissRequest = { if (!saving) deleteOpen = false },
+                title = { Text("Eliminar artículo") },
+                text = { Text("¿Seguro que quieres eliminar «${product?.nombre ?: nombre}»? Esta acción no se puede deshacer.") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        if (saving) return@TextButton
+                        deleteOpen = false
+                        saving = true
+                        message = null
+                        scope.launch {
+                            try {
+                                SupabaseRepository.deleteProducto(productId)
+                                onBack()
+                            } catch (e: Exception) {
+                                message = e.message ?: "No se pudo eliminar el producto."
+                            } finally {
+                                saving = false
+                            }
+                        }
+                    }) { Text("Eliminar", color = ErrorText, fontWeight = FontWeight.Bold) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { deleteOpen = false }, enabled = !saving) { Text("Cancelar") }
+                }
+            )
         }
     }
 }
