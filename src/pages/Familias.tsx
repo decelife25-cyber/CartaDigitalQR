@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ChevronRight, Heart, Moon, Search, Sun, X } from 'lucide-react';
+import { ChevronRight, Heart, ImageOff, Moon, Search, Sun, X } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Familia } from '../types/database';
@@ -85,7 +85,7 @@ export default function Familias() {
           {familias.map((familia) => (
             <button key={familia.id} type="button" onClick={() => navigate(`/familias/${familia.id}`)} className="flex min-h-[72px] w-full items-center border-b text-left transition-colors active:brightness-95" style={{ background: 'var(--app-surface)', borderColor: 'var(--app-border)' }}>
               <div className="relative ml-3 h-[58px] w-[74px] shrink-0 overflow-hidden rounded-lg bg-stone-200">
-                {familia.foto_url ? <img src={familia.foto_url} alt={`Foto de ${familia.nombre}`} className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full w-full items-center justify-center" style={{ color: 'var(--app-muted)' }}><img src={PIZARRA_IMAGE} alt="" className="h-6 w-6 opacity-40 grayscale" /></div>}
+                {familia.foto_url ? <img src={familia.foto_url} alt={`Foto de ${familia.nombre}`} className="h-full w-full object-cover" loading="lazy" /> : <div className="flex h-full w-full items-center justify-center" style={{ color: 'var(--app-muted)' }}><ImageOff size={22} strokeWidth={1.5} /></div>}
                 <div className="absolute inset-0 bg-black/5" />
               </div>
               <div className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2">
@@ -95,7 +95,7 @@ export default function Familias() {
             </button>
           ))}
         </section>
-        {familias.length === 0 && <div className="px-4 py-12 text-center" style={{ color: 'var(--app-muted)' }}><img src={PIZARRA_IMAGE} alt="" className="mx-auto mb-3 h-8 w-8 opacity-50 grayscale" /><p className="text-sm">No hay familias disponibles en este momento.</p></div>}
+        {familias.length === 0 && <div className="px-4 py-12 text-center" style={{ color: 'var(--app-muted)' }}><ImageOff className="mx-auto mb-3 h-8 w-8" strokeWidth={1.5} /><p className="text-sm">No hay familias disponibles en este momento.</p></div>}
       </div>
 
       {searchOpen && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 px-3 pb-3 sm:items-center" role="dialog" aria-modal="true" aria-labelledby="search-title" onMouseDown={(event) => { if (event.currentTarget === event.target) closeSearch(); }}>

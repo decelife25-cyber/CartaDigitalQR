@@ -208,6 +208,15 @@ export const adminApi = {
 
   async deleteProducto(id: string): Promise<void> {
     await requireSession();
+
+    // Eliminar primero las relaciones para no depender de una política
+    // ON DELETE CASCADE en la base de datos.
+    const { error: alergenosError } = await supabase
+      .from('producto_alergeno')
+      .delete()
+      .eq('producto_id', id);
+    if (alergenosError) throw new Error(`No se pueden eliminar los alérgenos del producto: ${getErrorMessage(alergenosError)}`);
+
     const { error } = await supabase.from('productos').delete().eq('id', id);
     if (error) throw new Error(`No se puede eliminar el producto: ${getErrorMessage(error)}`);
   },
