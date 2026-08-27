@@ -35,6 +35,7 @@ function mapAlergeno(alergeno: Alergeno): Alergeno {
 
 function mapProducto(producto: any): Producto {
   return {
+    familia: producto.familias ? { ...producto.familias } : undefined,
     ...producto,
     alergenos: (producto.producto_alergeno ?? [])
       .map((pa: any) => pa.alergenos)
@@ -94,6 +95,7 @@ export const api = {
       .from('productos')
       .select(`
         *,
+        familias (*),
         producto_alergeno (
           alergenos (*)
         )
@@ -115,6 +117,7 @@ export const api = {
       .from('productos')
       .select(`
         *,
+        familias (*),
         producto_alergeno (
           alergenos (*)
         )
@@ -136,6 +139,7 @@ export const api = {
       .from('productos')
       .select(`
         *,
+        familias (*),
         producto_alergeno (
           alergenos (*)
         )
@@ -160,6 +164,7 @@ export const api = {
       .from('productos')
       .select(`
         *,
+        familias (*),
         producto_alergeno (
           alergenos (*)
         )
@@ -188,6 +193,7 @@ export const api = {
       .from('productos')
       .select(`
         *,
+        familias (*),
         producto_alergeno (
           alergenos (*)
         )

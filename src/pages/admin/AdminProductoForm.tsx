@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Check, ChevronDown, Image as ImageIcon, Lightbulb, Save, Trash2, Camera } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Image as ImageIcon, Lightbulb, Save, Trash, Camera } from 'lucide-react';
 import AppModal from '../../components/ui/AppModal';
 import { adminApi } from '../../services/adminApi';
 import type { Alergeno, Familia, Producto } from '../../types/database';
@@ -134,7 +134,7 @@ export default function AdminProductoForm() {
     <header className="sticky top-0 z-30 flex h-11 items-center gap-1 border-b px-2" style={{borderColor:'var(--app-border)',background:'color-mix(in srgb, var(--app-bg) 94%, transparent)',backdropFilter:'blur(10px)'}}>
       <button type="button" onClick={handleExit} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver"><ArrowLeft size={20}/></button>
       <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight">{isEditing?'Editar artículo':'Nuevo artículo'}</h1>
-      {isEditing&&<button type="button" onClick={handleDelete} disabled={saving} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500"><Trash2 size={15}/><span className="hidden min-[390px]:inline">Eliminar</span></button>}
+      {isEditing&&<button type="button" onClick={handleDelete} disabled={saving} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500"><Trash size={15}/><span className="hidden min-[390px]:inline">Eliminar</span></button>}
       <label className="flex shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 text-center"><span className="text-[8px] font-extrabold uppercase leading-none" style={{color:'var(--app-muted)'}}>Visible</span><StatusSwitch checked={activo}/><input type="checkbox" checked={activo} onChange={e=>setActivo(e.target.checked)} className="sr-only"/></label>
     </header>
     <form id="producto-form" onSubmit={handleSubmit} className="w-full space-y-2 px-0 pb-14 pt-2">
