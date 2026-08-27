@@ -209,6 +209,14 @@ export const adminApi = {
   async deleteProducto(id: string): Promise<void> {
     await requireSession();
 
+    const { data: producto, error: productoError } = await supabase
+      .from('productos')
+      .select('id, foto_url')
+      .eq('id', id)
+      .maybeSingle();
+    if (productoError) throw new Error(`No se puede comprobar el producto: ${getErrorMessage(productoError)}`);
+    if (!producto) throw new Error('El producto ya no existe.');
+
     // Eliminar primero las relaciones para no depender de una política
     // ON DELETE CASCADE en la base de datos.
     const { error: alergenosError } = await supabase
@@ -217,8 +225,23 @@ export const adminApi = {
       .eq('producto_id', id);
     if (alergenosError) throw new Error(`No se pueden eliminar los alérgenos del producto: ${getErrorMessage(alergenosError)}`);
 
-    const { error } = await supabase.from('productos').delete().eq('id', id);
+    // Solicitar la fila eliminada permite detectar el caso en el que RLS
+    // impide el DELETE sin devolver un error explícito.
+    const { data: deleted, error } = await supabase
+      .from('productos')
+      .delete()
+      .eq('id', id)
+      .select('id');
     if (error) throw new Error(`No se puede eliminar el producto: ${getErrorMessage(error)}`);
+    if (!deleted?.length) throw new Error('No se ha podido eliminar el producto. Comprueba los permisos de la sesión.');
+
+    if (producto.foto_url) {
+      try {
+        await this.deleteProductoFoto(producto.foto_url);
+      } catch (error) {
+        console.warn('El producto se eliminó, pero no se pudo eliminar su imagen:', error);
+      }
+    }
   },
 
   async uploadProductoFoto(file: File): Promise<string> {
