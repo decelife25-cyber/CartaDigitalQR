@@ -35,6 +35,7 @@ export interface Alergeno {
 }
 
 export interface Producto {
+  familia?: Familia;
   id: string;
   configuracion_restaurante_id: string;
   familia_id: string;
