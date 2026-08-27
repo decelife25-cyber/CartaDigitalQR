@@ -14,6 +14,7 @@ import java.net.URL
 
 object SupabaseAuth {
     private const val PREFS = "supabase_session"
+    private const val FALLBACK_PREFS = "supabase_session_fallback"
     private const val ACCESS = "access_token"
     private const val REFRESH = "refresh_token"
     private const val EXPIRES_AT = "expires_at"
@@ -24,21 +25,36 @@ object SupabaseAuth {
     @Volatile private var expiresAt: Long = 0L
 
     suspend fun restoreSession(context: Context): Boolean {
+        val appContext = context.applicationContext
         if (prefs == null) {
-            val masterKey = MasterKey.Builder(context.applicationContext)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            prefs = EncryptedSharedPreferences.create(
-                context.applicationContext,
-                PREFS,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
+            prefs = try {
+                val masterKey = MasterKey.Builder(appContext)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
+                EncryptedSharedPreferences.create(
+                    appContext,
+                    PREFS,
+                    masterKey,
+                    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+                )
+            } catch (e: Exception) {
+                // Some devices/Android versions can reject the encrypted preference
+                // keystore. Do not crash before the login screen is shown: use a
+                // clean fallback store so the user can authenticate again.
+                appContext.getSharedPreferences(FALLBACK_PREFS, Context.MODE_PRIVATE)
+            }
         }
-        accessToken = prefs?.getString(ACCESS, null)
-        refreshToken = prefs?.getString(REFRESH, null)
-        expiresAt = prefs?.getLong(EXPIRES_AT, 0L) ?: 0L
+        try {
+            accessToken = prefs?.getString(ACCESS, null)
+            refreshToken = prefs?.getString(REFRESH, null)
+            expiresAt = prefs?.getLong(EXPIRES_AT, 0L) ?: 0L
+        } catch (e: Exception) {
+            prefs = appContext.getSharedPreferences(FALLBACK_PREFS, Context.MODE_PRIVATE)
+            accessToken = prefs?.getString(ACCESS, null)
+            refreshToken = prefs?.getString(REFRESH, null)
+            expiresAt = prefs?.getLong(EXPIRES_AT, 0L) ?: 0L
+        }
         if (accessToken != null && expiresAt > System.currentTimeMillis() + 30_000) return true
         return refresh()
     }
