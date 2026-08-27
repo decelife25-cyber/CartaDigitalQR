@@ -22,7 +22,7 @@ export default function FichaPlato() {
   useEffect(() => { async function loadData() { if (!id) return; try { setProducto(await api.getProductoById(id)); } finally { setLoading(false); } } void loadData(); }, [id]);
   if (loading) return <div className="min-h-full flex items-center justify-center" style={{ background: 'var(--app-bg)' }}><div className="h-8 w-8 rounded-full border-2 border-current border-t-transparent animate-spin opacity-50" /></div>;
   if (!producto) return <main className="min-h-full flex flex-col items-center justify-center px-6 text-center" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}><p className="text-lg font-semibold">Producto no encontrado.</p><button onClick={() => navigate(-1)} className="mt-5 rounded-xl px-5 py-3 font-semibold" style={{ background: 'var(--app-surface)', border: '1px solid var(--app-border)' }}>Volver</button></main>;
-  const isArroz = producto.familia?.nombre?.toLowerCase() === 'arroces';
+  const isArroz = producto.familia?.nombre?.trim().toLocaleLowerCase('es') === 'arroces';
   const selected = isSelected(producto.id); const toggleSelection = () => { if (producto.agotado) return; if (selected) removeSelection(producto.id); else addSelection(producto.id); };
   return <main className="min-h-full pb-28" style={{ background: 'var(--app-bg)', color: 'var(--app-text)' }}>
     <section className="relative w-full overflow-hidden" style={{ background: 'var(--app-surface)' }}>
