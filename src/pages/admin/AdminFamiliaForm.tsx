@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowLeft, Camera, Check, Image as ImageIcon, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Camera, Check, Image as ImageIcon, Save, Trash } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AppModal from '../../components/ui/AppModal';
 import { adminApi } from '../../services/adminApi';
@@ -156,7 +156,7 @@ export default function AdminFamiliaForm() {
       <header className="sticky top-0 z-30 flex h-11 items-center gap-1 border-b px-2" style={{ borderColor: 'var(--app-border)', background: 'color-mix(in srgb, var(--app-bg) 94%, transparent)', backdropFilter: 'blur(10px)' }}>
         <button type="button" onClick={() => navigate('/admin/familias')} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" aria-label="Volver"><ArrowLeft size={20} /></button>
         <h1 className="min-w-0 flex-1 truncate text-[18px] font-extrabold tracking-tight">{isEditing ? 'Editar familia' : 'Nueva familia'}</h1>
-        {isEditing && <button type="button" onClick={() => setDeleteOpen(true)} disabled={saving || uploading} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500 disabled:opacity-40"><Trash2 size={15} /><span className="hidden min-[390px]:inline">Eliminar</span></button>}
+        {isEditing && <button type="button" onClick={() => setDeleteOpen(true)} disabled={saving || uploading} className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[11px] font-extrabold text-red-500 disabled:opacity-40"><Trash size={17} strokeWidth={2.3} /><span className="hidden min-[390px]:inline">Eliminar</span></button>}
         <label className="flex shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 text-center">
           <span className="text-[8px] font-extrabold uppercase leading-none" style={{ color: 'var(--app-muted)' }}>{activo ? 'Visible' : 'Oculta'}</span>
           <StatusSwitch checked={activo} />
