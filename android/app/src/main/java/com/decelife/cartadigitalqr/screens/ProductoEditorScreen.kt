@@ -32,6 +32,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.decelife.cartadigitalqr.data.SupabaseRepository
+import com.decelife.cartadigitalqr.data.deleteProducto
 import com.decelife.cartadigitalqr.models.*
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
 import com.decelife.cartadigitalqr.ui.theme.*
