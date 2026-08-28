@@ -14,10 +14,14 @@ import AdminProductoForm from './pages/admin/AdminProductoForm';
 import AdminConfiguracion from './pages/admin/AdminConfiguracion';
 
 function App() {
-  // Vite defines the public base for each deployment target. For the
-  // Cloudflare production build this is /carta-camborio/, so React Router
-  // must use the same prefix. Local development keeps basename undefined.
-  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
+  // The Cloudflare Worker keeps /carta-camborio/ in the browser URL while
+  // proxying the request to the Pages origin. Assets are served from '/'.
+  // Therefore the router basename must follow the actual browser pathname,
+  // not Vite's BASE_URL.
+  const pathname = window.location.pathname;
+  const basename = pathname === '/carta-camborio' || pathname.startsWith('/carta-camborio/')
+    ? '/carta-camborio'
+    : import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
 
   return (
     <BrowserRouter basename={basename}>
