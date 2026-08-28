@@ -1,0 +1,5 @@
+# Allow the Cloudflare Pages deployment URL to be tested directly at
+# /carta-camborio while keeping Vite's production asset prefix unchanged.
+# These are internal proxy rewrites (200), so the browser URL does not change.
+/carta-camborio /index.html 200
+/carta-camborio/* /:splat 200
