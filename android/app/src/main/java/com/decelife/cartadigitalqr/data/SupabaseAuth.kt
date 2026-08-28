@@ -1,6 +1,7 @@
 package com.decelife.cartadigitalqr.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.decelife.cartadigitalqr.BuildConfig
@@ -18,29 +19,41 @@ object SupabaseAuth {
     private const val REFRESH = "refresh_token"
     private const val EXPIRES_AT = "expires_at"
 
-    private var prefs: android.content.SharedPreferences? = null
+    private var prefs: SharedPreferences? = null
     @Volatile private var accessToken: String? = null
     @Volatile private var refreshToken: String? = null
     @Volatile private var expiresAt: Long = 0L
 
     suspend fun restoreSession(context: Context): Boolean {
-        if (prefs == null) {
-            val masterKey = MasterKey.Builder(context.applicationContext)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            prefs = EncryptedSharedPreferences.create(
-                context.applicationContext,
-                PREFS,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
+        try {
+            if (prefs == null) {
+                prefs = try {
+                    val masterKey = MasterKey.Builder(context.applicationContext)
+                        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                        .build()
+                    EncryptedSharedPreferences.create(
+                        context.applicationContext,
+                        PREFS,
+                        masterKey,
+                        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+                    )
+                } catch (_: Exception) {
+                    // EncryptedSharedPreferences puede fallar en determinadas instalaciones
+                    // limpias/actualizaciones del dispositivo. En ese caso no se debe cerrar
+                    // la aplicación: usamos las preferencias normales y mostramos el login.
+                    context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                }
+            }
+            accessToken = prefs?.getString(ACCESS, null)
+            refreshToken = prefs?.getString(REFRESH, null)
+            expiresAt = prefs?.getLong(EXPIRES_AT, 0L) ?: 0L
+            if (accessToken != null && expiresAt > System.currentTimeMillis() + 30_000) return true
+            return refresh()
+        } catch (_: Exception) {
+            clearSession()
+            return false
         }
-        accessToken = prefs?.getString(ACCESS, null)
-        refreshToken = prefs?.getString(REFRESH, null)
-        expiresAt = prefs?.getLong(EXPIRES_AT, 0L) ?: 0L
-        if (accessToken != null && expiresAt > System.currentTimeMillis() + 30_000) return true
-        return refresh()
     }
 
     fun bearerToken(): String? = accessToken
@@ -48,7 +61,12 @@ object SupabaseAuth {
     suspend fun ensureValidSession(): Boolean {
         if (accessToken == null) return false
         if (expiresAt > System.currentTimeMillis() + 30_000) return true
-        return refresh()
+        return try {
+            refresh()
+        } catch (_: Exception) {
+            clearSession()
+            false
+        }
     }
 
     suspend fun signIn(email: String, password: String): String? = withContext(Dispatchers.IO) {
