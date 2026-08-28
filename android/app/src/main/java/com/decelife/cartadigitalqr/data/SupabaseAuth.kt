@@ -23,24 +23,37 @@ object SupabaseAuth {
     @Volatile private var refreshToken: String? = null
     @Volatile private var expiresAt: Long = 0L
 
-    suspend fun restoreSession(context: Context): Boolean {
-        if (prefs == null) {
+    private fun initPrefs(context: Context): android.content.SharedPreferences? {
+        if (prefs != null) return prefs
+        return runCatching {
             val masterKey = MasterKey.Builder(context.applicationContext)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build()
-            prefs = EncryptedSharedPreferences.create(
+            EncryptedSharedPreferences.create(
                 context.applicationContext,
                 PREFS,
                 masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
+            ).also { prefs = it }
+        }.getOrElse {
+            prefs = null
+            null
         }
-        accessToken = prefs?.getString(ACCESS, null)
-        refreshToken = prefs?.getString(REFRESH, null)
-        expiresAt = prefs?.getLong(EXPIRES_AT, 0L) ?: 0L
-        if (accessToken != null && expiresAt > System.currentTimeMillis() + 30_000) return true
-        return refresh()
+    }
+
+    suspend fun restoreSession(context: Context): Boolean {
+        return try {
+            val storage = initPrefs(context) ?: return false
+            accessToken = storage.getString(ACCESS, null)
+            refreshToken = storage.getString(REFRESH, null)
+            expiresAt = storage.getLong(EXPIRES_AT, 0L)
+            if (accessToken != null && expiresAt > System.currentTimeMillis() + 30_000) return true
+            refresh()
+        } catch (_: Exception) {
+            clearSession()
+            false
+        }
     }
 
     fun bearerToken(): String? = accessToken
@@ -48,7 +61,7 @@ object SupabaseAuth {
     suspend fun ensureValidSession(): Boolean {
         if (accessToken == null) return false
         if (expiresAt > System.currentTimeMillis() + 30_000) return true
-        return refresh()
+        return runCatching { refresh() }.getOrDefault(false)
     }
 
     suspend fun signIn(email: String, password: String): String? = withContext(Dispatchers.IO) {
