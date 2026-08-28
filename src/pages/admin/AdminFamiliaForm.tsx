@@ -148,7 +148,7 @@ export default function AdminFamiliaForm() {
   };
 
   if (loading) {
-    return <div className="flex min-h-[60vh] items-center justify-center" style={{ background: 'var(--app-bg)' }}><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-500'" /></div>;
+    return <div className="flex min-h-[60vh] items-center justify-center" style={{ background: 'var(--app-bg)' }}><div className="h-7 w-7 animate-spin rounded-full border-b-2 border-orange-500" /></div>;
   }
 
   return (
