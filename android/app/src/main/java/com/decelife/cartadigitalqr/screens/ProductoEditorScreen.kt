@@ -119,6 +119,8 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var sugerencia by remember(product) { mutableStateOf(product?.sugerido ?: false) }
     var familyOpen by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    var deleteOpen by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -148,7 +150,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                 overflow = TextOverflow.Ellipsis
             )
             if (productId != null) {
-                IconButton(onClick = { message = "La eliminación requiere confirmación." }, modifier = Modifier.size(32.dp)) {
+                IconButton(onClick = { if (!saving && !deleting) deleteOpen = true }, enabled = !saving && !deleting, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Default.DeleteOutline, "Eliminar", tint = ErrorText, modifier = Modifier.size(20.dp))
                 }
             }
@@ -269,11 +271,40 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                             onBack()
                         } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
                     }
-                }, enabled = !saving, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
+                }, enabled = !saving && !deleting, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
                     Icon(Icons.Default.Save, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
+    }
+
+    if (deleteOpen && productId != null) {
+        AlertDialog(
+            onDismissRequest = { if (!deleting) deleteOpen = false },
+            title = { Text("Eliminar artículo", fontWeight = FontWeight.ExtraBold) },
+            text = { Text("¿Quieres eliminar definitivamente este artículo de la carta?") },
+            confirmButton = {
+                TextButton(enabled = !deleting, onClick = {
+                    deleting = true
+                    message = null
+                    scope.launch {
+                        try {
+                            SupabaseRepository.deleteProducto(productId)
+                            deleteOpen = false
+                            onBack()
+                        } catch (e: Exception) {
+                            message = e.message ?: "No se pudo eliminar el artículo."
+                            deleteOpen = false
+                        } finally {
+                            deleting = false
+                        }
+                    }
+                }) { Text(if (deleting) "Eliminando…" else "Eliminar", color = ErrorText, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(enabled = !deleting, onClick = { deleteOpen = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
 
