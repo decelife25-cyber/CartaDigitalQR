@@ -1,5 +1,9 @@
 package com.decelife.cartadigitalqr.screens
 
+import android.webkit.MimeTypeMap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,6 +24,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +37,7 @@ import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import com.decelife.cartadigitalqr.data.SupabaseRepository
+import com.decelife.cartadigitalqr.data.SupabaseStorage
 import com.decelife.cartadigitalqr.models.*
 import com.decelife.cartadigitalqr.ui.components.AdminHeader
 import com.decelife.cartadigitalqr.ui.theme.*
@@ -119,12 +125,33 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
     var sugerencia by remember(product) { mutableStateOf(product?.sugerido ?: false) }
     var familyOpen by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
+    var uploadingFoto by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
     val density = LocalDensity.current
     val loader = remember(context) { ImageLoader.Builder(context).components { add(SvgDecoder.Factory()) }.build() }
     val familiaNombre = familias.firstOrNull { it.id == familiaId }?.nombre ?: "Selecciona una familia"
+
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            uploadingFoto = true
+            message = null
+            try {
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                val extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: "jpg"
+                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: throw IllegalStateException("No se pudo leer la imagen seleccionada.")
+                fotoUrl = SupabaseStorage.uploadProductoFoto(bytes, mime, extension)
+                message = "Foto subida correctamente. Pulsa Guardar cambios para conservarla."
+            } catch (e: Exception) {
+                message = e.message ?: "No se pudo subir la fotografía."
+            } finally {
+                uploadingFoto = false
+            }
+        }
+    }
 
     Column(Modifier.fillMaxSize().background(AppBg)) {
         AdminHeader(showHome = true, onHome = onBack)
@@ -173,14 +200,28 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                                 Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(9.dp)).background(AppSurfaceSoft).border(1.dp, AppBorder, RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) {
                                     if (fotoUrl.isNotBlank()) AsyncImage(model = fotoUrl, contentDescription = nombre, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(9.dp)))
                                     else Icon(Icons.Default.Image, null, tint = AppMuted, modifier = Modifier.size(28.dp))
+                                    if (uploadingFoto) {
+                                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.58f)), contentAlignment = Alignment.Center) {
+                                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                                        }
+                                    }
                                 }
                                 Spacer(Modifier.height(2.dp))
-                                Button(onClick = { message = "La selección de fotografía se conecta en la siguiente iteración." }, modifier = Modifier.fillMaxWidth().height(28.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(horizontal = 3.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
-                                    Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(13.dp)); Spacer(Modifier.width(3.dp)); Text("Cambiar foto", fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                Button(
+                                    onClick = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                                    enabled = !uploadingFoto && !saving,
+                                    modifier = Modifier.fillMaxWidth().height(28.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 3.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)
+                                ) {
+                                    Icon(Icons.Default.CameraAlt, null, modifier = Modifier.size(13.dp))
+                                    Spacer(Modifier.width(3.dp))
+                                    Text(if (uploadingFoto) "Subiendo…" else if (fotoUrl.isBlank()) "Añadir foto" else "Cambiar foto", fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                 }
                                 if (fotoUrl.isNotBlank()) {
                                     Spacer(Modifier.height(1.dp))
-                                    Button(onClick = { fotoUrl = "" }, modifier = Modifier.fillMaxWidth().height(28.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(0.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ErrorText), border = BorderStroke(1.dp, AppBorder)) {
+                                    Button(onClick = { fotoUrl = "" }, enabled = !uploadingFoto && !saving, modifier = Modifier.fillMaxWidth().height(28.dp), shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(0.dp), colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent, contentColor = ErrorText), border = BorderStroke(1.dp, AppBorder)) {
                                         Text("Eliminar foto", fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
@@ -203,11 +244,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                                         Icon(Icons.Default.KeyboardArrowDown, null, modifier = Modifier.size(16.dp), tint = if (familyOpen) SuccessText else AppText)
                                     }
                                     if (familyOpen) {
-                                        Popup(
-                                            alignment = Alignment.TopStart,
-                                            offset = IntOffset(0, with(density) { 50.dp.roundToPx() }),
-                                            onDismissRequest = { familyOpen = false }
-                                        ) {
+                                        Popup(alignment = Alignment.TopStart, offset = IntOffset(0, with(density) { 50.dp.roundToPx() }), onDismissRequest = { familyOpen = false }) {
                                             Column(Modifier.width(maxWidth).heightIn(max = 256.dp).verticalScroll(rememberScrollState()).clip(RoundedCornerShape(9.dp)).background(AppSurface).border(1.dp, AppBorder, RoundedCornerShape(9.dp)).padding(4.dp)) {
                                                 FamilyOption("Selecciona una familia", familiaId.isBlank(), 36.dp) { familiaId = ""; familyOpen = false }
                                                 familias.forEach { f -> FamilyOption(f.nombre, f.id == familiaId, 36.dp) { familiaId = f.id; familyOpen = false } }
@@ -243,9 +280,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             alergenos.chunked(2).forEach { pair ->
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    pair.forEach { a ->
-                                        AlergenoChip(a, selected.contains(a.id), loader, Modifier.weight(1f)) { selected = if (selected.contains(a.id)) selected - a.id else selected + a.id }
-                                    }
+                                    pair.forEach { a -> AlergenoChip(a, selected.contains(a.id), loader, Modifier.weight(1f)) { selected = if (selected.contains(a.id)) selected - a.id else selected + a.id } }
                                     if (pair.size == 1) Spacer(Modifier.weight(1f))
                                 }
                             }
@@ -269,7 +304,7 @@ fun ProductoEditorScreen(productId: String?, onBack: () -> Unit) {
                             onBack()
                         } catch (e: Exception) { message = e.message ?: "No se pudo guardar." } finally { saving = false }
                     }
-                }, enabled = !saving, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
+                }, enabled = !saving && !uploadingFoto, modifier = Modifier.weight(1.7f).height(36.dp), shape = RoundedCornerShape(9.dp), colors = ButtonDefaults.buttonColors(containerColor = OrangePrimary, contentColor = Color.White)) {
                     Icon(Icons.Default.Save, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(4.dp)); Text(if (saving) "Guardando…" else "Guardar cambios", fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
