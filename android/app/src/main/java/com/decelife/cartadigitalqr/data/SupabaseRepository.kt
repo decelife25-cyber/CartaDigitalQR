@@ -124,6 +124,34 @@ object SupabaseRepository {
         request("PATCH", "productos?id=eq.$id", payload.toString())
     }
 
+    suspend fun deleteProducto(id: String) {
+        val json = JSONArray(get("productos?select=id,foto_url&id=eq.$id&limit=1"))
+        val producto = json.optJSONObject(0) ?: throw IllegalStateException("El producto ya no existe.")
+        val fotoUrl = producto.optString("foto_url").takeIf { it.isNotBlank() && it != "null" }
+
+        request("DELETE", "producto_alergeno?producto_id=eq.$id")
+        request("DELETE", "productos?id=eq.$id")
+
+        val remaining = JSONArray(get("productos?select=id&id=eq.$id&limit=1"))
+        if (remaining.length() > 0) {
+            throw IllegalStateException("No se ha podido eliminar el producto. Comprueba los permisos de la sesión.")
+        }
+
+        if (fotoUrl != null) {
+            try {
+                val marker = "/storage/v1/object/public/productos/"
+                val index = fotoUrl.indexOf(marker)
+                if (index != -1) {
+                    val filePath = fotoUrl.substring(index + marker.length)
+                    if (filePath.isNotBlank()) storageRequest("DELETE", "productos/$filePath")
+                }
+            } catch (e: Exception) {
+                // El producto ya está eliminado; no convertir un fallo de limpieza
+                // de Storage en un falso fallo de eliminación del producto.
+            }
+        }
+    }
+
     suspend fun saveFamilia(id: String?, nombre: String, descripcion: String?, fotoUrl: String?, activo: Boolean) {
         val payload = JSONObject().apply { put("nombre", nombre); put("descripcion", descripcion ?: JSONObject.NULL); put("foto_url", fotoUrl?.takeIf { it.isNotBlank() } ?: JSONObject.NULL); put("activo", activo) }
         if (id == null) { val configJson = JSONArray(get("familias?select=configuracion_restaurante_id&configuracion_restaurante_id=not.is.null&limit=1")); val configId = configJson.optJSONObject(0)?.optString("configuracion_restaurante_id").orEmpty(); if (configId.isBlank()) throw IllegalStateException("No se pudo determinar el restaurante de la familia."); payload.put("configuracion_restaurante_id", configId); payload.put("orden", 0); request("POST", "familias", payload.toString()) } else request("PATCH", "familias?id=eq.$id", payload.toString())
