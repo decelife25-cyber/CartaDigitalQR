@@ -48,9 +48,9 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 private val SpecialColor = Color(0xFFF59E0B)
-private val SpecialBackground = Color(0xFFFFF8E8)
+private val SpecialBackground = Color.Transparent
 private val SuggestedColor = Color(0xFF10B981)
-private val SuggestedBackground = Color(0xFFECFBF5)
+private val SuggestedBackground = Color.Transparent
 private enum class StatusFilter(val label: String) { TODOS("Estado: Todos"), VISIBLES("Visibles"), OCULTOS("Ocultos"), DISPONIBLES("Disponibles"), AGOTADOS("Agotados"), DESTACADOS("Especialidades"), SUGERENCIAS("Sugerencias") }
 private enum class SortMode(val label: String) { ORDEN("Orden: Carta"), NOMBRE("Nombre A-Z"), PRECIO_ASC("Precio ↑"), PRECIO_DESC("Precio ↓") }
 private const val FILTER_PREFS = "productos_filtros"
@@ -111,8 +111,6 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         SortMode.PRECIO_DESC -> list.sortedByDescending { it.precio }
     } }
 
-    // El guardado ya no bloquea el siguiente arrastre. Se cancela un guardado pendiente
-    // cuando el usuario vuelve a ordenar para persistir siempre el último estado.
     val canReorder = search.isBlank() && sortMode == SortMode.ORDEN
 
     LaunchedEffect(Unit) {
