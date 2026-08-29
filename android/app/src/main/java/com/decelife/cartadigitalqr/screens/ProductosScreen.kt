@@ -160,12 +160,16 @@ fun ProductosScreen(onBackClick: () -> Unit, onNewProduct: () -> Unit, onProduct
         val source = current.firstOrNull { it.id == id }
         val target = current.firstOrNull { it.id == targetId }
         if (source != null && target != null && source.id != target.id) {
-            products = current.map { product -> when (product.id) {
-                source.id -> product.copy(orden = target.orden)
-                target.id -> product.copy(orden = source.orden)
-                else -> product
-            } }
-            persistOrder()
+            val ordered = current.sortedBy { it.orden }.toMutableList()
+            val sourceIndex = ordered.indexOfFirst { it.id == source.id }
+            if (sourceIndex >= 0) {
+                ordered.removeAt(sourceIndex)
+                val targetIndex = ordered.indexOfFirst { it.id == target.id }
+                val insertIndex = if (targetIndex >= 0) targetIndex else ordered.size
+                ordered.add(insertIndex, source)
+                products = ordered.mapIndexed { index, product -> product.copy(orden = index + 1) }
+                persistOrder()
+            }
         }
         draggedId = null; dragVisualX = 0f; dragVisualY = 0f
     }
