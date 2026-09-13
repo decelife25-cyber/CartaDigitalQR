@@ -6,9 +6,10 @@ import path from 'path'
 // www.decelife.com/carta-camborio/ subpath by the router Worker.
 // Assets therefore need to be generated under the same public prefix.
 const isCloudflarePages = process.env.CF_PAGES === '1' || process.env.CF_PAGES === 'true'
+const isProductionBuild = isCloudflarePages || process.env.GITHUB_ACTIONS === 'true'
 
 export default defineConfig({
-  base: isCloudflarePages ? '/carta-camborio/' : (process.env.GITHUB_ACTIONS ? '/CartaDigitalQR/' : '/'),
+  base: isProductionBuild ? '/carta-camborio/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
