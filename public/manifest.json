@@ -1,22 +1,22 @@
 {
-  "id": "/CartaDigitalQR/",
+  "id": "/carta-camborio/",
   "name": "Carta Digital",
   "short_name": "Carta Digital",
   "description": "Carta Digital para restaurantes - Acceso público y pedido desde mesa",
-  "start_url": "/CartaDigitalQR/",
-  "scope": "/CartaDigitalQR/",
+  "start_url": "/carta-camborio/",
+  "scope": "/carta-camborio/",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#111111",
   "icons": [
     {
-      "src": "/CartaDigitalQR/icon-192.svg",
+      "src": "/carta-camborio/icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/CartaDigitalQR/icon-512.svg",
+      "src": "/carta-camborio/icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
