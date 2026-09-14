@@ -98,7 +98,7 @@ object SupabaseRepository {
     }
 
     suspend fun getProductos(): List<Producto> {
-        val json = JSONArray(get("productos?select=*&activo=eq.true&order=orden.asc"))
+        val json = JSONArray(get("productos?select=*&order=orden.asc"))
         return buildList(json.length()) { for (i in 0 until json.length()) { val item = json.getJSONObject(i); add(Producto(item.getString("id"), item.optString("familia_id"), item.optString("nombre"), item.optString("descripcion").takeIf { it.isNotBlank() && it != "null" }, item.optDouble("precio", 0.0), item.optInt("orden", 0), item.optBoolean("activo", true), item.optBoolean("agotado", false), item.optBoolean("destacado", false), item.optBoolean("sugerido", false), item.optString("foto_url").takeIf { it.isNotBlank() && it != "null" })) } }
     }
 
